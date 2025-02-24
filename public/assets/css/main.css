@@ -4,6 +4,7 @@ body {
     font-size: 0.875rem;
     font-weight: 400;
     line-height: 1.5;
+    height: 100%;
 }
 .sidebar {
     background-color: #262c05;
@@ -75,6 +76,7 @@ body {
     padding: 20px;
     transition: all 0.3s;
     margin-top: 56px; /* Adjust based on navbar height */
+    min-height: 100vh;
 }
 .content.active {
     margin-left: 0;
@@ -82,6 +84,9 @@ body {
 .dropdown {
     position: relative;
     display: inline-block;
+}
+.ml-auto {
+    margin-left: auto !important;
 }
 
 .avatar {
@@ -227,7 +232,6 @@ body {
 .table td {
     padding: 12px;
     border-bottom: 1px solid #e0e0e0;
-    text-align: center;
     vertical-align: middle; 
 }
 .table th {
@@ -247,7 +251,6 @@ body {
 
 .table td div {
     display: flex;
-    justify-content: center;
     align-items: center;
 }
 .status {
@@ -619,4 +622,72 @@ form {
     font-size: 24px;
     color: #007bff;
     font-weight: 600;
+}
+
+/* Style only for the transaction tabs */
+.trans-tab {
+    border-bottom: 2px solid #ddd;
+    display: flex;
+    justify-content: center;
+    background: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.trans-tab .nav-item {
+    margin: 0 5px;
+}
+
+.trans-tab .nav-link {
+    color: #555;
+    font-weight: 500;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 6px;
+    transition: all 0.3s ease-in-out;
+}
+
+.trans-tab .nav-link.active {
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    color: #fff;
+    font-weight: 600;
+    border-radius: 6px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+}
+
+.trans-tab .nav-link:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #2575fc;
+}
+
+
+/* Footer Styling */
+.footer {
+    background-color: #333;
+    color: #fff;
+    padding: 20px 0;
+    text-align: center;
+    margin-top: 40px;
+    border-top: 1px solid #444;
+}
+
+.footer p {
+    margin: 0;
+    font-size: 14px;
+}
+
+.footer .material-icons-outlined {
+    color: #ff4d4d;
+    vertical-align: middle;
+    font-size: 16px;
+}
+
+.footer a {
+    color: #fff;
+    text-decoration: none;
+}
+
+.footer a:hover {
+    color: #007bff;
 }

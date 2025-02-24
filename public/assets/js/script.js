@@ -41,11 +41,11 @@ $(document).ready(function () {
         filteredRows.slice(start, end).show();
         $('.page-item').removeClass('active');
         $('.page-item').eq(page - 1).addClass('active'); // Improved pagination highlighting
-        localStorage.setItem('currentPage', page);
+        sessionStorage.setItem('currentPage', page); // Use sessionStorage instead of localStorage
     }
 
-    // Get the current page from local storage (default to 1 if not set)
-    let currentPage = localStorage.getItem('currentPage') || 1;
+    // Get the current page from session storage (default to 1 if not set)
+    let currentPage = sessionStorage.getItem('currentPage') || 1;
 
     // Show the saved page (or the first page by default)
     showPage(currentPage);
@@ -120,18 +120,14 @@ $(document).ready(function () {
     });
 
     //javascript function for refund
-    document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('.visibility').forEach(button => {
-            button.addEventListener('click', function () {
-                let row = this.closest('tr');
-                let transactionId = row.children[0].textContent.trim(); // Invoice/Transaction ID
-    
-                document.getElementById('refundBtn').setAttribute('href', `/transactions/refund/${transactionId}`);
-            });
+    document.querySelectorAll('.visibility').forEach(button => {
+        button.addEventListener('click', function () {
+            let row = this.closest('tr');
+            let transactionId = row.children[0].textContent.trim(); // Invoice/Transaction ID
+
+            document.getElementById('refundBtn').setAttribute('href', `/transactions/refund/${transactionId}`);
         });
     });
-    
-
 
     // Show/hide specific users dropdown based on radio selection
     $('input[name="sendTo"]').on('change', function () {
@@ -142,8 +138,8 @@ $(document).ready(function () {
         }
     });
 
-     // Show/hide image upload input based on toggle
-     $('#includeImageToggle').on('change', function () {
+    // Show/hide image upload input based on toggle
+    $('#includeImageToggle').on('change', function () {
         if ($(this).is(':checked')) {
             $('#imageUploadGroup').show();
         } else {
@@ -172,4 +168,35 @@ $(document).ready(function () {
         });
         $('#selectedUsersList').html(selectedUsers.join(', '));
     });
+
+    // Tab Persistence Logic (using sessionStorage)
+    function setActiveTab(tabId) {
+        // Remove 'active' class from all tabs and tab panes
+        $('.nav-link').removeClass('active');
+        $('.tab-pane').removeClass('show active');
+
+        // Add 'active' class to the selected tab and tab pane
+        $(`#${tabId}-tab`).addClass('active');
+        $(`#${tabId}`).addClass('show active');
+    }
+
+    function saveActiveTab(tabId) {
+        sessionStorage.setItem('activeTab', tabId); // Use sessionStorage instead of localStorage
+    }
+
+    function loadActiveTab() {
+        const activeTab = sessionStorage.getItem('activeTab');
+        if (activeTab) {
+            setActiveTab(activeTab);
+        }
+    }
+
+    // Event listener for tab clicks
+    $('.nav-link').on('click', function () {
+        const tabId = $(this).attr('aria-controls');
+        saveActiveTab(tabId);
+    });
+
+    // Load the active tab when the page loads
+    loadActiveTab();
 });

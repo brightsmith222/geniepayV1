@@ -56,7 +56,7 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="dropdown ml-auto">
-            <img src="img/avatar.png" alt="Avatar" class="avatar rounded-circle" id="avatarDropdown" width="40" height="40" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <img src="{{ URL::to('assets/img/avatar.png')}}" alt="Avatar" class="avatar rounded-circle" id="avatarDropdown" width="40" height="40" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <div class="dropdown-menu" id="profileMenu">
                 <a class="dropdown-item" href="#">Profile</a>
                 <a class="dropdown-item" href="#">Logout</a>
@@ -67,7 +67,7 @@
     <div class="sidebar" id="sidebar">
         <!-- Logo at the top of the sidebar -->
         <div class="sidebar-logo">
-            <img src="logo.png" alt="Logo">
+            <img src="{{ URL::to('assets/img/logo.png')}}" alt="Logo">
         </div>
         <ul>
             <li><a href="{{ URL::to('dashboard') }}"><span class="material-icons-outlined">dashboard</span> Dashboard</a></li>
@@ -101,20 +101,19 @@
   </div><!-- End #main -->
 
   <!-- ======= Footer ======= -->
-  <footer id="footer" class="footer">
-    <div class="copyright">
-      &copy; Copyright <strong><span>Geniepay</span></strong>. All Rights Reserved
+  <footer class="footer">
+    <div class="container">
+        <div class="row">
+          <div class="copyright">
+            &copy; Copyright <strong><span>Geniepay</span></strong>. All Rights Reserved
+          </div>
+          <div class="credits">
+            Developed by <a href="#">Edugenie Tech</a>
+          </div>
+        </div>
     </div>
-    <div class="credits">
-      <!-- All the links in the footer should remain intact. -->
-      <!-- You can delete the links only if you purchased the pro version. -->
-      <!-- Licensing information: https://bootstrapmade.com/license/ -->
-      <!-- Purchase the pro version with working PHP/AJAX contact form: https://bootstrapmade.com/nice-admin-bootstrap-admin-html-template/ -->
-      Developed by <a href="#">Edugenie Tech</a>
-    </div>
-  </footer><!-- End Footer -->
-
-  <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+</footer>
+<!-- End Footer -->
 
   <!-- Jquery File -->
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
@@ -129,7 +128,6 @@
   <script src="{{ URL::to('assets/vendor/simple-datatables/simple-datatables.js')}}"></script>
   <script src="{{ URL::to('assets/vendor/tinymce/tinymce.min.js')}}"></script>
   <script src="{{ URL::to('assets/vendor/php-email-form/validate.js')}}"></script>
-  some
   <!-- Template Main JS File -->
   <script src="{{ URL::to('assets/js/script.js')}}"></script>
 
