@@ -1,0 +1,622 @@
+body {
+    padding-top: 56px; /* Adjust based on navbar height */
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.5;
+}
+.sidebar {
+    background-color: #262c05;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 250px;
+    transition: all 0.3s;
+    z-index: 1001; /* Higher than navbar */
+}
+.sidebar.active {
+    left: -250px;
+}
+.sidebar-logo {
+    padding: 15px;
+    text-align: center;
+    border-bottom: 1px solid #3a4306;
+}
+.sidebar-logo img {
+    height: 40px; /* Adjust logo size */
+}
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 0; /* No margin needed since logo is part of the sidebar */
+}
+.sidebar ul li {
+    padding: 10px 15px;
+    color: #fff;
+}
+.sidebar ul li a{
+    text-decoration: none;
+    color: #fff;
+    display: flex;
+}
+.sidebar ul li.active {
+    background-color: #3a4306;
+}
+
+.sidebar ul li.active a {
+    color: #fff;
+    font-weight: bold;
+}
+.sidebar ul li.active a span {
+    color: #bbd423;
+    margin-right: .5rem;
+    
+}
+.sidebar ul li a span {
+    margin-right: .5rem;
+    
+}
+.navbar {
+    background-color: #fff;
+    padding: 10px;
+    position: fixed;
+    top: 0;
+    left: 250px; /* Align with the sidebar */
+    right: 0;
+    z-index: 1000; /* Lower than sidebar */
+    transition: all 0.3s;
+}
+.navbar.active {
+    left: 0; /* Full width when sidebar is hidden */
+}
+.content {
+    margin-left: 250px;
+    padding: 20px;
+    transition: all 0.3s;
+    margin-top: 56px; /* Adjust based on navbar height */
+}
+.content.active {
+    margin-left: 0;
+}
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.dropdown-menus {
+    position: absolute;
+    top: 50px; /* Adjust as needed */
+    right: 0;
+    left: auto;
+    background: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    width: 150px;
+    display: none !important; /* Initially hidden */
+    z-index: 1002;
+    transform: translateX(-2%); /* Center dropdown */
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 50px; /* Adjust as needed */
+    right: 0;
+    left: auto;
+    background: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    width: 150px;
+    display: none; /* Initially hidden */
+    z-index: 1002;
+    transform: translateX(-2%); /* Center dropdown */
+}
+
+.dropdown.show .dropdown-menu {
+    display: block;
+}
+
+
+
+.dropdown-menu a {
+    display: block;
+    padding: 10px 15px;
+    text-decoration: none;
+    color: #333;
+}
+
+.dropdown-menu a:hover {
+    background: #f0f0f0;
+}
+
+.navbar-toggler {
+    display: none; /* Hide toggle button by default */
+}
+@media (max-width: 768px) {
+    .navbar-toggler {
+        display: block; /* Show toggle button on mobile */
+    }
+    .sidebar {
+        left: -250px;
+    }
+    .sidebar.active {
+        left: 0;
+    }
+    .navbar {
+        left: 0; /* Full width on mobile when sidebar is hidden */
+    }
+    .content {
+        margin-left: 0;
+    }
+}
+/* Card styling */
+.card {
+    margin-bottom: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.card-body {
+    padding: 20px;
+}
+.card-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+.card-text {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+}
+.card-subtext {
+    font-size: 14px;
+    color: #666;
+}
+.card-subtext span {
+    color: #28a745; /* Green for positive changes */
+}
+.card-subtext span.negative {
+    color: #dc3545; /* Red for negative changes */
+}
+.progress {
+    height: 10px;
+    border-radius: 5px;
+    background-color: #e9ecef;
+    margin-top: 10px;
+}
+.progress-bar {
+    border-radius: 5px;
+    background-color: #007bff;
+}
+.device-progress {
+    margin-top: 20px;
+}
+.device-progress .progress {
+    margin-bottom: 10px;
+}
+.device-progress .progress-bar {
+    background-color: #28a745; /* Green for desktop */
+}
+.device-progress .progress-bar.mobile {
+    background-color: #ffc107; /* Yellow for mobile */
+}
+.device-progress .progress-bar.tablet {
+    background-color: #dc3545; /* Red for tablet */
+}
+/* Table styling */
+.table-responsive {
+    overflow-x: auto;
+}
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+.table tbody tr{
+    align-content: center;
+}
+.table th,
+.table td {
+    padding: 12px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: center;
+    vertical-align: middle; 
+}
+.table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    text-align: center;
+    vertical-align: middle; 
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+.table td img {
+    display: block;
+    margin: auto;
+}
+
+.table td div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.status {
+    padding: 0.65em;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+}
+.status.in-progress {
+    background-color: #007bff;
+    color: #fff;
+}
+.status.completed {
+    background-color: rgba(25, 135, 84, .1);
+    color: #198754;
+}
+.status.cancel {
+    background-color: rgba(220, 53, 69, .1);
+    color: #dc3545;
+}
+.status.pending {
+    background-color: #ffc107;
+    color: #000;
+}
+.action-button {
+    cursor: pointer;
+    font-size: 18px;
+    color: #666;
+}
+.action-button:hover {
+    color: #333;
+}
+
+/* Custom pagination styling */
+.pagination {
+    margin-top: 20px;
+}
+
+.page-item.active .page-link {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.page-link {
+    color: #007bff;
+    cursor: pointer;
+}
+
+.page-link:hover {
+    color: #0056b3;
+}
+
+/* Search container styling */
+.search-container {
+    position: relative;
+    width: 250px; /* Adjust width as needed */
+}
+
+.search-box {
+    width: 100%;
+    padding-right: 40px; /* Space for the search icon */
+    border-radius: 20px; /* Rounded corners */
+    border: 1px solid #ddd;
+    transition: border-color 0.3s ease;
+}
+
+.search-box:focus {
+    border-color: #007bff; /* Highlight border on focus */
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Add a glow effect */
+}
+
+.search-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    cursor: pointer;
+}
+
+.search-icon:hover {
+    color: #007bff; /* Change color on hover */
+}
+
+/* General Form Styling */
+form {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Form styling */
+.form-group.row {
+    margin-bottom: 15px;
+}
+
+.col-form-label {
+    font-weight: bold;
+    text-align: right;
+    padding-top: 7px;
+}
+
+/* Form Labels */
+.form-group label {
+    font-weight: 600;
+    color: #555;
+}
+
+/* Input Fields */
+.form-control {
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    padding-top: 10px;
+    padding-right: 10px;
+    padding-bottom: 5px;
+    padding-left: 10px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+/* Dropdown Select */
+.form-control.select {
+    cursor: pointer;
+}
+
+/* Submit Button */
+.btn-primary {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    border: none;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    margin-top: 20px;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #0056b3, #003f7f);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 15px;
+    }
+}
+
+.view-transaction {
+    text-decoration: none;
+}
+.visibility{
+    color: #828282;
+    cursor: pointer;
+
+}
+
+.img-thumbnails {
+    padding: .25rem;
+    border-radius: .25rem;
+    height: auto;
+}
+
+.ms-2{
+    margin-left: .5rem;
+}
+
+.modal-body p {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+.modal-footer .btn {
+    min-width: 100px;
+}
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-check {
+    margin-bottom: 10px;
+}
+
+#specificUsersGroup {
+    margin-top: 10px;
+}
+/* Toggle switch styling */
+.custom-switch .custom-control-label::before {
+    border-radius: 20px;
+}
+
+.custom-switch .custom-control-label::after {
+    border-radius: 50%;
+}
+
+/* Image upload styling */
+#imageUploadGroup {
+    margin-top: 10px;
+}
+
+* User list styling */
+#userList {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+#userList .form-check {
+    margin-bottom: 10px;
+}
+
+/* Search input styling */
+#userSearch {
+    margin-bottom: 10px;
+}
+
+/* Selected users styling */
+#selectedUsers {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+}
+
+#selectedUsersList {
+    margin-top: 5px;
+    font-style: italic;
+}
+
+/* Custom Tabs Styling */
+.custom-tabs {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.custom-tabs .nav-tabs {
+    border-bottom: 2px solid #e9ecef;
+    margin-bottom: 20px;
+}
+
+.custom-tabs .nav-tabs .nav-item {
+    margin-right: 10px;
+}
+
+.custom-tabs .nav-tabs .nav-link {
+    border: none;
+    border-radius: 4px;
+    padding: 10px 20px;
+    color: #6c757d;
+    font-weight: 500;
+    background: transparent;
+    transition: all 0.3s ease;
+}
+
+.custom-tabs .nav-tabs .nav-link.active {
+    color: #fff; /* White text for better contrast */
+    border-bottom: 2px solid transparent;
+}
+
+.custom-tabs .nav-tabs .nav-link:hover {
+    color: #fff; /* White text on hover */
+}
+
+/* MTN Active Tab */
+.custom-tabs .nav-tabs .nav-link#mtn-tab.active {
+    background-color: #c3c500; /* MTN Yellow */
+}
+
+.custom-tabs .nav-tabs .nav-link#mtn-tab:hover {
+    background-color: #c3c500; /* Slightly darker yellow on hover */
+}
+
+/* Glo Active Tab */
+.custom-tabs .nav-tabs .nav-link#glo-tab.active {
+    background-color: #00de05; /* Glo Green */
+}
+
+.custom-tabs .nav-tabs .nav-link#glo-tab:hover {
+    background-color: #00c504; /* Slightly darker green on hover */
+}
+
+/* Airtel Active Tab */
+.custom-tabs .nav-tabs .nav-link#airtel-tab.active {
+    background-color: #fc0909; /* Airtel Red */
+}
+
+.custom-tabs .nav-tabs .nav-link#airtel-tab:hover {
+    background-color: #e30808; /* Slightly darker red on hover */
+}
+
+/* 9mobile Active Tab */
+.custom-tabs .nav-tabs .nav-link#mobile-tab.active {
+    background-color: #278900; /* 9mobile Dark Green */
+}
+
+.custom-tabs .nav-tabs .nav-link#mobile-tab:hover {
+    background-color: #227800; /* Slightly darker green on hover */
+}
+
+.custom-tabs .tab-content {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.custom-tabs .tab-inner-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.custom-tabs .tab-inner-content h5 {
+    margin-bottom: 20px;
+    color: #343a40;
+}
+
+.custom-tabs .form-group label {
+    font-weight: 500;
+    color: #495057;
+}
+
+.custom-tabs .form-control {
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+    padding: 10px;
+}
+
+.custom-tabs .btn-primary {
+    background-color: #007bff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+.custom-tabs .btn-primary:hover {
+    background-color: #0056b3;
+}
+/* Current Percentage Styling */
+.current-percentage {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+    border: 1px solid #e9ecef;
+}
+
+.current-percentage span {
+    font-size: 16px;
+    color: #6c757d;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.current-percentage strong {
+    font-size: 24px;
+    color: #007bff;
+    font-weight: 600;
+}
