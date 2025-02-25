@@ -413,6 +413,11 @@ form {
     cursor: pointer;
 
 }
+.visib{
+    color: #828282;
+    cursor: pointer;
+
+}
 
 .img-thumbnails {
     padding: .25rem;

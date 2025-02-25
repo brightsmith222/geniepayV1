@@ -16,7 +16,7 @@
                                     <span class="search-icon"><i class="material-icons-outlined">search</i></span>
                                 </div>
                             </div>
-                            <table class="table">
+                            <table class="table" id="wallet-transaction-table">
                                 <thead>
                                     <tr>
                                         <th>ID</th>

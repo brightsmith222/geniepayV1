@@ -11,10 +11,25 @@ class TransactionsController extends Controller
      * Display a listing of the resource.
      */
     public function index()
-    {
-        $transactions = Transactions::all();
-        return view('transaction.index', compact('transactions'));
-    }
+{
+    $transactions = Transactions::all();
+    $dataTransactions = Transactions::where('service', 'Data')->get();
+    $airtimeTransactions = Transactions::where('service', 'Airtime')->get();
+    $cableTransactions = Transactions::where('service', 'Cable')->get();
+    $electricityTransactions = Transactions::where('service', 'Electricity')->get();
+    $examTransactions = Transactions::where('service', 'Exam')->get();
+
+    return view('transaction.index', compact(
+        'transactions',
+        'dataTransactions',
+        'airtimeTransactions',
+        'cableTransactions',
+        'electricityTransactions',
+        'examTransactions'
+    ));
+}
+
+
     public function allTransactions(Request $request){
 
        

@@ -1,4 +1,6 @@
 $(document).ready(function () {
+    const rowsPerPage = 5; // Define rowsPerPage globally
+
     // Toggle sidebar on mobile
     $('#toggleSidebar').on('click', function () {
         $('#sidebar, .navbar, .content').toggleClass('active');
@@ -16,60 +18,69 @@ $(document).ready(function () {
         event.stopPropagation();
     });
 
-    // Table Pagination and Search
-    const rowsPerPage = 5; // Number of rows per page
-    const table = $('table tbody');
-    let rows = table.find('tr');
-    let filteredRows = rows; // Initially, all rows are visible
-    let pageCount = Math.ceil(filteredRows.length / rowsPerPage);
+    // Initialize pagination and search for each table
+    function initializeTable(tableId) {
+        
+        const table = $(`#${tableId} tbody`);
+        let rows = table.find('tr');
+        let filteredRows = rows; // Initially, all rows are visible
+        let pageCount = Math.ceil(filteredRows.length / rowsPerPage);
 
-    // Create Bootstrap pagination
-    const pagination = $('<nav aria-label="Table navigation"><ul class="pagination justify-content-center"></ul></nav>');
-    function updatePagination() {
-        pagination.find('ul').empty();
-        for (let i = 1; i <= pageCount; i++) {
-            pagination.find('ul').append(`<li class="page-item"><a class="page-link" href="#">${i}</a></li>`);
+        // Create Bootstrap pagination
+        const pagination = $(`<nav aria-label="Table navigation"><ul class="pagination justify-content-center"></ul></nav>`);
+        function updatePagination() {
+            pagination.find('ul').empty();
+            for (let i = 1; i <= pageCount; i++) {
+                pagination.find('ul').append(`<li class="page-item"><a class="page-link" href="#">${i}</a></li>`);
+            }
         }
+        $(`#${tableId}`).closest('.card').find('.card-body').append(pagination);
+
+        // Function to show rows for a specific page
+        function showPage(page) {
+            
+            const start = (page - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            rows.hide();
+            filteredRows.slice(start, end).show();
+            pagination.find('.page-item').removeClass('active');
+            pagination.find(`.page-item:eq(${page - 1})`).addClass('active');
+            sessionStorage.setItem(`${tableId}-currentPage`, page);
+        }
+
+        // Get the current page from session storage (default to 1 if not set)
+        let currentPage = sessionStorage.getItem(`${tableId}-currentPage`) || 1;
+
+        // Show the saved page (or the first page by default)
+        showPage(currentPage);
+
+        // Handle pagination button clicks
+        pagination.on('click', '.page-link', function (e) {
+            e.preventDefault();
+            const page = $(this).text();
+            currentPage = page;
+            showPage(page);
+        });
+
+        // Optimized Search functionality
+        $(`#${tableId}`).closest('.card').find('.search-box').on('input', function () {
+            const searchTerm = $(this).val().toLowerCase();
+            filteredRows = rows.filter(function () {
+                return $(this).text().toLowerCase().includes(searchTerm);
+            });
+            pageCount = Math.ceil(filteredRows.length / rowsPerPage);
+            updatePagination();
+            showPage(1); // Always show the first page after search
+        });
     }
-    $('.table-responsive').after(pagination);
 
-    // Function to show rows for a specific page
-    function showPage(page) {
-        const start = (page - 1) * rowsPerPage;
-        const end = start + rowsPerPage;
-        rows.hide();
-        filteredRows.slice(start, end).show();
-        $('.page-item').removeClass('active');
-        $('.page-item').eq(page - 1).addClass('active'); // Improved pagination highlighting
-        sessionStorage.setItem('currentPage', page); // Use sessionStorage instead of localStorage
-    }
-
-    // Get the current page from session storage (default to 1 if not set)
-    let currentPage = sessionStorage.getItem('currentPage') || 1;
-
-    // Show the saved page (or the first page by default)
-    showPage(currentPage);
-
-    // Handle pagination button clicks
-    $('.pagination').on('click', '.page-link', function (e) {
-        e.preventDefault();
-        const page = $(this).text();
-        currentPage = page;
-        showPage(page);
-    });
-
-    // Optimized Search functionality
-    $('#searchInput').on('input', function () {
-        const searchTerm = $(this).val().toLowerCase();
-        filteredRows = rows.filter(function () {
-            return $(this).text().toLowerCase().includes(searchTerm);
-        }).detach(); // Detach elements for better performance
-
-        table.append(filteredRows); // Reattach filtered rows
-        pageCount = Math.ceil(filteredRows.length / rowsPerPage);
-        updatePagination();
-        showPage(1);
-    });
+    // Initialize each table
+    initializeTable('all-transaction-table');
+    initializeTable('data-transaction-table');
+    initializeTable('airtime-transaction-table');
+    initializeTable('cable-transaction-table');
+    initializeTable('electricity-transaction-table');
+    initializeTable('exam-transaction-table');
 
     $('#avatarDropdown').on('click', function (event) {
         event.stopPropagation(); // Prevents closing when clicking on the avatar
@@ -106,27 +117,79 @@ $(document).ready(function () {
         $("#transactionModal").modal("show");
     });
 
-    // Actions inside modal
-    $("#refundBtn").click(function () {
-        alert("Refund initiated for " + $("#modalInvoice").text());
+    // Data Modal Functionality
+    $(document).on("click", ".datavisibility", function () {
+        let row = $(this).closest("tr");
+
+        $("#modalInvoice").text(row.find("td:eq(0)").text().trim());
+        $("#modalStatus").text(row.find("td:eq(1)").text().trim());
+        $("#modalService").text(row.find("td:eq(2)").text().trim());
+        $("#modalUsername").text(row.find("td:eq(3)").text().trim());
+        $("#modalAmount").text(row.find("td:eq(6)").text().trim());
+        $("#modalPhone").text(row.find("td:eq(7)").text().trim());
+        $("#modalCard").text(row.find("td:eq(8)").text().trim());
+
+        $("#datatransactionModal").modal("show");
     });
 
-    $("#debitBtn").click(function () {
-        alert("Debit initiated for " + $("#modalInvoice").text());
+    // Airtime Modal Functionality
+    $(document).on("click", ".airtimevisibility", function () {
+        let row = $(this).closest("tr");
+
+        $("#modalInvoice").text(row.find("td:eq(0)").text().trim());
+        $("#modalStatus").text(row.find("td:eq(1)").text().trim());
+        $("#modalService").text(row.find("td:eq(2)").text().trim());
+        $("#modalUsername").text(row.find("td:eq(3)").text().trim());
+        $("#modalAmount").text(row.find("td:eq(6)").text().trim());
+        $("#modalPhone").text(row.find("td:eq(7)").text().trim());
+        $("#modalCard").text(row.find("td:eq(8)").text().trim());
+
+        $("#airtimetransactionModal").modal("show");
     });
 
-    $("#saveBtn").click(function () {
-        alert("Changes saved for " + $("#modalInvoice").text());
+    // Cable Modal Functionality
+    $(document).on("click", ".cablevisibility", function () {
+        let row = $(this).closest("tr");
+
+        $("#modalInvoice").text(row.find("td:eq(0)").text().trim());
+        $("#modalStatus").text(row.find("td:eq(1)").text().trim());
+        $("#modalService").text(row.find("td:eq(2)").text().trim());
+        $("#modalUsername").text(row.find("td:eq(3)").text().trim());
+        $("#modalAmount").text(row.find("td:eq(6)").text().trim());
+        $("#modalPhone").text(row.find("td:eq(7)").text().trim());
+        $("#modalCard").text(row.find("td:eq(8)").text().trim());
+
+        $("#cabletransactionModal").modal("show");
     });
 
-    //javascript function for refund
-    document.querySelectorAll('.visibility').forEach(button => {
-        button.addEventListener('click', function () {
-            let row = this.closest('tr');
-            let transactionId = row.children[0].textContent.trim(); // Invoice/Transaction ID
+    // Electricity Modal Functionality
+    $(document).on("click", ".electricityvisibility", function () {
+        let row = $(this).closest("tr");
 
-            document.getElementById('refundBtn').setAttribute('href', `/transactions/refund/${transactionId}`);
-        });
+        $("#modalInvoice").text(row.find("td:eq(0)").text().trim());
+        $("#modalStatus").text(row.find("td:eq(1)").text().trim());
+        $("#modalService").text(row.find("td:eq(2)").text().trim());
+        $("#modalUsername").text(row.find("td:eq(3)").text().trim());
+        $("#modalAmount").text(row.find("td:eq(6)").text().trim());
+        $("#modalPhone").text(row.find("td:eq(7)").text().trim());
+        $("#modalCard").text(row.find("td:eq(8)").text().trim());
+
+        $("#electricitytransactionModal").modal("show");
+    });
+
+    // Exam Modal Functionality
+    $(document).on("click", ".examvisibility", function () {
+        let row = $(this).closest("tr");
+
+        $("#modalInvoice").text(row.find("td:eq(0)").text().trim());
+        $("#modalStatus").text(row.find("td:eq(1)").text().trim());
+        $("#modalService").text(row.find("td:eq(2)").text().trim());
+        $("#modalUsername").text(row.find("td:eq(3)").text().trim());
+        $("#modalAmount").text(row.find("td:eq(6)").text().trim());
+        $("#modalPhone").text(row.find("td:eq(7)").text().trim());
+        $("#modalCard").text(row.find("td:eq(8)").text().trim());
+
+        $("#examtransactionModal").modal("show");
     });
 
     // Show/hide specific users dropdown based on radio selection
