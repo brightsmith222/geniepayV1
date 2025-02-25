@@ -7,7 +7,7 @@
         <!-- Tabs -->
         <ul class="nav trans-tab nav-tabs" id="transactionTabs" role="tablist">
             <li class="nav-item">
-                <a class="nav-link" id="all-transaction-tab" data-toggle="tab" href="#all-transaction" role="tab" aria-controls="all-transaction" aria-selected="true">All Transactions</a>
+                <a class="nav-link active" id="all-transaction-tab" data-toggle="tab" href="#all-transaction" role="tab" aria-controls="all-transaction" aria-selected="true">All Transactions</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="data-transaction-tab" data-toggle="tab" href="#data-transaction" role="tab" aria-controls="data-transaction" aria-selected="false">Data Transactions</a>

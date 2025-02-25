@@ -74,8 +74,8 @@
             <li><a href="{{ URL::to('transaction') }}"><span class="material-icons-outlined">receipt</span> Transactions</a></li>
             <li><a href="{{ URL::to('wallet_transac') }}"><span class="material-icons-outlined">trending_up</span> Wallet Transac</a></li>
             <li><a href="{{ URL::to('users') }}"><span class="material-icons-outlined">people</span> Users</a></li>
-            <li class="active"><a href="{{ URL::to('sliders') }}"><span class="material-icons-outlined">person</span> Slider</a></li>
-            <li><a href="data_setting.html"><span class="material-icons-outlined">assignment</span> Topup Percentage</a></li>
+            <li><a href="{{ URL::to('sliders') }}"><span class="material-icons-outlined">person</span> Slider</a></li>
+            <li><a href="{{ URL::to('data_settings')}}"><span class="material-icons-outlined">assignment</span> Data Settings</a></li>
             <li><a href="{{ URL::to('notifications') }}"><span class="material-icons-outlined">group</span> Notification</a></li>
             <li><a href="#"><span class="material-icons-outlined">account_balance</span> Financial Services</a></li>
             <li><a href="#"><span class="material-icons-outlined">payment</span> Bill Payments</a></li>

@@ -188,6 +188,9 @@ $(document).ready(function () {
         const activeTab = sessionStorage.getItem('activeTab');
         if (activeTab) {
             setActiveTab(activeTab);
+        } else {
+            // Set the default active tab if no tab is saved in sessionStorage
+            setActiveTab('all-transaction'); // Change this to the default tab ID
         }
     }
 
@@ -199,4 +202,20 @@ $(document).ready(function () {
 
     // Load the active tab when the page loads
     loadActiveTab();
+
+    // Set the active sidebar link based on the current URL
+    function setActiveSidebarLink() {
+        const currentUrl = window.location.href; // Get the current URL
+        $('#sidebar ul li a').each(function () {
+            const linkUrl = $(this).attr('href'); // Get the href of the sidebar link
+            if (currentUrl.includes(linkUrl)) {
+                $(this).parent().addClass('active'); // Add 'active' class to the parent <li>
+            } else {
+                $(this).parent().removeClass('active'); // Remove 'active' class from other <li> elements
+            }
+        });
+    }
+
+    // Call the function to set the active sidebar link
+    setActiveSidebarLink();
 });

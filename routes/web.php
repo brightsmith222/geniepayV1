@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Middleware\AdminMiddleWare;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\WalletTransactionsController;
+use App\Http\Controllers\DataSettingsController;
 
 
 
@@ -31,6 +32,11 @@ Route::get('dashboard', [AdminDashboardController::class, 'myAdmin'] );
 
 //Users
 Route::get('users', [UsersController::class, 'index']);
+Route::get('edit-user/{id}', [UsersController::class, 'edit']);
+
+
+//Data Settings
+Route::get('data_settings', [DataSettingsController::class, 'index']);
 
 //Wallet Transaction
 Route::get('wallet_transac', [WalletTransactionsController::class, 'index']);

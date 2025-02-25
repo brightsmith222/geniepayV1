@@ -44,7 +44,7 @@
                                     <div class="dropdown">
                                         <span class="action-button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">&#8942;</span>
                                         <section class="dropdown-menu">
-                                            <a class="dropdown-item" href="edit.html">Edit</a>
+                                            <a class="dropdown-item" href="edit-users/{id}">Edit</a>
                                             <a class="dropdown-item" href="#">Suspend</a>
                                             <a class="dropdown-item" href="#">Block</a>
                                         </section>
