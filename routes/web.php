@@ -14,6 +14,8 @@ use App\Http\Middleware\AdminMiddleWare;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\WalletTransactionsController;
 use App\Http\Controllers\DataSettingsController;
+use App\Livewire\SliderControllers;
+use App\Http\Controllers\ReportedController;
 
 
 
@@ -28,45 +30,52 @@ Route::get('/', function (Request $request) {
 
 
 //Dashboard
-Route::get('dashboard', [AdminDashboardController::class, 'myAdmin'] );
+Route::get('dashboard', [AdminDashboardController::class, 'myAdmin'])->name('dashboard');
+Route::get('/filter-data', [AdminDashboardController::class, 'filterData']);
 
 //Users
-Route::get('users', [UsersController::class, 'index']);
-Route::get('edit-user/{id}', [UsersController::class, 'edit']);
+Route::get('users', [UsersController::class, 'index'])->name('users.index');
+Route::get('edit-user/{id}', [UsersController::class, 'edit'])->name('edit-user');
+Route::put('update-user/{id}', [UsersController::class, 'update'])->name('update-user');
+Route::get('suspend-user/{id}', [UsersController::class, 'suspend'])->name('suspend-user');
+Route::get('block-user/{id}', [UsersController::class, 'block'])->name('block-user');
+Route::get('delete-user/{id}', [UsersController::class, 'destroy'])->name('delete-user');
 
 
 //Data Settings
 Route::get('data_settings', [DataSettingsController::class, 'index']);
 
 //Wallet Transaction
-Route::get('wallet_transac', [WalletTransactionsController::class, 'index']);
+Route::get('wallet_transac', [WalletTransactionsController::class, 'index'])->name('wallet_transac.index');
+Route::post('wallet_transac/{id}/walletrefund', [WalletTransactionsController::class, 'walletrefund'])->name('wallet_transac.refund');
 
 
 //TRANSACTIONS
 
-Route::get('transaction', [TransactionsController::class,'index'] );
-//Route::post('/transactions/refund/{id}', 'TransactionController@refund')->name('transactions.refund');
-Route::post('/transaction/refund/{id}', [TransactionsController::class,'refund'] );
+Route::get('transaction', [TransactionsController::class, 'index'])->name('transaction.index');
+Route::post('transaction/{id}/refund', [TransactionsController::class, 'refund'])->name('transaction.refund');
 
 
+//Reported Transaction
+Route::get('reported', [ReportedController::class, 'index'])->name('reported.index');
+Route::post('reported/{id}/reportrefund', [ReportedController::class, 'reportedrefund'])->name('report.refund');
 
 
   // Notification
-  Route::get('notifications', [NotificationController::class, 'index']);
-  Route::get('notification-form', [NotificationController::class, 'create']);
-  Route::post('add-notification', [NotificationController::class, 'store']);
-  Route::get('edit-notification/{id}', [NotificationController::class, 'edit']);
-  Route::post('update-notification/{id}', [NotificationController::class, 'update']);
-  Route::get('delete-notification/{id}', [NotificationController::class, 'destroy']);
+Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+Route::get('notification-form', [NotificationController::class, 'create']);
+Route::post('add-notification', [NotificationController::class, 'store'])->name('add-notification');
+Route::get('edit-notification/{id}', [NotificationController::class, 'edit']);
+Route::post('update-notification/{id}', [NotificationController::class, 'update']);
+Route::get('delete-notification/{id}', [NotificationController::class, 'destroy']);
 
-  // Slider
-  Route::get('sliders', [SliderController::class, 'index']);
-  Route::get('slider-form', [SliderController::class, 'create']);
-  Route::post('add-slider', [SliderController::class, 'store']);
-  Route::get('edit-slider/{id}', [SliderController::class, 'edit']);
-  Route::post('update-slider/{id}', [SliderController::class, 'update']);
-  Route::get('delete-slider/{id}', [SliderController::class, 'destroy']);
-
+  // Slider Routes
+Route::get('sliders', [SliderController::class, 'index'])->name('sliders');
+Route::get('slider-form', [SliderController::class, 'create'])->name('slider-form');
+Route::post('add-slider', [SliderController::class, 'store'])->name('add-slider'); 
+Route::get('edit-slider/{id}', [SliderController::class, 'edit'])->name('edit-slider');
+Route::post('update-slider/{id}', [SliderController::class, 'update'])->name('update-slider');
+Route::delete('delete-slider/{id}', [SliderController::class, 'destroy'])->name('delete-slider');
 
 
 

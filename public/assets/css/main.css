@@ -81,6 +81,7 @@ body {
 .content.active {
     margin-left: 0;
 }
+
 .dropdown {
     position: relative;
     display: inline-block;
@@ -216,10 +217,7 @@ body {
 .device-progress .progress-bar.tablet {
     background-color: #dc3545; /* Red for tablet */
 }
-/* Table styling */
-.table-responsive {
-    overflow-x: auto;
-}
+
 .table {
     width: 100%;
     border-collapse: collapse;
@@ -272,8 +270,8 @@ body {
     color: #dc3545;
 }
 .status.pending {
-    background-color: #ffc107;
-    color: #000;
+    background-color: #ffe390;
+    color: #a27e15;
 }
 .action-button {
     cursor: pointer;
@@ -324,8 +322,8 @@ body {
 
 .search-icon {
     position: absolute;
-    right: 10px;
-    top: 50%;
+    right: 25px;
+    top: 55%;
     transform: translateY(-50%);
     color: #666;
     cursor: pointer;
@@ -530,38 +528,38 @@ form {
 }
 
 /* MTN Active Tab */
-.custom-tabs .nav-tabs .nav-link#mtn-tab.active {
+.custom-tabs .nav-tabs .nav-link#net-mtn-tab.active {
     background-color: #c3c500; /* MTN Yellow */
 }
 
-.custom-tabs .nav-tabs .nav-link#mtn-tab:hover {
+.custom-tabs .nav-tabs .nav-link#net-mtn-tab:hover {
     background-color: #c3c500; /* Slightly darker yellow on hover */
 }
 
 /* Glo Active Tab */
-.custom-tabs .nav-tabs .nav-link#glo-tab.active {
+.custom-tabs .nav-tabs .nav-link#net-glo-tab.active {
     background-color: #00de05; /* Glo Green */
 }
 
-.custom-tabs .nav-tabs .nav-link#glo-tab:hover {
+.custom-tabs .nav-tabs .nav-link#net-glo-tab:hover {
     background-color: #00c504; /* Slightly darker green on hover */
 }
 
 /* Airtel Active Tab */
-.custom-tabs .nav-tabs .nav-link#airtel-tab.active {
+.custom-tabs .nav-tabs .nav-link#net-airtel-tab.active {
     background-color: #fc0909; /* Airtel Red */
 }
 
-.custom-tabs .nav-tabs .nav-link#airtel-tab:hover {
+.custom-tabs .nav-tabs .nav-link#net-airtel-tab:hover {
     background-color: #e30808; /* Slightly darker red on hover */
 }
 
 /* 9mobile Active Tab */
-.custom-tabs .nav-tabs .nav-link#mobile-tab.active {
+.custom-tabs .nav-tabs .nav-link#net-9mobile-tab.active {
     background-color: #278900; /* 9mobile Dark Green */
 }
 
-.custom-tabs .nav-tabs .nav-link#mobile-tab:hover {
+.custom-tabs .nav-tabs .nav-link#net-9mobile-tab:hover {
     background-color: #227800; /* Slightly darker green on hover */
 }
 
@@ -677,6 +675,14 @@ form {
     border-top: 1px solid #444;
 }
 
+.foot-con{
+    padding-right: 15px;
+    padding-left: 15px;
+    margin-right: auto;
+    margin-left: auto;
+    max-width: 560px;
+}
+
 .footer p {
     margin: 0;
     font-size: 14px;
@@ -695,4 +701,324 @@ form {
 
 .footer a:hover {
     color: #007bff;
+}
+
+.fl-wrapper {
+    z-index: 1200 !important;
+}
+
+.all-users {
+    background: #e8e8ff;
+}
+
+.all-users .card-text {
+    opacity: 0.7;
+    color: #7510f0;
+}
+
+.all-users .stat-icon{
+    background-color: rgba(130, 128, 255, 0.22);
+    padding: 5px;
+    border-radius: 8px;
+    position: relative;
+    top: -7px;
+}
+
+.all-users .stat-icon svg {
+    font-size: 5px;
+}
+
+.active-users {
+    background: #e2fff2;
+}
+
+.active-users .card-text {
+    opacity: 0.7;
+    color: #00a85a;
+}
+
+.active-users .stat-icon{
+    background-color: rgba(23, 178, 106, 0.17);
+    padding: 5px;
+    border-radius: 8px;
+    position: relative;
+    top: -7px;
+}
+
+.active-users .stat-icon svg {
+    font-size: 5px;
+}
+
+.suspend-users {
+    background: #fffbe2
+}
+
+.suspend-users .card-text {
+    opacity: 0.7;
+    color: #b6a50f
+}
+
+.suspend-users .stat-icon{
+    background-color: rgb(255 158 0 / 25%);
+    padding: 5px;
+    border-radius: 8px;
+    position: relative;
+    top: -7px;
+}
+
+.suspend-users .stat-icon svg {
+    font-size: 5px;
+}
+
+.block-users {
+    background: #fff1eb;
+}
+
+.block-users .card-text {
+    opacity: 0.7;
+    color: #ff4d00;
+}
+
+.block-users .stat-icon{
+    background-color: rgba(255, 77, 0, 0.25);
+    padding: 5px;
+    border-radius: 8px;
+    position: relative;
+    top: -7px;
+}
+
+.block-users .stat-icon svg {
+    font-size: 5px;
+}
+
+.report-users {
+    background: #ffebf8;
+}
+
+.report-users .card-text {
+    opacity: 0.7;
+    color: #ff00ba;
+}
+
+.report-users .stat-icon{
+    background-color: rgb(178 23 151 / 17%);
+    padding: 5px;
+    border-radius: 8px;
+    position: relative;
+    top: -7px;
+}
+
+.report-users .stat-icon svg {
+    font-size: 5px;
+}
+
+.total-sale {
+    background: #e8e8ff;
+}
+
+.total-sale .card-text {
+    opacity: 0.7;
+    color: #7510f0;
+}
+
+.total-sale .stat-icon{
+    background-color: rgba(130, 128, 255, 0.22);
+    padding: 5px;
+    border-radius: 8px;
+    position: relative;
+    top: -7px;
+}
+
+.total-sale .stat-icon svg {
+    font-size: 5px;
+}
+
+.data-sale {
+    background: #e2fff2;
+}
+
+.data-sale .card-text {
+    opacity: 0.7;
+    color: #00a85a;
+}
+
+.data-sale .stat-icon{
+    background-color: rgba(23, 178, 106, 0.17);
+    padding: 5px;
+    border-radius: 8px;
+    position: relative;
+    top: -7px;
+}
+
+.data-sale .stat-icon svg {
+    font-size: 5px;
+}
+
+.airtime-sale {
+    background: #fffbe2
+}
+
+.airtime-sale .card-text {
+    opacity: 0.7;
+    color: #b6a50f
+}
+
+.airtime-sale .stat-icon{
+    background-color: rgb(255 158 0 / 25%);
+    padding: 5px;
+    border-radius: 8px;
+    position: relative;
+    top: -7px;
+}
+
+.airtime-sale .stat-icon svg {
+    font-size: 5px;
+}
+
+.electricity-sale {
+    background: #ffebf8;
+}
+
+.electricity-sale .card-text {
+    opacity: 0.7;
+    color: #ff00ba;
+}
+
+.electricity-sale .stat-icon{
+    background-color: rgb(178 23 151 / 17%);
+    padding: 5px;
+    border-radius: 8px;
+    position: relative;
+    top: -7px;
+}
+
+.electricity-sale .stat-icon svg {
+    font-size: 5px;
+}
+
+.cable-sale {
+    background: #fff1eb;
+}
+
+.cable-sale .card-text {
+    opacity: 0.7;
+    color: #ff4d00;
+}
+
+.cable-sale .stat-icon{
+    background-color: rgba(255, 77, 0, 0.25);
+    padding: 5px;
+    border-radius: 8px;
+    position: relative;
+    top: -7px;
+}
+
+.cable-sale .stat-icon svg {
+    font-size: 5px;
+}
+
+.exam-sale {
+    background: #ebfeff
+}
+
+.exam-sale .card-text {
+    opacity: 0.7;
+    color: #00d2ff
+}
+
+.exam-sale .stat-icon{
+    background-color: rgb(23 175 178 / 17%);
+    padding: 5px;
+    border-radius: 8px;
+    position: relative;
+    top: -7px;
+}
+
+.exam-sale .stat-icon svg {
+    font-size: 5px;
+}
+
+
+
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #333;
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+  }
+  
+  .time-display {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 20px;
+  }
+  
+  .time-block {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    overflow: hidden;
+    text-align: center;
+    background-color: #444;
+    border-radius: 5px;
+  }
+  
+  .time-number {
+    position: absolute;
+    width: 100%;
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+    line-height: 50px;
+    transition: transform 0.5s ease-in-out;
+    
+  }
+  
+  @keyframes slide-up {
+    0% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(-100%);
+    }
+  }
+  
+  .date-display {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 16px;
+    color: #F3EDF5;
+  }
+  #hours{
+    color: #09d109;
+  }
+
+  #minutes{
+    color: #d51313;
+  }
+
+  .stat-head {
+    margin-top: 5rem;
+    margin-bottom: 2rem;
+}
+
+.report-stat{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #0aae9d;
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.report-stat p{
+    margin: 0px;
 }

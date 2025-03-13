@@ -24,8 +24,14 @@ class NotificationController extends Controller
      */
     public function index()
     {
-        $notifications = Notification::all();
-        return view('notification.index', compact('notifications'));
+        // Fetch all notifications
+    $notifications = Notification::all();
+
+    // Fetch all users to display in the "Specific Users" dropdown
+    $users = User::all();
+
+    // Pass both variables to the view
+    return view('notification.index', compact('notifications', 'users'));
     }
 
     public function notificationsAdmin(Request $request)

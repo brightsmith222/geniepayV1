@@ -12,7 +12,8 @@ class SliderController extends Controller
      */
     public function index()
     {
-        $sliders = Slider::all();
+        
+        $sliders = Slider::paginate(3); 
         return view('slider.index', compact('sliders'));
     }
 
@@ -134,12 +135,19 @@ class SliderController extends Controller
      */
     public function destroy($id)
     {
-        $delete =  Slider::destroy($id);
-
-        if ($delete) {
-            return redirect()->back()->with('deleted', 'deleted successfully!');
+        // Find the slider by ID
+        $slider = Slider::find($id);
+    
+        // Check if the slider exists
+        if ($slider) {
+            // Delete the slider
+            $slider->delete();
+    
+            // Redirect with success message
+            return redirect()->back()->with('deleted', 'Slider deleted successfully!');
         }
-
-        return redirect()->back()->with('delete-failed', 'Could not be deleted!');
+    
+        // If the slider does not exist, redirect with error message
+        return redirect()->back()->with('delete-failed', 'Slider not found!');
     }
 }

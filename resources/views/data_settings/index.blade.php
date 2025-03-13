@@ -1,8 +1,6 @@
 @extends('layout')
 
-@section('dashboard-content')
-
-<h1>Data Top-Up Percentage Settings</h1>
+@section('dashboard-content')<h1>Data Top-Up Percentage Settings</h1>
 
     <!-- Tabs -->
     <div class="custom-tabs">
@@ -96,5 +94,9 @@
             </div>
         </div>
     </div>
+
+
+
+
 
 @stop

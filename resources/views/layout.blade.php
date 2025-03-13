@@ -2,12 +2,13 @@
 <html lang="en">
 
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
 
   <title>Geniepay - Dashboard</title>
   <meta content="" name="description">
   <meta content="" name="keywords">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
 
   <!-- Favicons -->
   <link href="{{ URL::to('nexhublogo.png')}}" rel="icon">
@@ -16,9 +17,14 @@
   <!-- Google Fonts -->
   <link href="https://fonts.gstatic.com" rel="preconnect">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
 
+    <!-- Notify toast -->
+    @notifyCss
+<!-- Livewire css -->
+    @livewireStyles
   <!-- Vendor CSS Files -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
   <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
   <link href="{{ URL::to('assets/vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
   <link href="{{ URL::to('assets/vendor/boxicons/css/boxicons.min.css')}}" rel="stylesheet">
@@ -26,6 +32,11 @@
   <link href="{{ URL::to('assets/vendor/quill/quill.bubble.css')}}" rel="stylesheet">
   <link href="{{ URL::to('assets/vendor/remixicon/remixicon.css')}}" rel="stylesheet">
   <link href="{{ URL::to('assets/vendor/simple-datatables/style.css')}}" rel="stylesheet">
+  
+  <!-- Flatpickr CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+   <!-- Flatpickr JS -->
+ <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
   <!-- Template Main CSS File -->
   <link href="{{ URL::to('assets/css/main.css')}}" rel="stylesheet">
@@ -49,7 +60,9 @@
 </head>
 
 <body>
-
+  
+  <x:notify::notify/>
+  
   <!-- ======= Header ======= -->
   <nav class="navbar navbar-light bg-light">
         <button class="navbar-toggler" type="button" id="toggleSidebar">
@@ -71,6 +84,7 @@
         </div>
         <ul>
             <li><a href="{{ URL::to('dashboard') }}"><span class="material-icons-outlined">dashboard</span> Dashboard</a></li>
+            <li><a href="{{ URL::to('reported') }}"><span class="material-icons-outlined">receipt</span> Reported</a></li>
             <li><a href="{{ URL::to('transaction') }}"><span class="material-icons-outlined">receipt</span> Transactions</a></li>
             <li><a href="{{ URL::to('wallet_transac') }}"><span class="material-icons-outlined">trending_up</span> Wallet Transac</a></li>
             <li><a href="{{ URL::to('users') }}"><span class="material-icons-outlined">people</span> Users</a></li>
@@ -102,24 +116,33 @@
 
   <!-- ======= Footer ======= -->
   <footer class="footer">
-    <div class="container">
+    <div class="foot-con">
         <div class="row">
           <div class="copyright">
-            &copy; Copyright <strong><span>Geniepay</span></strong>. All Rights Reserved
-          </div>
-          <div class="credits">
-            Developed by <a href="#">Edugenie Tech</a>
-          </div>
-        </div>
+          <span> &copy; Copyright <strong><span>Geniepay</span></strong>. All Rights Reserved. <span class="credits">Developed by <a href="#">Edugenie Tech</a></span>
+        </span> 
+      </div>
+      </div>
+   </div>
     </div>
 </footer>
 <!-- End Footer -->
 
+  <!-- Notify toast JS-->
+  @notifyJs
+
+  <!-- Livewire JS-->
+  @livewireScripts
+
   <!-- Jquery File -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.6/umd/popper.min.js"></script>
+     
+   
 
   <!-- Vendor JS Files -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="{{ URL::to('assets/vendor/apexcharts/apexcharts.min.js')}}"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
   <script src="{{ URL::to('assets/vendor/chart.js/chart.umd.js')}}"></script>
@@ -128,17 +151,13 @@
   <script src="{{ URL::to('assets/vendor/simple-datatables/simple-datatables.js')}}"></script>
   <script src="{{ URL::to('assets/vendor/tinymce/tinymce.min.js')}}"></script>
   <script src="{{ URL::to('assets/vendor/php-email-form/validate.js')}}"></script>
+
+
+
   <!-- Template Main JS File -->
   <script src="{{ URL::to('assets/js/script.js')}}"></script>
 
-
-
-
- 
-
-
-
-
+    
 
 
 </body>

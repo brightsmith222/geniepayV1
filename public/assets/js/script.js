@@ -1,6 +1,4 @@
 $(document).ready(function () {
-    const rowsPerPage = 5; // Define rowsPerPage globally
-
     // Toggle sidebar on mobile
     $('#toggleSidebar').on('click', function () {
         $('#sidebar, .navbar, .content').toggleClass('active');
@@ -18,76 +16,68 @@ $(document).ready(function () {
         event.stopPropagation();
     });
 
-    // Initialize pagination and search for each table
-    function initializeTable(tableId) {
-        
-        const table = $(`#${tableId} tbody`);
-        let rows = table.find('tr');
-        let filteredRows = rows; // Initially, all rows are visible
-        let pageCount = Math.ceil(filteredRows.length / rowsPerPage);
-
-        // Create Bootstrap pagination
-        const pagination = $(`<nav aria-label="Table navigation"><ul class="pagination justify-content-center"></ul></nav>`);
-        function updatePagination() {
-            pagination.find('ul').empty();
-            for (let i = 1; i <= pageCount; i++) {
-                pagination.find('ul').append(`<li class="page-item"><a class="page-link" href="#">${i}</a></li>`);
-            }
-        }
-        $(`#${tableId}`).closest('.card').find('.card-body').append(pagination);
-
-        // Function to show rows for a specific page
-        function showPage(page) {
-            
-            const start = (page - 1) * rowsPerPage;
-            const end = start + rowsPerPage;
-            rows.hide();
-            filteredRows.slice(start, end).show();
-            pagination.find('.page-item').removeClass('active');
-            pagination.find(`.page-item:eq(${page - 1})`).addClass('active');
-            sessionStorage.setItem(`${tableId}-currentPage`, page);
-        }
-
-        // Get the current page from session storage (default to 1 if not set)
-        let currentPage = sessionStorage.getItem(`${tableId}-currentPage`) || 1;
-
-        // Show the saved page (or the first page by default)
-        showPage(currentPage);
-
-        // Handle pagination button clicks
-        pagination.on('click', '.page-link', function (e) {
-            e.preventDefault();
-            const page = $(this).text();
-            currentPage = page;
-            showPage(page);
-        });
-
-        // Optimized Search functionality
+    
+    // Initialize search functionality for each table
+    function initializeSearch(tableId) {
         $(`#${tableId}`).closest('.card').find('.search-box').on('input', function () {
             const searchTerm = $(this).val().toLowerCase();
-            filteredRows = rows.filter(function () {
-                return $(this).text().toLowerCase().includes(searchTerm);
+            $(`#${tableId} tbody tr`).each(function () {
+                const rowText = $(this).text().toLowerCase();
+                if (rowText.includes(searchTerm)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
             });
-            pageCount = Math.ceil(filteredRows.length / rowsPerPage);
-            updatePagination();
-            showPage(1); // Always show the first page after search
         });
     }
 
-    // Initialize each table
-    initializeTable('all-transaction-table');
-    initializeTable('data-transaction-table');
-    initializeTable('airtime-transaction-table');
-    initializeTable('cable-transaction-table');
-    initializeTable('electricity-transaction-table');
-    initializeTable('exam-transaction-table');
+    // Initialize search for each table
+    initializeSearch('all-transaction-table');
+    initializeSearch('data-transaction-table');
+    initializeSearch('airtime-transaction-table');
+    initializeSearch('cable-transaction-table');
+    initializeSearch('electricity-transaction-table');
+    initializeSearch('exam-transaction-table');
+    initializeSearch('wallet-transaction-table');
 
+/*
+function performSearch(searchInput) {
+    const route = $(searchInput).data('route'); // Get the route URL
+    const searchTerm = $(searchInput).val(); // Get the search term
+    const table = $(searchInput).data('table'); // Get the table selector
+    const pagination = $(searchInput).data('pagination'); // Get the pagination selector
+
+    $.ajax({
+        url: route,
+        method: 'GET',
+        data: { search: searchTerm },
+        success: function (response) {
+            // Update the table and pagination
+            $(table + ' tbody').html($(response).find(table + ' tbody').html());
+            $(pagination).html($(response).find(pagination).html());
+        },
+        error: function (xhr, status, error) {
+            console.error('AJAX Error:', error); // Log any errors
+            console.log(xhr.responseText); // Log the server response
+        }
+    });
+}
+
+// Attach the search function to all search inputs
+$('.search-box').on('input', function () {
+    performSearch(this); // Call the generic search function
+});  
+
+*/
+
+    //Avavar dropdown menu
     $('#avatarDropdown').on('click', function (event) {
         event.stopPropagation(); // Prevents closing when clicking on the avatar
         $('#profileMenu').toggle(); // Show/hide the menu
     });
 
-    // Close the menu when clicking outside
+    // Close the avatar menu when clicking outside
     $(document).on('click', function () {
         $('#profileMenu').hide();
     });
@@ -97,100 +87,171 @@ $(document).ready(function () {
         event.stopPropagation();
     });
 
-    // Transaction Modal Functionality
-    $(document).on("click", ".visibility", function () {
-        let row = $(this).closest("tr");
-
-        $("#modalInvoice").text(row.find("td:eq(0)").text().trim());
-        $("#modalStatus").text(row.find("td:eq(1)").text().trim());
-        $("#modalService").text(row.find("td:eq(2)").text().trim());
-        $("#modalUsername").text(row.find("td:eq(3)").text().trim());
-        $("#modalProvider").text(row.find("td:eq(4)").text().trim());
-        $("#modalPlan").text(row.find("td:eq(5)").text().trim());
-        $("#modalAmount").text(row.find("td:eq(6)").text().trim());
-        $("#modalPhone").text(row.find("td:eq(7)").text().trim());
-        $("#modalCard").text(row.find("td:eq(8)").text().trim());
-        $("#modalMeter").text(row.find("td:eq(9)").text().trim());
-        $("#modalQuantity").text(row.find("td:eq(10)").text().trim());
-        $("#modalToken").text(row.find("td:eq(11)").text().trim());
-
-        $("#transactionModal").modal("show");
+    //Currency formatter function
+    let formatter = new Intl.NumberFormat('en-NG', {
+        style: 'currency',
+        currency: 'NGN',
+        minimumFractionDigits: 2
     });
 
-    // Data Modal Functionality
+    // Transaction Modal Functionality
+    $(document).on('click', '.visibility', function () {
+        let row = $(this).closest('tr');
+        $('#modalInvoice').text(row.data('invoice'));
+        $('#modalStatus').text(row.data('status'));
+        $('#modalService').text(row.data('service'));
+        $('#modalUsername').text(row.data('username'));
+        $('#modalProvider').text(row.data('provider'));
+        $('#modalPlan').text(row.data('plan'));
+        $('#modalAmount').text(formatter.format(row.data("amount") || 0));
+        $('#modalPhone').text(row.data('phone'));
+        $('#modalCard').text(row.data('card'));
+        $('#modalMeter').text(row.data('meter'));
+        $('#modalQuantity').text(row.data('quantity'));
+        $('#modalToken').text(row.data('token'));
+        $('#modalEpin').text(row.data('epin'));
+        $('#refundBtn').data('id', row.data('id'));
+        if (row.data('status').toLowerCase() === 'refunded') {
+            $('#refundBtn').prop('disabled', true);
+        } else {
+            $('#refundBtn').prop('disabled', false);
+        }
+    });
+
+    // Open Data Transaction Modal
     $(document).on("click", ".datavisibility", function () {
         let row = $(this).closest("tr");
-
-        $("#modalInvoice").text(row.find("td:eq(0)").text().trim());
-        $("#modalStatus").text(row.find("td:eq(1)").text().trim());
-        $("#modalService").text(row.find("td:eq(2)").text().trim());
-        $("#modalUsername").text(row.find("td:eq(3)").text().trim());
-        $("#modalAmount").text(row.find("td:eq(6)").text().trim());
-        $("#modalPhone").text(row.find("td:eq(7)").text().trim());
-        $("#modalCard").text(row.find("td:eq(8)").text().trim());
-
+        $("#modalInvoices").text(row.data("invoice"));
+        $("#modalStatuss").text(row.data("status"));
+        $("#modalServices").text(row.data("service"));
+        $("#modalUsernames").text(row.data("username"));
+        $("#modalAmounts").text(formatter.format(row.data("amount") || 0));
+        $("#modalPhones").text(row.data("phone"));
+        $('#refundBtns').data('id', row.data('id'));
+        if (row.data('status').toLowerCase() === 'refunded') {
+            $('#refundBtns').prop('disabled', true);
+        } else {
+            $('#refundBtns').prop('disabled', false);
+        }
         $("#datatransactionModal").modal("show");
     });
 
     // Airtime Modal Functionality
     $(document).on("click", ".airtimevisibility", function () {
         let row = $(this).closest("tr");
-
-        $("#modalInvoice").text(row.find("td:eq(0)").text().trim());
-        $("#modalStatus").text(row.find("td:eq(1)").text().trim());
-        $("#modalService").text(row.find("td:eq(2)").text().trim());
-        $("#modalUsername").text(row.find("td:eq(3)").text().trim());
-        $("#modalAmount").text(row.find("td:eq(6)").text().trim());
-        $("#modalPhone").text(row.find("td:eq(7)").text().trim());
-        $("#modalCard").text(row.find("td:eq(8)").text().trim());
-
+        $("#airtimemodalInvoice").text(row.data("invoice"));
+        $("#airtimemodalStatus").text(row.data("status"));
+        $("#airtimemodalService").text(row.data("service"));
+        $("#airtimemodalUsername").text(row.data("username"));
+        $("#airtimemodalAmount").text(formatter.format(row.data("amount") || 0));
+        $("#airtimemodalPhone").text(row.data("phone"));
+        $('#airtimerefundBtn').data('id', row.data('id'));
+        if (row.data('status').toLowerCase() === 'refunded') {
+            $('#airtimerefundBtn').prop('disabled', true);
+        } else {
+            $('#airtimerefundBtn').prop('disabled', false);
+        }
         $("#airtimetransactionModal").modal("show");
     });
 
     // Cable Modal Functionality
     $(document).on("click", ".cablevisibility", function () {
         let row = $(this).closest("tr");
-
-        $("#modalInvoice").text(row.find("td:eq(0)").text().trim());
-        $("#modalStatus").text(row.find("td:eq(1)").text().trim());
-        $("#modalService").text(row.find("td:eq(2)").text().trim());
-        $("#modalUsername").text(row.find("td:eq(3)").text().trim());
-        $("#modalAmount").text(row.find("td:eq(6)").text().trim());
-        $("#modalPhone").text(row.find("td:eq(7)").text().trim());
-        $("#modalCard").text(row.find("td:eq(8)").text().trim());
-
+        $("#cablemodalInvoice").text(row.data("invoice"));
+        $("#cablemodalStatus").text(row.data("status"));
+        $("#cablemodalService").text(row.data("service"));
+        $("#cablemodalUsername").text(row.data("username"));
+        $("#cablemodalAmount").text(formatter.format(row.data("amount") || 0));
+        $("#cablemodalPhone").text(row.data("phone"));
+        $('#cablerefundBtn').data('id', row.data('id'));
+        if (row.data('status').toLowerCase() === 'refunded') {
+            $('#cablerefundBtn').prop('disabled', true);
+        } else {
+            $('#cablerefundBtn').prop('disabled', false);
+        }
         $("#cabletransactionModal").modal("show");
     });
 
     // Electricity Modal Functionality
     $(document).on("click", ".electricityvisibility", function () {
         let row = $(this).closest("tr");
-
-        $("#modalInvoice").text(row.find("td:eq(0)").text().trim());
-        $("#modalStatus").text(row.find("td:eq(1)").text().trim());
-        $("#modalService").text(row.find("td:eq(2)").text().trim());
-        $("#modalUsername").text(row.find("td:eq(3)").text().trim());
-        $("#modalAmount").text(row.find("td:eq(6)").text().trim());
-        $("#modalPhone").text(row.find("td:eq(7)").text().trim());
-        $("#modalCard").text(row.find("td:eq(8)").text().trim());
-
+        $("#electricitymodalInvoice").text(row.data("invoice"));
+        $("#electricitymodalStatus").text(row.data("status"));
+        $("#electricitymodalService").text(row.data("service"));
+        $("#electricitymodalUsername").text(row.data("username"));
+        $("#electricitymodalAmount").text(formatter.format(row.data("amount") || 0));
+        $("#electricitymodalPhone").text(row.data("phone"));
+        $('#electricityrefundBtn').data('id', row.data('id'));
+        if (row.data('status').toLowerCase() === 'refunded') {
+            $('#electricityrefundBtn').prop('disabled', true);
+        } else {
+            $('#electricityrefundBtn').prop('disabled', false);
+        }
         $("#electricitytransactionModal").modal("show");
     });
 
     // Exam Modal Functionality
     $(document).on("click", ".examvisibility", function () {
         let row = $(this).closest("tr");
-
-        $("#modalInvoice").text(row.find("td:eq(0)").text().trim());
-        $("#modalStatus").text(row.find("td:eq(1)").text().trim());
-        $("#modalService").text(row.find("td:eq(2)").text().trim());
-        $("#modalUsername").text(row.find("td:eq(3)").text().trim());
-        $("#modalAmount").text(row.find("td:eq(6)").text().trim());
-        $("#modalPhone").text(row.find("td:eq(7)").text().trim());
-        $("#modalCard").text(row.find("td:eq(8)").text().trim());
-
+        $("#exammodalInvoice").text(row.data("invoice"));
+        $("#exammodalStatus").text(row.data("status"));
+        $("#exammodalService").text(row.data("service"));
+        $("#exammodalUsername").text(row.data("username"));
+        $("#exammodalAmount").text(formatter.format(row.data("amount") || 0));
+        $("#exammodalPhone").text(row.data("phone"));
+        $('#examrefundBtn').data('id', row.data('id'));
+        if (row.data('status').toLowerCase() === 'refunded') {
+            $('#examrefundBtn').prop('disabled', true);
+        } else {
+            $('#examrefundBtn').prop('disabled', false);
+        }
         $("#examtransactionModal").modal("show");
     });
+
+    // Wallet Modal Functionality
+    $(document).on("click", ".walletvisibility", function () {
+        let row = $(this).closest("tr");
+        $("#walletmodalInvoice").text(row.data("invoice"));
+        $("#walletmodalStatus").text(row.data("status"));
+        $("#walletmodalUsername").text(row.data("username"));
+        $("#walletmodalType").text(row.data("type"));
+        $("#walletmodalService").text(row.data("service"));
+        $("#walletmodalSender").text(row.data("sender-email"));
+        $("#walletmodalReceiver").text(row.data("receiver-email"));
+        $("#walletmodalAmount").text(formatter.format(row.data("amount") || 0));
+        $("#walletmodalBalanceBefore").text(formatter.format(row.data("balance-before") || 0));
+        $("#walletmodalBalanceAfter").text(formatter.format(row.data("balance-after") || 0));
+        $('#walletrefundBtn').data('id', row.data('id'));
+        if (row.data('status').toLowerCase() === 'refunded') {
+            $('#walletrefundBtn').prop('disabled', true);
+        } else {
+            $('#walletrefundBtn').prop('disabled', false);
+        }
+        $("#wallettransactionModal").modal("show");
+    });
+
+    // Reported Modal Functionality
+    $(document).on("click", ".reportedvisibility", function () {
+        let row = $(this).closest("tr");
+        $("#reportedmodalInvoice").text(row.data("invoice"));
+        $("#reportedmodalStatus").text(row.data("status"));
+        $("#reportedmodalUsername").text(row.data("username"));
+        $("#reportedmodalType").text(row.data("type"));
+        $("#reportedmodalService").text(row.data("service"));
+        $("#reportedmodalSender").text(row.data("sender-email"));
+        $("#reportedmodalReceiver").text(row.data("receiver-email"));
+        $("#reportedmodalAmount").text(formatter.format(row.data("amount") || 0));
+        $("#reportedmodalBalanceBefore").text(formatter.format(row.data("balance-before") || 0));
+        $("#reportedmodalBalanceAfter").text(formatter.format(row.data("balance-after") || 0));
+        $('#reportedrefundBtn').data('id', row.data('id'));
+        if (row.data('status').toLowerCase() === 'refunded') {
+            $('#reportedrefundBtn').prop('disabled', true);
+        } else {
+            $('#reportedrefundBtn').prop('disabled', false);
+        }
+        $("#reportedtransactionModal").modal("show");
+    });
+
 
     // Show/hide specific users dropdown based on radio selection
     $('input[name="sendTo"]').on('change', function () {
@@ -232,19 +293,18 @@ $(document).ready(function () {
         $('#selectedUsersList').html(selectedUsers.join(', '));
     });
 
-    // Tab Persistence Logic (using sessionStorage)
+
+    // ******** START OF ACTIVE TRANSACTION TAB *******
+    
     function setActiveTab(tabId) {
-        // Remove 'active' class from all tabs and tab panes
         $('.nav-link').removeClass('active');
         $('.tab-pane').removeClass('show active');
-
-        // Add 'active' class to the selected tab and tab pane
         $(`#${tabId}-tab`).addClass('active');
         $(`#${tabId}`).addClass('show active');
     }
 
     function saveActiveTab(tabId) {
-        sessionStorage.setItem('activeTab', tabId); // Use sessionStorage instead of localStorage
+        sessionStorage.setItem('activeTab', tabId);
     }
 
     function loadActiveTab() {
@@ -252,33 +312,329 @@ $(document).ready(function () {
         if (activeTab) {
             setActiveTab(activeTab);
         } else {
-            // Set the default active tab if no tab is saved in sessionStorage
-            setActiveTab('all-transaction'); // Change this to the default tab ID
+            setActiveTab('all-transaction-tab');
         }
     }
 
-    // Event listener for tab clicks
     $('.nav-link').on('click', function () {
         const tabId = $(this).attr('aria-controls');
         saveActiveTab(tabId);
     });
 
-    // Load the active tab when the page loads
     loadActiveTab();
 
-    // Set the active sidebar link based on the current URL
+    // ******** END OF ACTIVE TRANSACTION TAB *******
+
+
+    // ******** START OF ACTIVE SIDEBAR LINK *******
     function setActiveSidebarLink() {
-        const currentUrl = window.location.href; // Get the current URL
+        const currentUrl = window.location.href;
         $('#sidebar ul li a').each(function () {
-            const linkUrl = $(this).attr('href'); // Get the href of the sidebar link
+            const linkUrl = $(this).attr('href');
             if (currentUrl.includes(linkUrl)) {
-                $(this).parent().addClass('active'); // Add 'active' class to the parent <li>
+                $(this).parent().addClass('active');
             } else {
-                $(this).parent().removeClass('active'); // Remove 'active' class from other <li> elements
+                $(this).parent().removeClass('active');
             }
         });
     }
 
-    // Call the function to set the active sidebar link
     setActiveSidebarLink();
+
+    // ******** END OF ACTIVE SIDEBAR LINK *******
+
+
+    // ******* START OF TAB FOR DATA SETTING ******
+    function setActiveDataTab(tabId) {
+        $(`#${tabId}-tab`).addClass('active');
+        $(`#${tabId}`).addClass('show active');
+    }
+
+    function saveActiveDataTab(tabId) {
+        sessionStorage.setItem('activeDataTab', tabId);
+    }
+
+    function loadActiveDataTab() {
+        const activeDataTab = sessionStorage.getItem('activeDataTab');
+        if (activeDataTab) {
+            setActiveDataTab(activeDataTab);
+        } else {
+            setActiveDataTab('net-mtn-tab');
+        }
+    }
+
+    $('.data-nav-link').on('click', function () {
+        const tabId = $(this).attr('aria-controls');
+        saveActiveDataTab(tabId);
+    });
+
+    loadActiveDataTab();
+
+    // ******* END OF TAB FOR DATA SETTING ******
+
+
+   
+    // ******** START OF ALL TRANSACTION REFUND **********
+
+    $(document).on('click', '.refund-btn', function () {
+        let transactionId = $(this).data('id');
+        let refundButton = $(this);
+
+    // Show a confirmation dialog before proceeding
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'You are about to refund this transaction. This action cannot be undone!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, refund it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Proceed with the refund if the user confirms
+            $.ajax({
+                url: `/transaction/${transactionId}/refund`,
+                type: 'POST',
+                data: {
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (response) {
+                    // Display success or error message using SweetAlert2
+                    if (response.type === 'success') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: response.message,
+                            confirmButtonColor: '#3085d6',
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Reload the page or update the UI
+                                location.reload();
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: response.message,
+                            confirmButtonColor: '#d33',
+                        });
+                    }
+                },
+                error: function (xhr) {
+                    // Handle AJAX errors
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: xhr.responseJSON.message || 'An error occurred. Please try again.',
+                        confirmButtonColor: '#d33',
+                    });
+                }
+            });
+        }
+    });
+});
+
+// ******** END OF ALL TRANSACTION REFUND **********
+
+
+
+   // ******** START OF WALLET REFUND **********
+
+    $(document).on('click', '.refund-btns', function () {
+        let transactionId = $(this).data('id');
+        let refundButton = $(this);
+
+    // Show a confirmation dialog before proceeding
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'You are about to refund this transaction. This action cannot be undone!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, refund it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Proceed with the refund if the user confirms
+            $.ajax({
+                url: `/wallet_transac/${transactionId}/walletrefund`,
+                type: 'POST',
+                data: {
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (response) {
+                    // Display success or error message using SweetAlert2
+                    if (response.type === 'success') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: response.message,
+                            confirmButtonColor: '#3085d6',
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Reload the page or update the UI
+                                location.reload();
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: response.message,
+                            confirmButtonColor: '#d33',
+                        });
+                    }
+                },
+                error: function (xhr) {
+                    // Handle AJAX errors
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: xhr.responseJSON.message || 'An error occurred. Please try again.',
+                        confirmButtonColor: '#d33',
+                    });
+                }
+            });
+        }
+    });
+});
+
+// ******** END OF WALLET REFUND **********
+
+
+   // ********** START OF REFUND REPORTED TRANSACTION *********
+
+   $(document).on('click', '.refunds-btns', function () {
+    let transactionId = $(this).data('id');
+
+    // Show a confirmation dialog before proceeding
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'You are about to refund this transaction. This action cannot be undone!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, refund it!',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Proceed with the refund if the user confirms
+            $.ajax({
+                url: `/reported/${transactionId}/reportrefund`,
+                type: 'POST',
+                data: {
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function (response) {
+                    // Display success or error message using SweetAlert2
+                    if (response.type === 'success') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: response.message,
+                            confirmButtonColor: '#3085d6',
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Reload the page or update the UI
+                                location.reload();
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error!',
+                            text: response.message,
+                            confirmButtonColor: '#d33',
+                        });
+                    }
+                },
+                error: function (xhr) {
+                    // Handle AJAX errors
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: xhr.responseJSON.message || 'An error occurred. Please try again.',
+                        confirmButtonColor: '#d33',
+                    });
+                }
+            });
+        }
+    });
+});
+
+// ******** END OF REFUND REPORTED TRANSACTION *******
+
+
+
+    // ********** START OF PAGINATION **********
+    const paginationLinks = document.querySelectorAll('.pagination a');
+
+    // Save the current page to localStorage when a pagination link is clicked
+    paginationLinks.forEach(link => {
+        link.addEventListener('click', function (e) {
+            const page = new URL(link.href).searchParams.get('page');
+            localStorage.setItem('sliderCurrentPage', page);
+        });
+    });
+
+    // Restore the current page from localStorage
+    const currentPage = localStorage.getItem('sliderCurrentPage');
+    if (currentPage) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', currentPage);
+        window.location.href = url.toString();
+    }
+
+    // ********** END OF PAGINATION **********
+
+    // *********** START OF DASHBOARD TIMER ********
+    function updateTime() {
+        const now = new Date();
+        let hours = now.getHours();
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+    
+        // Convert to 12-hour format
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+    
+        // Update the time display
+        updateNumber('hours', `${hours}`);
+        updateNumber('minutes', `${minutes}`);
+        updateNumber('ampm', ampm);
+    
+        // Update the date
+        const dayOfWeek = now.toLocaleDateString(undefined, { weekday: 'short' });
+        const day = now.getDate();
+        const month = now.toLocaleDateString(undefined, { month: 'short' });
+        const year = now.getFullYear();
+        document.getElementById('current-date').textContent = `${dayOfWeek}, ${day} ${month}, ${year}`;
+      }
+    
+      function updateNumber(id, newValue) {
+        const element = document.getElementById(id);
+        if (element.textContent !== newValue) {
+          // Add slide-up animation
+          element.style.animation = 'slide-up 0.5s ease-in-out';
+          // Update the value after the animation ends
+          element.addEventListener('animationend', () => {
+            element.textContent = newValue;
+            element.style.animation = ''; // Reset animation
+          }, { once: true });
+        }
+      }
+    
+      // Update the time every second
+      setInterval(updateTime, 1000);
+    
+      // Initialize the time immediately on page load
+      updateTime();
+  
+// *********** END OF DASHBOARD TIMER ********
+
 });

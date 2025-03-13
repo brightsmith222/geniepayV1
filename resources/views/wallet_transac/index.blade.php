@@ -8,18 +8,58 @@
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Wallet Transaction</h5>
+                         <!-- Search Input -->
+                         <div class="d-flex justify-content-end mb-3">
+                            <input type="hidden" id="walletIndexRoute" value="{{ route('wallet_transac.index') }}">
+                                  <div class="search-container">
+                                    <form>
+                                        <input type="text" 
+                                               id="walletSearchInput" 
+                                               class="form-control search-box" 
+                                               placeholder="Search wallet..." 
+                                               data-route="{{ route('wallet_transac.index') }}" 
+                                               data-table="#wallet-table" 
+                                               data-pagination=".wallet-pagination">
+                                        <span class="search-icon"><i class="material-icons-outlined">search</i></span>
+                                    </form>
+                                  </div>
+                        </div>
+                        <!-- Sorting Dropdown -->
+                        <div class="mb-3">
+                            <label for="sort">Sort By:</label>
+                            <select id="sort" onchange="window.location.href = this.value;">
+                                <option value="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'direction' => 'desc']) }}"
+                                        {{ request('sort') === 'created_at' && request('direction') === 'desc' ? 'selected' : '' }}>
+                                    Newest First
+                                </option>
+                                <option value="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'direction' => 'asc']) }}"
+                                        {{ request('sort') === 'created_at' && request('direction') === 'asc' ? 'selected' : '' }}>
+                                    Oldest First
+                                </option>
+                                <option value="{{ request()->fullUrlWithQuery(['sort' => 'amount', 'direction' => 'desc']) }}"
+                                        {{ request('sort') === 'amount' && request('direction') === 'desc' ? 'selected' : '' }}>
+                                    Amount (High to Low)
+                                </option>
+                                <option value="{{ request()->fullUrlWithQuery(['sort' => 'amount', 'direction' => 'asc']) }}"
+                                        {{ request('sort') === 'amount' && request('direction') === 'asc' ? 'selected' : '' }}>
+                                    Amount (Low to High)
+                                </option>
+                                <option value="{{ request()->fullUrlWithQuery(['sort' => 'status', 'direction' => 'asc']) }}"
+                                        {{ request('sort') === 'status' && request('direction') === 'asc' ? 'selected' : '' }}>
+                                    Status (A-Z)
+                                </option>
+                                <option value="{{ request()->fullUrlWithQuery(['sort' => 'status', 'direction' => 'desc']) }}"
+                                        {{ request('sort') === 'status' && request('direction') === 'desc' ? 'selected' : '' }}>
+                                    Status (Z-A)
+                                </option>
+                            </select>
+                        </div>
                         <div class="table-responsive">
-                            <!-- Search Input -->
-                            <div class="d-flex justify-content-end mb-3">
-                                <div class="search-container">
-                                    <input type="text" id="searchInput" class="form-control search-box" placeholder="Search...">
-                                    <span class="search-icon"><i class="material-icons-outlined">search</i></span>
-                                </div>
-                            </div>
                             <table class="table" id="wallet-transaction-table">
                                 <thead>
                                     <tr>
                                         <th>ID</th>
+                                        <th>Invoice Id</th>
                                         <th>Status</th>
                                         <th>Username</th>
                                         <th>Trans Type</th>
@@ -35,59 +75,57 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>TXN123456</td>
-                                        <td><span class="status completed">Successful</span></td> 
-                                        <td>Johnny112</td>
-                                        <td>Credit</td>
-                                        <td>Wallet Funded</td>
-                                        <td>johnnydoe@gmail.com</td>
-                                        <td>Samlarry@gmail.com</td>
-                                        <td>#3500</td>
-                                        <td>#6000</td>
-                                        <td>#9500</td>
-                                        <td>06/06/25</td>
+                                    @if($walletTransactions->isEmpty())
+                                      <tr>
+                                          <td colspan="15" class="text-center">No data available</td>
+                                          </tr>
+                                      @else
+
+                                        @foreach($walletTransactions as $transaction)
+                                        <tr data-id="{{ $transaction->id }}" 
+                                            data-invoice="{{ $transaction->transaction_id }}" 
+                                            data-status="{{ $transaction->status }}" 
+                                            data-username="{{ $transaction->user }}"
+                                            data-type="{{ $transaction->trans_type }}"
+                                            data-service="{{ $transaction->service }}"
+                                            data-sender-email="{{ $transaction->sender_email }}"
+                                            data-receiver-email="{{ $transaction->receiver_email }}"
+                                            data-amount="{{ $transaction->amount }}"
+                                            data-balance-before="{{ $transaction->balance_before }}"
+                                            data-balance-after="{{ $transaction->balance_after }}">
+
+                                        <td>{{ $transaction->id }}</td>
+                                        <td>{{ $transaction->transaction_id }}</td>
+                                        <td><span class="status {{ strtolower($transaction->status) === 'successful' ? 'completed #198754' : 'cancel #dc3545' }}">
+                                            {{ ucfirst($transaction->status) }}
+                                        </span></td>
+                                        <td>{{ $transaction->user }}</td>
+                                        <td>{{ $transaction->trans_type }}</td>                                        
+                                        <td>{{ $transaction->service }}</td>
+                                        <td>{{ $transaction->sender_email }}</td>
+                                        <td>{{ $transaction->receiver_email }}</td>
+                                        <td>₦{{ number_format($transaction->amount ?? 0, 2) }}</td>                                        
+                                        <td>₦{{ number_format($transaction->balance_before ?? 0, 2) }}</td>
+                                        <td>₦{{ number_format($transaction->balance_after ?? 0, 2) }}</td>
+                                        <td>{{ $transaction->created_at->format('d/m/Y') }}</td>
                                         <td>
-                                                <span class="material-icons-outlined visibility">visibility</span>
+                                            <span class="material-icons-outlined walletvisibility visib" data-toggle="modal" data-target="#wallettransactionModal">visibility</span>
                                         </td>
                                     </tr>
-                                    <tr>
-                                        <td>TXN654321</td>
-                                        <td><span class="status completed">Successful</span></td>
-                                        <td>Tessy424</td>
-                                        <td>Debit</td>                                        
-                                        <td>Transfer</td>
-                                        <td>tessyjoh@gmail.com</td>
-                                        <td>jessygreg@gmail.com</td>
-                                        <td>#5000</td>
-                                        <td>#6000</td>
-                                        <td>#11000</td>
-                                        <td>12/12/25</td>
-                                        <td>
-                                                <span class="material-icons-outlined visibility">visibility</span> </td>
-                                    </tr>
-                                        <tr>
-                                        <td>TXN789012</td>
-                                        <td><span class="status cancel">Failed</span></td>
-                                        <td>Tommyjay</td>
-                                        <td>Credit</td>                                        
-                                        <td>Wallet Funded</td>
-                                        <td>tommyjay@gmail.com</td>
-                                        <td>favournancy@gmail.com</td>
-                                        <td>#6000</td>
-                                        <td>#3000</td>
-                                        <td>#9000</td>
-                                        <td>02/11/25</td>
-                                        <td><span class="material-icons-outlined visibility">visibility</span></td>
-                                    </tr>
+                                    @endforeach
+                                    @endif
                                 </tbody>
                             </table>
-                            
+                        </div>
+                        <div class="d-flex justify-content-center mt-4">
+                            {{ $walletTransactions->links() }}
                         </div>
                         <!-- Transaction Details Modal -->
-<div class="modal fade" id="transactionModal" tabindex="-1" aria-labelledby="transactionModalLabel" aria-hidden="true">
+  @foreach($walletTransactions as $transaction)
+<div class="modal fade" id="wallettransactionModal" tabindex="-1" aria-labelledby="wallettransactionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
+            <form>
             <div class="modal-header">
                 <h5 class="modal-title" id="transactionModalLabel">Transaction Details</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -97,31 +135,37 @@
             <div class="modal-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <p><strong>Invoice:</strong> <span id="modalInvoice"></span></p>
-                        <p><strong>Status:</strong> <span id="modalStatus"></span></p>
-                        <p><strong>Service:</strong> <span id="modalService"></span></p>
-                        <p><strong>Username:</strong> <span id="modalUsername"></span></p>
-                        <p><strong>Service Provider:</strong> <span id="modalProvider"></span></p>
-                        <p><strong>Service Plan:</strong> <span id="modalPlan"></span></p>
+                        <p><strong>Invoice:</strong> <span id="walletmodalInvoice"></span></p>
+                        <p><strong>Status:</strong> <span id="walletmodalStatus"></span></p>
+                        <p><strong>Username:</strong> <span id="walletmodalUsername"></span></p>
+                        <p><strong>Transaction Type:</strong> <span id="walletmodalType"></span></p>
+                        <p><strong>Service:</strong> <span id="walletmodalService"></span></p>
+                        <p><strong>Sender Email:</strong> <span id="walletmodalSender"></span></p>
                     </div>
                     <div class="col-md-6">
-                        <p><strong>Amount:</strong> <span id="modalAmount"></span></p>
-                        <p><strong>Phone Number:</strong> <span id="modalPhone"></span></p>
-                        <p><strong>Smart Card Number:</strong> <span id="modalCard"></span></p>
-                        <p><strong>Meter Number:</strong> <span id="modalMeter"></span></p>
-                        <p><strong>Quantity:</strong> <span id="modalQuantity"></span></p>
-                        <p><strong>Electricity Token:</strong> <span id="modalToken"></span></p>
-                        <p><strong>ePIN:</strong> <span id="modalEpin"></span></p>
+                        <p><strong>Receiver Email:</strong> <span id="walletmodalReceiver"></span></p>
+                        <p><strong>Amount:</strong> <span id="walletmodalAmount"></span></p>
+                        <p><strong>Balance Before:</strong> <span id="walletmodalBalanceBefore"></span></p>
+                        <p><strong>Balance After:</strong> <span id="walletmodalBalanceAfter"></span></p>
+                        
                     </div>
                 </div>
             </div>
+
+
             <div class="modal-footer">
-                <button class="btn btn-danger" id="refundBtn">Refund</button>
-                <button class="btn btn-warning" id="debitBtn">Debit</button>
-            </div>
+                <a href="javascript:void(0);" class="btn btn-danger refund-btns" id="walletrefundBtn"
+                data-id="{{ $transaction->id }}"
+                {{ $transaction->status == 'Refunded' ? 'disabled' : '' }}>
+                Refund
+              </a>
+                  <a href="" class="btn btn-warning" id="debitBtn">Debit</a>
+              </div>
+            </form>
         </div>
     </div>
 </div>
+@endforeach
 
                     </div>
                 </div>

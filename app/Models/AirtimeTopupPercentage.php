@@ -8,4 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class AirtimeTopupPercentage extends Model
 {
     use HasFactory;
+
+    protected $fillable = ['network_name', 'network_percentage'];
 }
