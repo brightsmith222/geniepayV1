@@ -12,56 +12,80 @@ class TransactionsController extends Controller
      * Display a listing of the resource.
      */
     public function index(Request $request)
-{
-    // Default sorting column and direction
-    $sortColumn = request('sort', 'created_at'); // Default to 'created_at'
-    $sortDirection = request('direction', 'desc'); // Default to 'desc'
-
-    // Validate the sort column to prevent SQL injection
-    $validColumns = ['id', 'amount', 'created_at', 'status'];
-    if (!in_array($sortColumn, $validColumns)) {
-        $sortColumn = 'created_at'; // Fallback to a valid column
+    {
+        // Default sorting column and direction
+        $sortColumn = 'created_at'; // Default to 'created_at'
+        $sortDirection = 'desc'; // Default to 'desc'
+    
+        // Handle POST request for sorting
+        if ($request->isMethod('post')) {
+            $sortParams = explode('_', $request->input('sort'));
+            if (count($sortParams) === 2) {
+                $sortColumn = $sortParams[0]; // Extract the column
+                $sortDirection = $sortParams[1]; // Extract the direction
+            }
+        } else {
+            // Handle GET request for sorting (if needed)
+            $sortParams = explode('_', request('sort', 'created_at_desc'));
+            if (count($sortParams) === 2) {
+                $sortColumn = $sortParams[0]; // Extract the column
+                $sortDirection = $sortParams[1]; // Extract the direction
+            }
+        }
+    
+        // Validate the sort column and direction
+        $validColumns = ['id', 'amount', 'created_at', 'status'];
+        $validDirections = ['asc', 'desc'];
+    
+        if (!in_array($sortColumn, $validColumns)) {
+            $sortColumn = 'created_at'; // Fallback to a valid column
+        }
+    
+        if (!in_array($sortDirection, $validDirections)) {
+            $sortDirection = 'desc'; // Fallback to a valid direction
+        }
+    
+        // Get the search term from the request
+        $searchTerm = $request->input('search');
+    
+        // Base query for all transactions
+        $transactionsQuery = Transactions::orderBy($sortColumn, $sortDirection);
+    
+        // Apply search filter if a search term is provided
+        if ($searchTerm) {
+            $transactionsQuery->where(function ($query) use ($searchTerm) {
+                $query->where('transaction_id', 'like', "%{$searchTerm}%")
+                      ->orWhere('service', 'like', "%{$searchTerm}%")
+                      ->orWhere('username', 'like', "%{$searchTerm}%")
+                      ->orWhere('amount', 'like', "%{$searchTerm}%")
+                      ->orWhere('status', 'like', "%{$searchTerm}%")
+                      ->orWhere('phone_number', 'like', "%{$searchTerm}%");
+            });
+        }
+    
+        // Paginate the results
+        $transactions = $transactionsQuery->paginate(7);
+    
+        // Fetch the required transactions based on service type with pagination
+        $dataTransactions = Transactions::where('service', 'Data')->orderBy($sortColumn, $sortDirection)->paginate(7);
+        $airtimeTransactions = Transactions::where('service', 'Airtime')->orderBy($sortColumn, $sortDirection)->paginate(7);
+        $cableTransactions = Transactions::where('service', 'Cable')->orderBy($sortColumn, $sortDirection)->paginate(7);
+        $electricityTransactions = Transactions::where('service', 'Electricity')->orderBy($sortColumn, $sortDirection)->paginate(7);
+        $examTransactions = Transactions::where('service', 'Exam')->orderBy($sortColumn, $sortDirection)->paginate(7);
+    
+        // Render the view and pass the necessary data
+        return view('transaction.index', compact(
+            'transactions',
+            'dataTransactions',
+            'airtimeTransactions',
+            'cableTransactions',
+            'electricityTransactions',
+            'examTransactions',
+            'searchTerm',
+            'sortColumn',
+            'sortDirection'
+        ));
     }
-
-    // Get the search term from the request
-    $searchTerm = $request->input('search');
-
-    // Base query for all transactions
-    $transactionsQuery = Transactions::orderBy($sortColumn, $sortDirection);
-
-    // Apply search filter if a search term is provided
-    if ($searchTerm) {
-        $transactionsQuery->where(function ($query) use ($searchTerm) {
-            $query->where('transaction_id', 'like', "%{$searchTerm}%")
-                  ->orWhere('service', 'like', "%{$searchTerm}%")
-                  ->orWhere('username', 'like', "%{$searchTerm}%")
-                  ->orWhere('amount', 'like', "%{$searchTerm}%")
-                  ->orWhere('status', 'like', "%{$searchTerm}%")
-                  ->orWhere('phone_number', 'like', "%{$searchTerm}%");
-        });
-    }
-
-    // Paginate the results
-    $transactions = $transactionsQuery->paginate(7);
-
-    // Fetch the required transactions based on service type with pagination
-    $dataTransactions = Transactions::where('service', 'Data')->orderBy($sortColumn, $sortDirection)->paginate(7);
-    $airtimeTransactions = Transactions::where('service', 'Airtime')->orderBy($sortColumn, $sortDirection)->paginate(7);
-    $cableTransactions = Transactions::where('service', 'Cable')->orderBy($sortColumn, $sortDirection)->paginate(7);
-    $electricityTransactions = Transactions::where('service', 'Electricity')->orderBy($sortColumn, $sortDirection)->paginate(7);
-    $examTransactions = Transactions::where('service', 'Exam')->orderBy($sortColumn, $sortDirection)->paginate(7);
-
-    // Render the view and pass the necessary data
-    return view('transaction.index', compact(
-        'transactions',
-        'dataTransactions',
-        'airtimeTransactions',
-        'cableTransactions',
-        'electricityTransactions',
-        'examTransactions',
-        'searchTerm'
-    ));
-}
 
 
 

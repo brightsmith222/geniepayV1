@@ -295,7 +295,7 @@ $('.search-box').on('input', function () {
 
 
     // ******** START OF ACTIVE TRANSACTION TAB *******
-    
+
     function setActiveTab(tabId) {
         $('.nav-link').removeClass('active');
         $('.tab-pane').removeClass('show active');
@@ -591,50 +591,10 @@ $('.search-box').on('input', function () {
 
     // ********** END OF PAGINATION **********
 
-    // *********** START OF DASHBOARD TIMER ********
-    function updateTime() {
-        const now = new Date();
-        let hours = now.getHours();
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const seconds = String(now.getSeconds()).padStart(2, '0');
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-    
-        // Convert to 12-hour format
-        hours = hours % 12;
-        hours = hours ? hours : 12; // the hour '0' should be '12'
-    
-        // Update the time display
-        updateNumber('hours', `${hours}`);
-        updateNumber('minutes', `${minutes}`);
-        updateNumber('ampm', ampm);
-    
-        // Update the date
-        const dayOfWeek = now.toLocaleDateString(undefined, { weekday: 'short' });
-        const day = now.getDate();
-        const month = now.toLocaleDateString(undefined, { month: 'short' });
-        const year = now.getFullYear();
-        document.getElementById('current-date').textContent = `${dayOfWeek}, ${day} ${month}, ${year}`;
-      }
-    
-      function updateNumber(id, newValue) {
-        const element = document.getElementById(id);
-        if (element.textContent !== newValue) {
-          // Add slide-up animation
-          element.style.animation = 'slide-up 0.5s ease-in-out';
-          // Update the value after the animation ends
-          element.addEventListener('animationend', () => {
-            element.textContent = newValue;
-            element.style.animation = ''; // Reset animation
-          }, { once: true });
-        }
-      }
-    
-      // Update the time every second
-      setInterval(updateTime, 1000);
-    
-      // Initialize the time immediately on page load
-      updateTime();
-  
-// *********** END OF DASHBOARD TIMER ********
+
+
+
+
+
 
 });

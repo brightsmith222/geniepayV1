@@ -92,7 +92,15 @@
               </div>
               <p class="card-text" id="total-data-sales">₦{{ number_format($totalDataSales, 2) }}</p>
               <p class="card-subtext">
-                <span class="negative" id="statistics">-2.50%</span> vs 74.60 (prev.)
+                <span class="negative" id="statistics-data-sales">
+                  @php
+                      $percentageChangeData = $previousTotalDataSales != 0 
+                          ? (($totalDataSales - $previousTotalDataSales) / $previousTotalDataSales) * 100 
+                          : 0;
+                      echo number_format($percentageChangeData, 2) . '%';
+                  @endphp
+                </span> 
+                vs ₦{{ number_format($previousTotalDataSales, 2) }} (prev.)
               </p>
             </div>
           </div>
@@ -106,7 +114,15 @@
               </div>
               <p class="card-text" id="total-airtime-sales">₦{{ number_format($totalAirtimeSales, 2) }}</p>
               <p class="card-subtext">
-                <span class="negative" id="statistics">-2.50%</span> vs 74.60 (prev.)
+                <span class="negative" id="statistics-airtime-sales">
+                  @php
+                      $percentageChangeAirtime = $previousTotalAirtimeSales != 0 
+                          ? (($totalAirtimeSales - $previousTotalAirtimeSales) / $previousTotalAirtimeSales) * 100 
+                          : 0;
+                      echo number_format($percentageChangeAirtime, 2) . '%';
+                  @endphp
+                </span> 
+                vs ₦{{ number_format($previousTotalAirtimeSales, 2) }} (prev.)
               </p>
             </div>
           </div>
@@ -124,7 +140,15 @@
               </div>
               <p class="card-text" id="total-electricity-sales">₦{{ number_format($totalElectricitySales, 2) }}</p>
               <p class="card-subtext">
-                <span class="negative" id="statistics" id="statistics">-1.83%</span> vs 2.19 (prev.)
+                <span class="negative" id="statistics-electricity-sales">
+                  @php
+                      $percentageChangeElectricity = $previousTotalElectricitySales != 0 
+                          ? (($totalElectricitySales - $previousTotalElectricitySales) / $previousTotalElectricitySales) * 100 
+                          : 0;
+                      echo number_format($percentageChangeElectricity, 2) . '%';
+                  @endphp
+                </span> 
+                vs ₦{{ number_format($previousTotalElectricitySales, 2) }} (prev.)
               </p>
             </div>
           </div>
@@ -141,7 +165,15 @@
               </div>
               <p class="card-text" id="total-cable-sales">₦{{ number_format($totalCableSales, 2) }}</p>
               <p class="card-subtext">
-                <span class="negative" id="statistics" id="statistics">-1.83%</span> vs 2.19 (prev.)
+                <span class="negative" id="statistics-cable-sales">
+                  @php
+                      $percentageChangeCable = $previousTotalCableSales != 0 
+                          ? (($totalCableSales - $previousTotalCableSales) / $previousTotalCableSales) * 100 
+                          : 0;
+                      echo number_format($percentageChangeCable, 2) . '%';
+                  @endphp
+                </span> 
+                vs ₦{{ number_format($previousTotalCableSales, 2) }} (prev.)
               </p>
             </div>
           </div>
@@ -158,7 +190,15 @@
               </div>
               <p class="card-text" id="total-exam-sales">₦{{ number_format($totalExamSales, 2) }}</p>
               <p class="card-subtext">
-                <span class="negative" id="statistics" id="statistics">-1.83%</span> vs 2.19 (prev.)
+                <span class="negative" id="statistics-exam-sales">
+                  @php
+                      $percentageChangeExam = $previousTotalExamSales != 0 
+                          ? (($totalExamSales - $previousTotalExamSales) / $previousTotalExamSales) * 100 
+                          : 0;
+                      echo number_format($percentageChangeExam, 2) . '%';
+                  @endphp
+                </span> 
+                vs ₦{{ number_format($previousTotalExamSales, 2) }} (prev.)
               </p>
             </div>
           </div>
@@ -208,7 +248,15 @@
               </div>
               <p class="card-text" id="total-users">{{ $totalUsers }}</p>
               <p class="card-subtext">
-                <span class="negative" id="statistics" id="statistics">-26.50%</span> vs 66.88 (prev.)
+                <span class="negative" id="statistics">
+                    @php
+                        $percentageChangeTotal = $previousTotalUsers != 0 
+                            ? (($totalUsers - $previousTotalUsers) / $previousTotalUsers) * 100 
+                            : 0;
+                        echo number_format($percentageChangeTotal, 2) . '%';
+                    @endphp
+                </span> 
+                vs {{ number_format($previousTotalUsers) }} (prev.)
               </p>
             </div>
           </div>
@@ -222,7 +270,15 @@
               </div>
               <p class="card-text" id="active-users">{{ $activeUsers }}</p>
               <p class="card-subtext">
-                <span class="negative" id="statistics" id="statistics">-2.50%</span> vs 74.60 (prev.)
+                <span class="negative" id="statistics">
+                    @php
+                        $percentageChangeUsers = $previousActiveUsers != 0 
+                            ? (($activeUsers - $previousActiveUsers) / $previousActiveUsers) * 100 
+                            : 0;
+                        echo number_format($percentageChangeUsers, 2) . '%';
+                    @endphp
+                </span> 
+                vs {{ number_format($previousActiveUsers) }} (prev.)
               </p>
             </div>
           </div>
@@ -240,7 +296,15 @@
               </div>
               <p class="card-text" id="suspended-users">{{ $suspendedUsers }}</p>
               <p class="card-subtext">
-                <span class="negative" id="statistics" id="statistics">-1.83%</span> vs 2.19 (prev.)
+                <span class="negative" id="statistics">
+                    @php
+                        $percentageChangeSuspended = $previousSuspendedUsers != 0 
+                            ? (($suspendedUsers - $previousSuspendedUsers) / $previousSuspendedUsers) * 100 
+                            : 0;
+                        echo number_format($percentageChangeSuspended, 2) . '%';
+                    @endphp
+                </span> 
+                vs {{ number_format($previousSuspendedUsers) }} (prev.)
               </p>
             </div>
           </div>
@@ -257,7 +321,15 @@
               </div>
               <p class="card-text" id="blocked-users">{{ $blockedUsers }}</p>
               <p class="card-subtext">
-                <span class="negative" id="statistics" id="statistics">-1.83%</span> vs 2.19 (prev.)
+                <span class="negative" id="statistics">
+                    @php
+                        $percentageChangeBlocked = $previousBlockedUsers != 0 
+                            ? (($blockedUsers - $previousBlockedUsers) / $previousBlockedUsers) * 100 
+                            : 0;
+                        echo number_format($percentageChangeBlocked, 2) . '%';
+                    @endphp
+                </span> 
+                vs {{ number_format($previousBlockedUsers) }} (prev.)
               </p>
             </div>
           </div>
@@ -417,6 +489,52 @@ document.addEventListener('DOMContentLoaded', function() {
         filterData(savedUsersFilter, 'users');
     }
 });
+
+    // *********** START OF DASHBOARD TIMER ********
+    function updateTime() {
+        const now = new Date();
+        let hours = now.getHours();
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+    
+        // Convert to 12-hour format
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+    
+        // Update the time display
+        updateNumber('hours', `${hours}`);
+        updateNumber('minutes', `${minutes}`);
+        updateNumber('ampm', ampm);
+    
+        // Update the date
+        const dayOfWeek = now.toLocaleDateString(undefined, { weekday: 'short' });
+        const day = now.getDate();
+        const month = now.toLocaleDateString(undefined, { month: 'short' });
+        const year = now.getFullYear();
+        document.getElementById('current-date').textContent = `${dayOfWeek}, ${day} ${month}, ${year}`;
+      }
+    
+      function updateNumber(id, newValue) {
+        const element = document.getElementById(id);
+        if (element.textContent !== newValue) {
+          // Add slide-up animation
+          element.style.animation = 'slide-up 0.5s ease-in-out';
+          // Update the value after the animation ends
+          element.addEventListener('animationend', () => {
+            element.textContent = newValue;
+            element.style.animation = ''; // Reset animation
+          }, { once: true });
+        }
+      }
+    
+      // Update the time every second
+      setInterval(updateTime, 1000);
+    
+      // Initialize the time immediately on page load
+      updateTime();
+  
+// *********** END OF DASHBOARD TIMER ********
   
 </script>
 

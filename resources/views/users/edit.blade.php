@@ -67,8 +67,8 @@
                 <label for="userRole" class="col-sm-3 col-form-label">User Role</label>
                 <div class="col-sm-9">
                     <select class="form-control" id="userRole" name="role">
-                        <option value="user" {{ $user->role === 'user' ? 'selected' : '' }}>User</option>
-                        <option value="admin" {{ $user->role === 'admin' ? 'selected' : '' }}>Admin</option>
+                        <option value="0" {{ $user->role === '0' ? 'selected' : '' }}>User</option>
+                        <option value="1" {{ $user->role === '1' ? 'selected' : '' }}>Admin</option>
                     </select>
                 </div>
             </div>

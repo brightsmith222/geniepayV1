@@ -30,7 +30,7 @@ class ReportedController extends Controller
     \Log::info('Search Term:', ['searchTerm' => $searchTerm]);
 
     // Base query for all transactions
-    $reportedQuery = TransactionReport::orderBy($sortColumn, $sortDirection);
+    $reportedQuery = TransactionReport::where('status', 'Reported')->orderBy($sortColumn, $sortDirection);
 
     // Apply search filter if a search term is provided
     if ($searchTerm) {

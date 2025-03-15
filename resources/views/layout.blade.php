@@ -91,15 +91,6 @@
             <li><a href="{{ URL::to('sliders') }}"><span class="material-icons-outlined">person</span> Slider</a></li>
             <li><a href="{{ URL::to('data_settings')}}"><span class="material-icons-outlined">assignment</span> Data Settings</a></li>
             <li><a href="{{ URL::to('notifications') }}"><span class="material-icons-outlined">group</span> Notification</a></li>
-            <li><a href="#"><span class="material-icons-outlined">account_balance</span> Financial Services</a></li>
-            <li><a href="#"><span class="material-icons-outlined">payment</span> Bill Payments</a></li>
-            <li><a href="#"><span class="material-icons-outlined">credit_card</span> Virtual Accounts</a></li>
-            <li><a href="#"><span class="material-icons-outlined">card_giftcard</span> Cashback</a></li>
-            <li><a href="#"><span class="material-icons-outlined">shopping_bag</span> Products & Support</a></li>
-            <li><a href="#"><span class="material-icons-outlined">sim_card</span> eSIMs</a></li>
-            <li><a href="#"><span class="material-icons-outlined">settings</span> Settings</a></li>
-            <li><a href="#"><span class="material-icons-outlined">support</span> Support Tickets</a></li>
-            <li><a href="#"><span class="material-icons-outlined">logout</span> Log Out</a></li>
         </ul>
     </div>
 

@@ -8,30 +8,54 @@ use App\Models\User;
 class UsersController extends Controller
 {
     public function index(Request $request)
-    {
-        // Default sorting column and direction
-    $sortColumn = request('sort', 'created_at'); // Default to 'created_at'
-    $sortDirection = request('direction', 'desc'); // Default to 'desc'
+{
+    // Default sorting column and direction
+    $sortColumn = 'created_at'; // Default to 'created_at'
+    $sortDirection = 'desc'; // Default to 'desc'
 
-    // Validate the sort column to prevent SQL injection
-    $validColumns = ['id', 'amount', 'created_at', 'status'];
+    // Handle sorting
+    if ($request->has('sort')) {
+        $sortParams = explode('_', $request->input('sort'));
+        if (count($sortParams) === 2) {
+            $sortColumn = $sortParams[0]; // Extract the column
+            $sortDirection = $sortParams[1]; // Extract the direction
+        }
+    }
+
+    // Validate the sort column and direction
+    $validColumns = ['id', 'wallet_balance', 'created_at', 'status'];
+    $validDirections = ['asc', 'desc'];
+
     if (!in_array($sortColumn, $validColumns)) {
         $sortColumn = 'created_at'; // Fallback to a valid column
     }
 
-    $searchTerm = $request->input('search'); // Get the search term from the request
+    if (!in_array($sortDirection, $validDirections)) {
+        $sortDirection = 'desc'; // Fallback to a valid direction
+    }
 
-    $users = User::query()
-        ->when($searchTerm, function ($query, $searchTerm) {
-            $columns = ['username', 'email', 'id', 'status', 'wallet_balance', 'full_name', 'phone_number']; // Add all columns you want to search
+    // Get the search term from the request
+    $searchTerm = $request->input('search');
+
+    // Base query for all users
+    $usersQuery = User::orderBy($sortColumn, $sortDirection);
+
+    // Apply search filter if a search term is provided
+    if ($searchTerm) {
+        $usersQuery->where(function ($query) use ($searchTerm) {
+            $columns = ['username', 'email', 'id', 'status', 'wallet_balance', 'full_name', 'phone_number'];
             foreach ($columns as $column) {
                 $query->orWhere($column, 'like', "%{$searchTerm}%");
             }
-            return $query;
-        })->paginate(7); 
-
-        return view('users.index', compact('users'));
+        });
     }
+
+    // Paginate the results
+    $users = $usersQuery->paginate(7);
+
+    // Render the view and pass the necessary data
+    return view('users.index', compact('users', 'searchTerm', 'sortColumn', 'sortDirection'));
+}
 
     //Function to edit user
     public function edit($id)

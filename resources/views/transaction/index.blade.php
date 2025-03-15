@@ -52,35 +52,33 @@
                                     </form>
                                   </div>
                               </div>
-                              <!-- Sorting Dropdown -->
+                            <!-- Sorting Dropdown -->
+                            <!-- Sorting Dropdown -->
                             <div class="mb-3">
                                 <label for="sort">Sort By:</label>
-                                <select id="sort" onchange="window.location.href = this.value;">
-                                    <option value="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'direction' => 'desc']) }}"
-                                            {{ request('sort') === 'created_at' && request('direction') === 'desc' ? 'selected' : '' }}>
-                                        Newest First
-                                    </option>
-                                    <option value="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'direction' => 'asc']) }}"
-                                            {{ request('sort') === 'created_at' && request('direction') === 'asc' ? 'selected' : '' }}>
-                                        Oldest First
-                                    </option>
-                                    <option value="{{ request()->fullUrlWithQuery(['sort' => 'amount', 'direction' => 'desc']) }}"
-                                            {{ request('sort') === 'amount' && request('direction') === 'desc' ? 'selected' : '' }}>
-                                        Amount (High to Low)
-                                    </option>
-                                    <option value="{{ request()->fullUrlWithQuery(['sort' => 'amount', 'direction' => 'asc']) }}"
-                                            {{ request('sort') === 'amount' && request('direction') === 'asc' ? 'selected' : '' }}>
-                                        Amount (Low to High)
-                                    </option>
-                                    <option value="{{ request()->fullUrlWithQuery(['sort' => 'status', 'direction' => 'asc']) }}"
-                                            {{ request('sort') === 'status' && request('direction') === 'asc' ? 'selected' : '' }}>
-                                        Status (A-Z)
-                                    </option>
-                                    <option value="{{ request()->fullUrlWithQuery(['sort' => 'status', 'direction' => 'desc']) }}"
-                                            {{ request('sort') === 'status' && request('direction') === 'desc' ? 'selected' : '' }}>
-                                        Status (Z-A)
-                                    </option>
-                                </select>
+                                <form id="sortForm" method="POST" action="{{ route('transaction.index') }}">
+                                    @csrf
+                                    <select id="sort" name="sort" onchange="document.getElementById('sortForm').submit();">
+                                        <option value="created_at_desc" {{ request('sort') === 'created_at_desc' ? 'selected' : '' }}>
+                                            Newest First
+                                        </option>
+                                        <option value="created_at_asc" {{ request('sort') === 'created_at_asc' ? 'selected' : '' }}>
+                                            Oldest First
+                                        </option>
+                                        <option value="amount_desc" {{ request('sort') === 'amount_desc' ? 'selected' : '' }}>
+                                            Amount (High to Low)
+                                        </option>
+                                        <option value="amount_asc" {{ request('sort') === 'amount_asc' ? 'selected' : '' }}>
+                                            Amount (Low to High)
+                                        </option>
+                                        <option value="status_asc" {{ request('sort') === 'status_asc' ? 'selected' : '' }}>
+                                            Status (A-Z)
+                                        </option>
+                                        <option value="status_desc" {{ request('sort') === 'status_desc' ? 'selected' : '' }}>
+                                            Status (Z-A)
+                                        </option>
+                                    </select>
+                                </form>
                             </div>
                                 <div class="table-responsive">
                                     
@@ -977,6 +975,32 @@
         </div>
 </div>
 
+<script>
+    function filterData(filter, type, startDate = null, endDate = null) {
+    let url = `/filter-data`;
+    let formData = new FormData();
+    formData.append('filter', filter);
+    formData.append('type', type);
+    if (startDate && endDate) {
+        formData.append('startDate', startDate);
+        formData.append('endDate', endDate);
+    }
 
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        },
+        body: formData,
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data); // Log the server response
+        // Update the UI with the filtered data
+    })
+    .catch(error => console.error('Error fetching data:', error));
+}
+</script>
 
 @stop

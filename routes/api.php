@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PaymentController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\SliderController;
+use App\Http\Controllers\Api\TransactionReportController;
 
 
 
@@ -54,6 +55,8 @@ Route::post('/transfer', [PaymentController::class, 'transfer']);
 Route::get('/sliders', [SliderController::class, 'index']);
 Route::get('/slider/{id}', [SliderController::class, 'show']);
 
+
+Route::post('/transaction-report', [TransactionReportController::class, 'transactionReport']);
 
 });
 

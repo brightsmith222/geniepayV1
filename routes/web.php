@@ -34,7 +34,7 @@ Route::get('dashboard', [AdminDashboardController::class, 'myAdmin'])->name('das
 Route::get('/filter-data', [AdminDashboardController::class, 'filterData']);
 
 //Users
-Route::get('users', [UsersController::class, 'index'])->name('users.index');
+Route::match(['get', 'post'], 'users', [UsersController::class, 'index'])->name('users.index');
 Route::get('edit-user/{id}', [UsersController::class, 'edit'])->name('edit-user');
 Route::put('update-user/{id}', [UsersController::class, 'update'])->name('update-user');
 Route::get('suspend-user/{id}', [UsersController::class, 'suspend'])->name('suspend-user');
@@ -52,7 +52,7 @@ Route::post('wallet_transac/{id}/walletrefund', [WalletTransactionsController::c
 
 //TRANSACTIONS
 
-Route::get('transaction', [TransactionsController::class, 'index'])->name('transaction.index');
+Route::match(['get', 'post'], 'transaction', [TransactionsController::class, 'index'])->name('transaction.index');
 Route::post('transaction/{id}/refund', [TransactionsController::class, 'refund'])->name('transaction.refund');
 
 

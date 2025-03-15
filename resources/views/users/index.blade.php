@@ -25,33 +25,30 @@
                 </div>
                 <!-- Sorting Dropdown -->
                 <div class="mb-3">
-                    <label for="sort">Sort By:</label>
-                    <select id="sort" onchange="window.location.href = this.value;">
-                        <option value="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'direction' => 'desc']) }}"
-                                {{ request('sort') === 'created_at' && request('direction') === 'desc' ? 'selected' : '' }}>
-                            Newest First
-                        </option>
-                        <option value="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'direction' => 'asc']) }}"
-                                {{ request('sort') === 'created_at' && request('direction') === 'asc' ? 'selected' : '' }}>
-                            Oldest First
-                        </option>
-                        <option value="{{ request()->fullUrlWithQuery(['sort' => 'amount', 'direction' => 'desc']) }}"
-                                {{ request('sort') === 'amount' && request('direction') === 'desc' ? 'selected' : '' }}>
-                            Amount (High to Low)
-                        </option>
-                        <option value="{{ request()->fullUrlWithQuery(['sort' => 'amount', 'direction' => 'asc']) }}"
-                                {{ request('sort') === 'amount' && request('direction') === 'asc' ? 'selected' : '' }}>
-                            Amount (Low to High)
-                        </option>
-                        <option value="{{ request()->fullUrlWithQuery(['sort' => 'status', 'direction' => 'asc']) }}"
-                                {{ request('sort') === 'status' && request('direction') === 'asc' ? 'selected' : '' }}>
-                            Status (A-Z)
-                        </option>
-                        <option value="{{ request()->fullUrlWithQuery(['sort' => 'status', 'direction' => 'desc']) }}"
-                                {{ request('sort') === 'status' && request('direction') === 'desc' ? 'selected' : '' }}>
-                            Status (Z-A)
-                        </option>
-                    </select>
+                    <label for="userSort">Sort By:</label>
+                    <form id="userSortForm" method="POST" action="{{ route('users.index') }}">
+                        @csrf <!-- Add CSRF token for POST requests -->
+                        <select id="userSort" name="sort" onchange="handleUserSort(this.value);">
+                            <option value="created_at_desc" {{ request('sort') === 'created_at_desc' ? 'selected' : '' }}>
+                                Newest First
+                            </option>
+                            <option value="created_at_asc" {{ request('sort') === 'created_at_asc' ? 'selected' : '' }}>
+                                Oldest First
+                            </option>
+                            <option value="wallet_balance_desc" {{ request('sort') === 'wallet_balance_desc' ? 'selected' : '' }}>
+                                Wallet Balance (High to Low)
+                            </option>
+                            <option value="wallet_balance_asc" {{ request('sort') === 'wallet_balance_asc' ? 'selected' : '' }}>
+                                Wallet Balance (Low to High)
+                            </option>
+                            <option value="status_asc" {{ request('sort') === 'status_asc' ? 'selected' : '' }}>
+                                Status (A-Z)
+                            </option>
+                            <option value="status_desc" {{ request('sort') === 'status_desc' ? 'selected' : '' }}>
+                                Status (Z-A)
+                            </option>
+                        </select>
+                    </form>
                 </div>
                 <div class="table-responsive">
                    
