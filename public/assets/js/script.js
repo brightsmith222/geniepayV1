@@ -595,6 +595,4 @@ $('.search-box').on('input', function () {
 
 
 
-
-
 });

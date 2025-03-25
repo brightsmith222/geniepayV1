@@ -18,6 +18,7 @@ class FCMService
         $this->firebaseCredentials = config('firebase.credentials');
     }
 
+    /*
     public function sendNotification($token, $title, $body, 
     // $link = "https://5bb1-197-210-53-209.ngrok-free.app/notifications"
     )
@@ -59,6 +60,47 @@ class FCMService
             return ['error' => $e->getMessage()];
         }
     }
+*/
+
+public function sendNotification($token, $title, $body, $image = null)
+{
+    $url = 'https://fcm.googleapis.com/v1/projects/geniepay-3b877/messages:send';
+    
+    // Build the notification message
+    $message = [
+        'message' => [
+            'token' => $token,
+            'notification' => [
+                'title' => $title,
+                'body'  => $body,
+                // Include the image URL if available
+                'image' => $image, // This can be null if there's no image
+            ],
+        ],
+    ];
+
+    // Send the request
+    try {
+        $response = $this->httpClient->post($url, [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $this->getAccessToken(),
+                'Content-Type' => 'application/json',
+            ],
+            'json' => $message,
+        ]);
+        
+        $responseBody = $response->getBody();
+
+        // Log the response
+        Log::info('FCM Response: ' . $responseBody);
+
+        return json_decode($response->getBody(), true);
+    } catch (RequestException $e) {
+        Log::error('Response From FCM: '. $e->getMessage());
+        return ['error' => $e->getMessage()];
+    }
+}
+
 
     protected function getAccessToken()
     {

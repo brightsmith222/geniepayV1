@@ -9,7 +9,9 @@
         "google/apiclient": "^2.17",
         "laravel/framework": "^11.0",
         "laravel/sanctum": "^4.0",
-        "laravel/tinker": "^2.9"
+        "laravel/tinker": "^2.9",
+        "livewire/livewire": "^3.5",
+        "mckenziearts/laravel-notify": "^2.7"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

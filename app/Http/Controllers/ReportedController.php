@@ -4,7 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\TransactionReport;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\RequestException;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
+
 
 class ReportedController extends Controller
 {
@@ -112,6 +116,40 @@ public function reportedrefund($id)
     ], 200);
 }
 
+public function queryApiStatus($requestId)
+{
+    $headers = [
+        'api-key' => '6f8493837a1d4b0e5715fd72849cb087',
+        'secret-key' => 'SK_5139159efe5bb9bd7bec71f13cece42899e4d29611a',
+        'public-key' => 'PK_5438116e83f6e4454bb7055ddd5960b363a9661143b',
+        'Content-Type' => 'application/json',
+    ];
+
+    $url = "https://sandbox.vtpass.com/api/requery";
+    $payload = [
+        'request_id' => $requestId,
+    ];
+
+    try {
+        $response = Http::withHeaders($headers)->post($url, $payload);
+        $data = $response->json();
+
+        Log::info('API Response: ', $data);
+
+        // Ensure 'requestId' exists before accessing
+        if (isset($data['requestId'])) {
+            return response()->json($data, 200);
+        }
+
+        return response()->json(['status' => 'Failed to fetch status', 'error' => 'Missing requestId'], 500);
+    } catch (\Exception $e) {
+        Log::error('API Error: ' . $e->getMessage());
+        return response()->json(['status' => 'Error fetching transaction details'], 500);
+    }
+}
+
+
+
     /**
      * Show the form for creating a new resource.
      */
@@ -131,10 +169,72 @@ public function reportedrefund($id)
     /**
      * Display the specified resource.
      */
-    public function show(Reported $reported)
-    {
-        //
+
+     public function show($transactionId)
+{
+    /*
+    $headers = [
+        'api-key' => '6f8493837a1d4b0e5715fd72849cb087',
+        'secret-key' => 'SK_5139159efe5bb9bd7bec71f13cece42899e4d29611a',
+        'public-key' => 'PK_5438116e83f6e4454bb7055ddd5960b363a9661143b',
+        'Content-Type' => 'application/json',
+    ];
+*/
+    //Live header
+    $headers = [
+        'api-key' => '7e34e6b7628b552ab6572a989ad28bf6',
+        'secret-key' => 'SK_69981ef530cd8a7eaf8f379e14baa5042e02957bed0',
+        'public-key' => 'PK_3667469c9f7e5b8229d8a9cb0586ade01e4d8659655',
+        'Content-Type' => 'application/json',
+    ];
+
+    $url = "https://vtpass.com/api/requery";
+    $payload = [
+        'request_id' => $transactionId,
+    ];
+
+    $response = Http::withHeaders($headers)
+        ->withoutVerifying()
+        ->post($url, $payload);
+
+    $responseData = $response->json();
+    Log::info('Full API Response:', ['response' => $responseData]);
+
+    // Check if response is successful
+    if ($response->failed() || !isset($responseData['code']) || $responseData['code'] !== '000') {
+        Log::error('Transaction fetch failed.', ['response' => $responseData]);
+        return back()->with('error', 'Transaction not found.');
     }
+
+    // Check if 'content' exists
+    if (!isset($responseData['content'])) {
+        Log::error('API response is missing content.', ['response' => $responseData]);
+        return back()->with('error', 'Transaction data is incomplete or not available.');
+    }
+
+    // Debug: Check what exists inside 'content'
+    Log::info('API Content Data:', ['content' => $responseData['content']]);
+
+    // Check if 'transactions' exists inside 'content'
+    if (!isset($responseData['content']['transactions'])) {
+        Log::error('Transaction data is missing inside content.', ['response' => $responseData['content']]);
+        return back()->with('error', 'Transaction data is incomplete or not available.');
+    }
+
+    $transaction = $responseData['content']['transactions'];
+
+    // Add extra details if available
+    $transaction['requestId'] = $responseData['requestId'] ?? 'N/A';
+    $transaction['transaction_date'] = $responseData['transaction_date'] ?? 'N/A';
+
+    Log::info('Final Transaction Data:', ['transaction' => $transaction]);
+
+    return view('reported.reports', compact('transaction'));
+}
+
+      
+
+    
 
     /**
      * Show the form for editing the specified resource.

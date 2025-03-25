@@ -100,7 +100,12 @@
                                         <td>₦{{ number_format($transaction->balance_after ?? 0, 2)}}</td>
                                         <td>{{ $transaction->created_at->format('d/m/Y') }}</td>
                                         <td>
-                                            <span class="material-icons-outlined reportedvisibility visib" data-toggle="modal" data-target="#reportedtransactionModal">visibility</span>
+                                            <span class="material-icons-outlined reportedvisibility visib " data-toggle="modal" data-target="#reportedtransactionModal">visibility</span>
+                                            <!-- view transaction -->
+                                            <a href="{{ route('reported.reports', $transaction->transaction_id) }}">
+                                                <span class="material-icons-outlined datavisibility visib">visibility</span>
+                                            </a>                                            
+                                            
                                         </td>
                                     </tr>
                                     @endforeach

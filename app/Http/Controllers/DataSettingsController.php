@@ -10,4 +10,5 @@ class DataSettingsController extends Controller
     {
         return view('data_settings.index');
     }
+
 }

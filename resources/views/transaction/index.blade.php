@@ -303,6 +303,8 @@
                                             <td>{{ $transaction->created_at->format('d/m/Y') }}</td>
                                             <td>
                                                 <span class="material-icons-outlined datavisibility visib" data-toggle="modal" data-target="#datatransactionModal">visibility</span>
+                                                
+
                                             </td>
                                         </tr>
                                         @endforeach

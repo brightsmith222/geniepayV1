@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+use App\Models\User;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SliderController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -16,6 +17,9 @@ use App\Http\Controllers\WalletTransactionsController;
 use App\Http\Controllers\DataSettingsController;
 use App\Livewire\SliderControllers;
 use App\Http\Controllers\ReportedController;
+use App\Http\Controllers\UserSearchController;
+use Livewire\Livewire;
+
 
 
 
@@ -59,6 +63,8 @@ Route::post('transaction/{id}/refund', [TransactionsController::class, 'refund']
 //Reported Transaction
 Route::get('reported', [ReportedController::class, 'index'])->name('reported.index');
 Route::post('reported/{id}/reportrefund', [ReportedController::class, 'reportedrefund'])->name('report.refund');
+Route::get('reported/{transactionId}', [ReportedController::class, 'show'])->name('reported.reports');
+//Route::get('reported/api/{requestId}', [ReportedController::class, 'queryApiStatus'])->name('reported.api.query');
 
 
   // Notification
@@ -68,6 +74,11 @@ Route::post('add-notification', [NotificationController::class, 'store'])->name(
 Route::get('edit-notification/{id}', [NotificationController::class, 'edit']);
 Route::post('update-notification/{id}', [NotificationController::class, 'update']);
 Route::get('delete-notification/{id}', [NotificationController::class, 'destroy']);
+
+
+// search user
+Route::get('/search-users', [UserSearchController::class, 'search'])->name('search.users');
+
 
   // Slider Routes
 Route::get('sliders', [SliderController::class, 'index'])->name('sliders');

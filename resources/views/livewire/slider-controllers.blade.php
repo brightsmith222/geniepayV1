@@ -1,9 +1,7 @@
 <div>
     <h1>Create New Slider</h1>
 
-    @if(session()->has('message'))
-        <div class="alert alert-success">{{ session('message') }}</div>
-    @endif
+   
 
     <!-- Upload Form -->
     <button type="button" class="btn btn-primary mb-4" data-toggle="modal" data-target="#uploadModal">
