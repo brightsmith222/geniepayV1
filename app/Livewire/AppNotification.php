@@ -99,7 +99,7 @@ protected function getListeners()
     ]);
 
     // Send the notification
-   // $this->sendNotification($notification);
+    $this->sendNotification($notification);
 
     // Emit an event to refresh the table
     $this->dispatch('notificationAdded');

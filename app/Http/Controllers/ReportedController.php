@@ -57,14 +57,15 @@ class ReportedController extends Controller
     return view('reported.index', compact('reportedTransactions'));
 }
 
-public function reportedrefund($id)
+public function reportedrefund($requestId) 
 {
-    // Find the specific transaction by its ID
-    $reportedtransaction = TransactionReport::findOrFail($id);
+    // Find by API transaction ID instead of primary key
+    $reportedtransaction = TransactionReport::where('transaction_id', $requestId)->first();
+   
 
     // Log the current status for debugging
     \Log::info('Checking transaction status:', [
-        'transaction_id' => $reportedtransaction->id,
+        'transaction_id' => $reportedtransaction->requestId,
         'status' => $reportedtransaction->status,
     ]);
 
@@ -74,7 +75,7 @@ public function reportedrefund($id)
     // Check if THIS SPECIFIC TRANSACTION is already refunded
     if ($status === 'refunded') {
         \Log::warning('Transaction already refunded:', [
-            'transaction_id' => $reportedtransaction->id,
+            'transaction_id' => $reportedtransaction->requestId,
         ]);
         return response()->json([
             'message' => 'This transaction has already been refunded',
@@ -83,12 +84,12 @@ public function reportedrefund($id)
     }
 
     // Find the user associated with this transaction
-    $user = User::where('username', $reportedtransaction->user)->first();
+    $user = User::where('username', $reportedtransaction->username)->first();
 
     if (!$user) {
         \Log::error('User not found for transaction:', [
-            'transaction_id' => $reportedtransaction->id,
-            'username' => $reportedtransaction->user,
+            'transaction_id' => $reportedtransaction->requestId,
+            'username' => $reportedtransaction->username,
         ]);
         return response()->json([
             'message' => 'User not found',
@@ -106,7 +107,7 @@ public function reportedrefund($id)
 
     // Log the updated status for debugging
     \Log::info('Transaction refunded successfully:', [
-        'transaction_id' => $reportedtransaction->id,
+        'transaction_id' => $reportedtransaction->requestId,
         'new_status' => $reportedtransaction->status,
     ]);
 
@@ -172,14 +173,6 @@ public function queryApiStatus($requestId)
 
      public function show($transactionId)
 {
-    /*
-    $headers = [
-        'api-key' => '6f8493837a1d4b0e5715fd72849cb087',
-        'secret-key' => 'SK_5139159efe5bb9bd7bec71f13cece42899e4d29611a',
-        'public-key' => 'PK_5438116e83f6e4454bb7055ddd5960b363a9661143b',
-        'Content-Type' => 'application/json',
-    ];
-*/
     //Live header
     $headers = [
         'api-key' => '7e34e6b7628b552ab6572a989ad28bf6',
@@ -193,45 +186,60 @@ public function queryApiStatus($requestId)
         'request_id' => $transactionId,
     ];
 
-    $response = Http::withHeaders($headers)
-        ->withoutVerifying()
-        ->post($url, $payload);
+    try {
+        $response = Http::withHeaders($headers)
+            ->withoutVerifying()
+            ->post($url, $payload);
 
-    $responseData = $response->json();
-    Log::info('Full API Response:', ['response' => $responseData]);
+        $responseData = $response->json();
+        Log::info('Full API Response:', ['response' => $responseData]);
 
-    // Check if response is successful
-    if ($response->failed() || !isset($responseData['code']) || $responseData['code'] !== '000') {
-        Log::error('Transaction fetch failed.', ['response' => $responseData]);
-        return back()->with('error', 'Transaction not found.');
+        // Check if response is successful
+        if ($response->failed() || !isset($responseData['code'])) {
+            Log::error('Transaction fetch failed.', ['response' => $responseData]);
+            return back()->with('error', 'Failed to fetch transaction details.');
+        }
+
+        // Check if transaction was successful
+        if ($responseData['code'] !== '000') {
+            Log::error('Transaction not successful.', ['response' => $responseData]);
+            return back()->with('error', 'Transaction not found or not successful.');
+        }
+
+        // Check if 'content' exists
+        if (!isset($responseData['content']) || !isset($responseData['content']['transactions'])) {
+            Log::error('API response is missing content or transactions.', ['response' => $responseData]);
+            return back()->with('error', 'Transaction data is incomplete or not available.');
+        }
+
+        $transaction = $responseData['content']['transactions'];
+
+        // Add additional details from the main response
+        $transaction['requestId'] = $responseData['requestId'] ?? 'N/A';
+        $transaction['transaction_date'] = $responseData['transaction_date'] ?? 'N/A';
+        $transaction['purchased_code'] = $responseData['purchased_code'] ?? 'N/A';
+        $transaction['response_description'] = $responseData['response_description'] ?? 'N/A';
+
+        // Format the transaction date
+        if ($transaction['transaction_date'] !== 'N/A') {
+            try {
+                $date = new \DateTime($transaction['transaction_date']);
+                $transaction['formatted_date'] = $date->format('jS M, Y h:i A');
+            } catch (\Exception $e) {
+                $transaction['formatted_date'] = $transaction['transaction_date'];
+            }
+        } else {
+            $transaction['formatted_date'] = 'N/A';
+        }
+
+        Log::info('Final Transaction Data:', ['transaction' => $transaction]);
+
+        return view('reported.reports', compact('transaction'));
+    } catch (\Exception $e) {
+        Log::error('API Error: ' . $e->getMessage());
+        return back()->with('error', 'Error fetching transaction details: ' . $e->getMessage());
     }
-
-    // Check if 'content' exists
-    if (!isset($responseData['content'])) {
-        Log::error('API response is missing content.', ['response' => $responseData]);
-        return back()->with('error', 'Transaction data is incomplete or not available.');
-    }
-
-    // Debug: Check what exists inside 'content'
-    Log::info('API Content Data:', ['content' => $responseData['content']]);
-
-    // Check if 'transactions' exists inside 'content'
-    if (!isset($responseData['content']['transactions'])) {
-        Log::error('Transaction data is missing inside content.', ['response' => $responseData['content']]);
-        return back()->with('error', 'Transaction data is incomplete or not available.');
-    }
-
-    $transaction = $responseData['content']['transactions'];
-
-    // Add extra details if available
-    $transaction['requestId'] = $responseData['requestId'] ?? 'N/A';
-    $transaction['transaction_date'] = $responseData['transaction_date'] ?? 'N/A';
-
-    Log::info('Final Transaction Data:', ['transaction' => $transaction]);
-
-    return view('reported.reports', compact('transaction'));
 }
-
       
 
     

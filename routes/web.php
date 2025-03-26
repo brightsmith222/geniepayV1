@@ -18,7 +18,6 @@ use App\Http\Controllers\DataSettingsController;
 use App\Livewire\SliderControllers;
 use App\Http\Controllers\ReportedController;
 use App\Http\Controllers\UserSearchController;
-use Livewire\Livewire;
 
 
 
