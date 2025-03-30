@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\DB;
 use App\Models\TransactionReport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -17,6 +18,28 @@ class ReportedController extends Controller
      */
     public function index(Request $request)
 {
+    if ($request->ajax()) {
+        $reports = TransactionReport::where('status', 'Reported')
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get()
+            ->map(function($report) {
+                return [
+                    'username' => $report->username,
+                    'service' => $report->service,
+                    'amount' => number_format($report->amount, 2),
+                    'service_plan' => $report->service_plan,
+                    'created_at' => $report->created_at->diffForHumans()
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'count' => TransactionReport::where('status', 'Reported')->count(),
+            'reports' => $reports
+        ]);
+    }
+
     // Default sorting column and direction
     $sortColumn = request('sort', 'created_at'); // Default to 'created_at'
     $sortDirection = request('direction', 'desc'); // Default to 'desc'
@@ -59,62 +82,108 @@ class ReportedController extends Controller
 
 public function reportedrefund($requestId) 
 {
-    // Find by API transaction ID instead of primary key
-    $reportedtransaction = TransactionReport::where('transaction_id', $requestId)->first();
-   
+    DB::beginTransaction();
+    
+    try {
+        // Find by API transaction ID instead of primary key
+        $reportedtransaction = TransactionReport::where('transaction_id', $requestId)->firstOrFail();
 
-    // Log the current status for debugging
-    \Log::info('Checking transaction status:', [
-        'transaction_id' => $reportedtransaction->requestId,
-        'status' => $reportedtransaction->status,
-    ]);
-
-    // Convert the status to lowercase for case-insensitive comparison
-    $status = strtolower($reportedtransaction->status);
-
-    // Check if THIS SPECIFIC TRANSACTION is already refunded
-    if ($status === 'refunded') {
-        \Log::warning('Transaction already refunded:', [
+        // Log the current status for debugging
+        \Log::info('Checking transaction status:', [
             'transaction_id' => $reportedtransaction->requestId,
+            'status' => $reportedtransaction->status,
         ]);
-        return response()->json([
-            'message' => 'This transaction has already been refunded',
-            'type' => 'error', // Add a type to differentiate between success and error
-        ], 400);
-    }
 
-    // Find the user associated with this transaction
-    $user = User::where('username', $reportedtransaction->username)->first();
+        // Convert the status to lowercase for case-insensitive comparison
+        $status = strtolower($reportedtransaction->status);
 
-    if (!$user) {
-        \Log::error('User not found for transaction:', [
+        // Check if THIS SPECIFIC TRANSACTION is already refunded
+        if ($status === 'refunded') {
+            \Log::warning('Transaction already refunded:', [
+                'transaction_id' => $reportedtransaction->requestId,
+            ]);
+            return response()->json([
+                'message' => 'This transaction has already been refunded',
+                'type' => 'error',
+            ], 400);
+        }
+
+        // Find the user associated with this transaction
+        $user = User::where('username', $reportedtransaction->username)->first();
+
+        if (!$user) {
+            \Log::error('User not found for transaction:', [
+                'transaction_id' => $reportedtransaction->requestId,
+                'username' => $reportedtransaction->username,
+            ]);
+            return response()->json([
+                'message' => 'User not found',
+                'type' => 'error',
+            ], 404);
+        }
+
+        // Store previous balance for verification
+        $previousBalance = $user->wallet_balance;
+        $expectedBalance = $previousBalance + $reportedtransaction->amount;
+
+        // Refund the amount to the user's wallet
+        $user->wallet_balance = $expectedBalance;
+
+        if (!$user->save()) {
+            \Log::error('Failed to update user balance:', [
+                'user_id' => $user->id,
+                'transaction_id' => $reportedtransaction->requestId
+            ]);
+            throw new \Exception('Failed to update user balance');
+        }
+
+        // Refresh user balance from DB and verify the update
+        $user->refresh();
+        
+        // Compare with a small epsilon to account for floating point precision
+        if (abs($user->wallet_balance - $expectedBalance) > 0.0001) {
+            \Log::error('Balance update verification failed:', [
+                'expected' => $expectedBalance,
+                'actual' => $user->wallet_balance,
+                'difference' => abs($user->wallet_balance - $expectedBalance)
+            ]);
+            throw new \Exception('Balance update verification failed');
+        }
+
+        // Update THIS SPECIFIC TRANSACTION'S status to "refunded"
+        $reportedtransaction->status = 'Refunded';
+        if (!$reportedtransaction->save()) {
+            \Log::error('Failed to update transaction status:', [
+                'transaction_id' => $reportedtransaction->requestId
+            ]);
+            throw new \Exception('Failed to update transaction status');
+        }
+
+        DB::commit();
+
+        \Log::info('Transaction refunded successfully:', [
             'transaction_id' => $reportedtransaction->requestId,
-            'username' => $reportedtransaction->username,
+            'new_status' => $reportedtransaction->status,
+            'user_new_balance' => $user->wallet_balance
         ]);
+
         return response()->json([
-            'message' => 'User not found',
-            'type' => 'error', // Add a type to differentiate between success and error
-        ], 404);
+            'message' => 'Refund successful',
+            'type' => 'success',
+        ], 200);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        \Log::error('Refund failed:', [
+            'error' => $e->getMessage(),
+            'request_id' => $requestId
+        ]);
+        
+        return response()->json([
+            'message' => 'An error occurred: ' . $e->getMessage(),
+            'type' => 'error',
+        ], 500);
     }
-
-    // Refund the amount to the user's wallet
-    $user->wallet_balance += $reportedtransaction->amount;
-    $user->save();
-
-    // Update THIS SPECIFIC TRANSACTION'S status to "refunded"
-    $reportedtransaction->status = 'Refunded';
-    $reportedtransaction->save();
-
-    // Log the updated status for debugging
-    \Log::info('Transaction refunded successfully:', [
-        'transaction_id' => $reportedtransaction->requestId,
-        'new_status' => $reportedtransaction->status,
-    ]);
-
-    return response()->json([
-        'message' => 'Refund successful',
-        'type' => 'success', // Add a type to differentiate between success and error
-    ], 200);
 }
 
 public function queryApiStatus($requestId)
@@ -194,24 +263,6 @@ public function queryApiStatus($requestId)
         $responseData = $response->json();
         Log::info('Full API Response:', ['response' => $responseData]);
 
-        // Check if response is successful
-        if ($response->failed() || !isset($responseData['code'])) {
-            Log::error('Transaction fetch failed.', ['response' => $responseData]);
-            return back()->with('error', 'Failed to fetch transaction details.');
-        }
-
-        // Check if transaction was successful
-        if ($responseData['code'] !== '000') {
-            Log::error('Transaction not successful.', ['response' => $responseData]);
-            return back()->with('error', 'Transaction not found or not successful.');
-        }
-
-        // Check if 'content' exists
-        if (!isset($responseData['content']) || !isset($responseData['content']['transactions'])) {
-            Log::error('API response is missing content or transactions.', ['response' => $responseData]);
-            return back()->with('error', 'Transaction data is incomplete or not available.');
-        }
-
         $transaction = $responseData['content']['transactions'];
 
         // Add additional details from the main response
@@ -224,7 +275,7 @@ public function queryApiStatus($requestId)
         if ($transaction['transaction_date'] !== 'N/A') {
             try {
                 $date = new \DateTime($transaction['transaction_date']);
-                $transaction['formatted_date'] = $date->format('jS M, Y h:i A');
+                $transaction['formatted_date'] = $date->format('M d, Y - h:iA');
             } catch (\Exception $e) {
                 $transaction['formatted_date'] = $transaction['transaction_date'];
             }

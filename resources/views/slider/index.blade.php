@@ -93,28 +93,13 @@
 
 <!-- Pagination Links -->
 <div class="d-flex justify-content-center mt-4">
-    {{ $sliders->links() }}
+    {{ $sliders->links('vendor.pagination.bootstrap-4') }}
 </div>
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-    const paginationLinks = document.querySelectorAll('.pagination a');
+    const paginationLinks = document.querySelectorAll('.pagination');
 
-    // Save the current page to localStorage when a pagination link is clicked
-    paginationLinks.forEach(link => {
-      link.addEventListener('click', function (e) {
-        const page = new URL(link.href).searchParams.get('page');
-        localStorage.setItem('sliderCurrentPage', page);
-      });
-    });
-
-    // Restore the current page from localStorage
-    const currentPage = localStorage.getItem('sliderCurrentPage');
-    if (currentPage) {
-      const url = new URL(window.location.href);
-      url.searchParams.set('page', currentPage);
-      window.location.href = url.toString();
-    }
 
     // SweetAlert2 Delete Confirmation
     const deleteForms = document.querySelectorAll('.delete-form');

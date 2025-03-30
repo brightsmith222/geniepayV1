@@ -4,4 +4,8 @@
 
 @livewire('app-notification')
 
-@stop
+@endsection
+
+@section('scripts')
+    <script src="{{ URL::to('assets/js/notification.js')}}"></script>
+@endsection

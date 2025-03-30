@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\DB;
 use App\Models\WalletTransactions;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -55,63 +56,108 @@ class WalletTransactionsController extends Controller
 
 public function walletrefund($id)
 {
-    // Find the specific transaction by its ID
-    $transaction = WalletTransactions::findOrFail($id);
+    DB::beginTransaction();
+    
+    try {
+        // Find the specific transaction by its ID
+        $transaction = WalletTransactions::findOrFail($id);
 
-    // Log the current status for debugging
-    \Log::info('Checking transaction status:', [
-        'transaction_id' => $transaction->id,
-        'status' => $transaction->status,
-    ]);
-
-    // Convert the status to lowercase for case-insensitive comparison
-    $status = strtolower($transaction->status);
-
-    // Check if THIS SPECIFIC TRANSACTION is already refunded
-    if ($status === 'refunded') {
-        \Log::warning('Transaction already refunded:', [
+        \Log::info('Checking transaction status:', [
             'transaction_id' => $transaction->id,
+            'status' => $transaction->status,
         ]);
-        return response()->json([
-            'message' => 'This transaction has already been refunded',
-            'type' => 'error', // Add a type to differentiate between success and error
-        ], 400);
-    }
 
-    // Find the user associated with this transaction
-    $user = User::where('username', $transaction->user)->first();
+        // Convert the status to lowercase for case-insensitive comparison
+        $status = strtolower($transaction->status);
 
-    if (!$user) {
-        \Log::error('User not found for transaction:', [
+        // Check if THIS SPECIFIC TRANSACTION is already refunded
+        if ($status === 'refunded') {
+            \Log::warning('Transaction already refunded:', [
+                'transaction_id' => $transaction->id,
+            ]);
+            return response()->json([
+                'message' => 'This transaction has already been refunded',
+                'type' => 'error',
+            ], 400);
+        }
+
+        // Find the user associated with this transaction
+        $user = User::where('username', $transaction->user)->first();
+
+        if (!$user) {
+            \Log::error('User not found for transaction:', [
+                'transaction_id' => $transaction->id,
+                'username' => $transaction->user,
+            ]);
+            return response()->json([
+                'message' => 'User not found',
+                'type' => 'error',
+            ], 404);
+        }
+
+        // Store previous balance for verification
+        $previousBalance = $user->wallet_balance;
+        $expectedBalance = $previousBalance + $transaction->amount;
+
+        // Refund the amount to the user's wallet
+        $user->wallet_balance = $expectedBalance;
+
+        if (!$user->save()) {
+            \Log::error('Failed to update user balance:', [
+                'user_id' => $user->id,
+                'transaction_id' => $transaction->id
+            ]);
+            throw new \Exception('Failed to update user balance');
+        }
+
+        // Refresh user balance from DB and verify the update
+        $user->refresh();
+        
+        // Compare with a small epsilon to account for floating point precision
+        if (abs($user->wallet_balance - $expectedBalance) > 0.0001) {
+            \Log::error('Balance update verification failed:', [
+                'expected' => $expectedBalance,
+                'actual' => $user->wallet_balance,
+                'difference' => abs($user->wallet_balance - $expectedBalance)
+            ]);
+            throw new \Exception('Balance update verification failed');
+        }
+
+        // Update THIS SPECIFIC TRANSACTION'S status to "refunded"
+        $transaction->status = 'Refunded';
+        if (!$transaction->save()) {
+            \Log::error('Failed to update transaction status:', [
+                'transaction_id' => $transaction->id
+            ]);
+            throw new \Exception('Failed to update transaction status');
+        }
+
+        DB::commit();
+
+        \Log::info('Transaction refunded successfully:', [
             'transaction_id' => $transaction->id,
-            'username' => $transaction->user,
+            'new_status' => $transaction->status,
+            'user_new_balance' => $user->wallet_balance
         ]);
+
         return response()->json([
-            'message' => 'User not found',
-            'type' => 'error', // Add a type to differentiate between success and error
-        ], 404);
+            'message' => 'Refund successful',
+            'type' => 'success',
+        ], 200);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        \Log::error('Refund failed:', [
+            'error' => $e->getMessage(),
+            'transaction_id' => $id ?? null
+        ]);
+        
+        return response()->json([
+            'message' => 'An error occurred: ' . $e->getMessage(),
+            'type' => 'error',
+        ], 500);
     }
-
-    // Refund the amount to the user's wallet
-    $user->wallet_balance += $transaction->amount;
-    $user->save();
-
-    // Update THIS SPECIFIC TRANSACTION'S status to "refunded"
-    $transaction->status = 'Refunded';
-    $transaction->save();
-
-    // Log the updated status for debugging
-    \Log::info('Transaction refunded successfully:', [
-        'transaction_id' => $transaction->id,
-        'new_status' => $transaction->status,
-    ]);
-
-    return response()->json([
-        'message' => 'Refund successful',
-        'type' => 'success', // Add a type to differentiate between success and error
-    ], 200);
 }
-
 
     /**
      * Show the form for creating a new resource.

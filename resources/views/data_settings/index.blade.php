@@ -4,4 +4,8 @@
 
 @livewire('data-setting')
 
-@stop
+@endsection
+
+@section('scripts')
+    <script src="{{ URL::to('assets/js/data.js')}}"></script>
+@endsection

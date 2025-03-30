@@ -91,44 +91,79 @@ class TransactionsController extends Controller
 
     //Refund user failed transaction
     public function refund($id)
-    {
+{
+    try {
         // Find the specific transaction by its ID
         $transaction = Transactions::findOrFail($id);
-    
+
         // Convert the status to lowercase for case-insensitive comparison
         $status = strtolower($transaction->status);
-    
+
         // Check if THIS SPECIFIC TRANSACTION is already refunded
         if ($status === 'refunded') {
             return response()->json([
                 'message' => 'This transaction has already been refunded',
-                'type' => 'error', // Error type for already refunded
+                'type' => 'error',
             ], 400);
         }
-    
+
         // Find the user associated with this transaction
-        $user = User::where('username', $transaction->user)->first();
-    
+        $user = User::where('username', $transaction->username)->first();
+
         if (!$user) {
             return response()->json([
                 'message' => 'User not found',
-                'type' => 'error', // Error type for user not found
+                'type' => 'error',
             ], 404);
         }
-    
+
+        // Store previous balance for verification
+        $previousBalance = $user->wallet_balance;
+        $expectedBalance = $previousBalance + $transaction->amount;
+
         // Refund the amount to the user's wallet
-        $user->wallet_balance += $transaction->amount;
-        $user->save();
-    
+        $user->wallet_balance = $expectedBalance;
+
+        // Save the user and check if the update was successful
+        if (!$user->save()) {
+            return response()->json([
+                'message' => 'Failed to update user balance',
+                'type' => 'error',
+            ], 500);
+        }
+
+        // Refresh user balance from DB and verify the update
+        $user->refresh();
+        
+        // Compare with a small epsilon to account for floating point precision
+        if (abs($user->wallet_balance - $expectedBalance) > 0.0001) {
+            return response()->json([
+                'message' => 'Balance update verification failed',
+                'type' => 'error',
+            ], 500);
+        }
+
         // Update THIS SPECIFIC TRANSACTION'S status to "refunded"
         $transaction->status = 'Refunded';
-        $transaction->save();
-    
+        if (!$transaction->save()) {
+            return response()->json([
+                'message' => 'Failed to update transaction status',
+                'type' => 'error',
+            ], 500);
+        }
+
         return response()->json([
             'message' => 'Refund successful',
-            'type' => 'success', // Success type for successful refund
+            'type' => 'success',
         ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'An error occurred: ' . $e->getMessage(),
+            'type' => 'error',
+        ], 500);
     }
+}
     
 
 

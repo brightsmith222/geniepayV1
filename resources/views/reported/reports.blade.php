@@ -74,9 +74,7 @@
                                                 <div class="d-flex flex-column">
                                                     <div class="d-flex gap-10 align-content-center align-items-center">
                                                         <p class="summary-title">API Trans Status</p>
-                                                        <span data-toggle="tooltip" data-placement="bottom" data-html="true" title="" class="tooltip-x circle-xs neutral-500-bg" data-original-title="You have been charged and we confirm that service/value has been successfully delivered">
-                                                            <span class="fa fa-info text-white" style="font-size: 6px;"></span>
-                                                        </span>
+                                                        
                                                     </div>
                                                     <div class="d-block">
                                                         <span class="badge text-center green-100-bg green-500-text">
@@ -140,6 +138,59 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="d-flex d-lg-none flex-column">
+                            <div class="d-flex gap-10 align-content-center align-items-center">
+                                <div class="circle-xl neutral-300-bg align-self-start">
+                                    <div class="circle-xl">
+                                       <div class="circle-xl blue-100-bg">
+                                                <img src="img/wallet.png" width="50px" class="img-fluid" style="">
+                                       </div>
+                                    </div>
+                                </div>  
+                             </div>
+                            <hr class="w-100">  
+                            <div class="d-flex flex-column flex-wrap gap-10">
+                                <div class="d-flex gap-15 justify-content-between mb-0">
+                                    <p class="mb-0 neutral-600-text">Service Name:</p>
+                                    <p class="mb-0 font-weight-bold neutral-950-text">{{ $transaction['product_name'] ?? 'N/A' }}</p>
+                                </div>
+            
+                                <div class="d-flex gap-15 justify-content-between mb-0">
+                                    <p class="mb-0 neutral-600-text">Recipient:</p>
+                                    <p class="mb-0 font-weight-bold neutral-950-text">
+                                        {{ $transaction['unique_element'] ?? 'N/A' }}</p>
+                                </div>
+            
+                                <div class="d-flex gap-15 justify-content-between mb-0">
+                                    <p class="mb-0 neutral-600-text">Amount:</p>
+                                    <p class="mb-0 font-weight-bold neutral-950-text">
+                                        ₦{{ number_format($transaction['total_amount'] ?? 0, 2) }}</p>
+                                </div>
+                                
+                                <div class="d-flex gap-15 justify-content-between mb-0">
+                                        <div class="mb-0 neutral-600-text d-flex gap-10 align-content-center align-items-center">
+                                            <span> API Trans Status Insight:</span>
+                                            
+                                        </div>
+                                        <p class="mb-0 font-weight-bold neutral-950-text">
+                                            <span class="badge text-center green-100-bg green-500-text">{{ $transaction['status'] ?? 'N/A' }}</span>
+                                        </p>
+                                </div>
+                               <div class="d-flex gap-15 justify-content-between mb-0">
+                                            <p class="mb-0 neutral-600-text">Commission Earned:</p>
+                                            <div class="d-flex justify-content-between mb-0">
+                                                <p class="mb-0 font-weight-bold neutral-950-text"></p>
+                                                <p class="mb-0 mr-2">₦{{ number_format($transaction['commission'] ?? 0, 2) }}</p>
+                                                  <span class="badge text-center green-100-bg green-500-text">Paid</span>
+                                                <p></p>
+                                            </div>
+                                </div>
+                                <div class="d-flex gap-15 justify-content-between mb-0">
+                                    <p class="mb-0 neutral-600-text">Transaction Date:</p>
+                                    <p class="mb-0 font-weight-bold neutral-950-text">{{ $transaction['formatted_date'] ?? 'N/A' }}</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -182,7 +233,7 @@
                         <div>
                             <button class="btn blue-100-bg neutral-500-text mb-0 py-1">
                                 <div class="d-flex align-content-center align-items-center justify-content-between gap-15">
-                                    <span>Oct 29, 2024 - 03:49AM</span>
+                                    <span>{{ $transaction['formatted_date'] ?? 'N/A' }}</span>
         
                                     <svg width="14" height="16" viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M5 1V2H9V1C9 0.46875 9.4375 0 10 0C10.5312 0 11 0.46875 11 1V2H12.5C13.3125 2 14 2.6875 14 3.5V5H0V3.5C0 2.6875 0.65625 2 1.5 2H3V1C3 0.46875 3.4375 0 4 0C4.53125 0 5 0.46875 5 1ZM0 6H14V14.5C14 15.3438 13.3125 16 12.5 16H1.5C0.65625 16 0 15.3438 0 14.5V6ZM2 9.5C2 9.78125 2.21875 10 2.5 10H3.5C3.75 10 4 9.78125 4 9.5V8.5C4 8.25 3.75 8 3.5 8H2.5C2.21875 8 2 8.25 2 8.5V9.5ZM6 9.5C6 9.78125 6.21875 10 6.5 10H7.5C7.75 10 8 9.78125 8 9.5V8.5C8 8.25 7.75 8 7.5 8H6.5C6.21875 8 6 8.25 6 8.5V9.5ZM10.5 8C10.2188 8 10 8.25 10 8.5V9.5C10 9.78125 10.2188 10 10.5 10H11.5C11.75 10 12 9.78125 12 9.5V8.5C12 8.25 11.75 8 11.5 8H10.5ZM2 13.5C2 13.7812 2.21875 14 2.5 14H3.5C3.75 14 4 13.7812 4 13.5V12.5C4 12.25 3.75 12 3.5 12H2.5C2.21875 12 2 12.25 2 12.5V13.5ZM6.5 12C6.21875 12 6 12.25 6 12.5V13.5C6 13.7812 6.21875 14 6.5 14H7.5C7.75 14 8 13.7812 8 13.5V12.5C8 12.25 7.75 12 7.5 12H6.5ZM10 13.5C10 13.7812 10.2188 14 10.5 14H11.5C11.75 14 12 13.7812 12 13.5V12.5C12 12.25 11.75 12 11.5 12H10.5C10.2188 12 10 12.25 10 12.5V13.5Z" fill="#737375"></path>
@@ -225,7 +276,7 @@
                                 <div class="px-3">
                                     <div class="d-flex justify-content-between align-content-center align-items-center">
                                         <p class="summary-title">Payment Method</p>
-                                        <p class="neutral-950-text text-end">Wallet</p>
+                                        <p class="neutral-950-text text-end">{{ $transaction['method'] ?? 'N/A' }}</p>
                                     </div>
                                 </div>
                                 <hr>
@@ -233,7 +284,7 @@
                                 <div class="px-3">
                                     <div class="d-flex justify-content-between align-content-center align-items-center">
                                         <p class="summary-title">Transaction ID</p>
-                                        <p class="neutral-950-text text-end">17301665551192763420169727</p>
+                                        <p class="neutral-950-text text-end">{{ $transaction['transactionId'] ?? 'N/A' }}</p>
                                     </div>
                                 </div>
                                 <hr>
@@ -241,8 +292,8 @@
                                  <div class="px-3">
                                     <div class="d-flex justify-content-between align-content-center align-items-center">
                                         <p class="summary-title">Amount</p>
-                                        <p class="neutral-950-text text-end">₦ 2000 + ₦0
-                                            <i class="conv_fee">(Convenience Fee)</i>
+                                        <p class="neutral-950-text text-end">₦{{ number_format($transaction['amount'] ?? 0, 2) }} +
+                                            <i class="conv_fee">₦{{ number_format($transaction['convinience_fee'] ?? 0, 2) }}(Convinience Fee)</i>
                                         </p>
                                     </div>
                                 </div>
@@ -250,7 +301,7 @@
                                 <div class="px-3">
                                     <div class="d-flex justify-content-between align-content-center align-items-center">
                                         <p class="summary-title">Total Amount Payable</p>
-                                        <p class="neutral-950-text text-end">₦1,976.00</p>
+                                        <p class="neutral-950-text text-end">₦{{ number_format($transaction['total_amount'] ?? 0, 2) }}</p>
                                     </div>
                                 </div>
                                 <hr>
@@ -452,5 +503,8 @@
                 </div>
             </div>
     </div>
+    @endsection
 
-@stop
+    @section('scripts')
+        <script src="{{ URL::to('assets/js/reported.js')}}"></script>
+    @endsection

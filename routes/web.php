@@ -18,6 +18,7 @@ use App\Http\Controllers\DataSettingsController;
 use App\Livewire\SliderControllers;
 use App\Http\Controllers\ReportedController;
 use App\Http\Controllers\UserSearchController;
+use App\Http\Controllers\SettingsController;
 
 
 
@@ -35,6 +36,7 @@ Route::get('/', function (Request $request) {
 //Dashboard
 Route::get('dashboard', [AdminDashboardController::class, 'myAdmin'])->name('dashboard');
 Route::get('/filter-data', [AdminDashboardController::class, 'filterData']);
+Route::get('/get-wallet-balance', [AdminDashboardController::class, 'getWalletBalance'])->name('get.wallet.balance');
 
 //Users
 Route::match(['get', 'post'], 'users', [UsersController::class, 'index'])->name('users.index');
@@ -63,7 +65,6 @@ Route::post('transaction/{id}/refund', [TransactionsController::class, 'refund']
 Route::get('reported', [ReportedController::class, 'index'])->name('reported.index');
 Route::post('reported/{id}/reportrefund', [ReportedController::class, 'reportedrefund'])->name('report.refund');
 Route::get('reported/{transactionId}', [ReportedController::class, 'show'])->name('reported.reports');
-//Route::get('reported/api/{requestId}', [ReportedController::class, 'queryApiStatus'])->name('reported.api.query');
 
 
   // Notification
@@ -87,7 +88,8 @@ Route::get('edit-slider/{id}', [SliderController::class, 'edit'])->name('edit-sl
 Route::post('update-slider/{id}', [SliderController::class, 'update'])->name('update-slider');
 Route::delete('delete-slider/{id}', [SliderController::class, 'destroy'])->name('delete-slider');
 
-
+  // Settings Routes
+  Route::get('settings', [SettingsController::class, 'index'])->name('setting');
 
 
 

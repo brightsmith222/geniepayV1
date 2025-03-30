@@ -92,7 +92,7 @@
                     </table>
                 </div>
                 <div class="d-flex justify-content-center mt-4">
-                    {{ $users->links() }}
+                    {{ $users->links('vendor.pagination.bootstrap-4') }}
                 </div>
             </div>
         </div>

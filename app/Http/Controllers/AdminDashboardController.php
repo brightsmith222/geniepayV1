@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Transactions;
 use App\Models\TransactionReport;
+use Illuminate\Support\Facades\Http;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -12,22 +13,63 @@ use Illuminate\Support\Facades\Log;
 class AdminDashboardController extends Controller
 {
     public function myAdmin(Request $request)
-    {
-        // Default filter (Today)
-        $filter = $request->input('filter', 'all_time');
+{
 
-        // Get data based on the filter
-        $data = $this->getFilteredData($filter);
+    // Default filter (Today)
+    $filter = $request->input('filter', 'all_time');
 
-        // Add the filter to the data array
-        $data['filter'] = $filter;
+    // Get data based on the filter
+    $data = $this->getFilteredData($filter);
 
-        // Debugging: Log the data being passed to the view
-        Log::info('Data passed to view:', $data);
+    // Add filter and transaction to the data array
+    $data['filter'] = $filter;
 
-        // Pass data to the view
-        return view('dashboard', $data);
+    // Debugging: Log the data being passed to the view
+    Log::info('Data passed to view:', $data);
+
+    // Pass data to the view
+    return view('dashboard', $data);
+}
+
+public function getWalletBalance()
+{
+    $headers = [
+        'api-key' => '6f8493837a1d4b0e5715fd72849cb087',
+        'secret-key' => 'SK_5139159efe5bb9bd7bec71f13cece42899e4d29611a',
+        'public-key' => 'PK_5438116e83f6e4454bb7055ddd5960b363a9661143b',
+        'Content-Type' => 'application/json',
+    ];
+
+    $url = "https://sandbox.vtpass.com/api/balance";
+    $response = Http::withHeaders($headers)->withoutVerifying()->get($url);
+
+    if ($response->failed()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to fetch balance',
+            'error' => $response->json()
+        ], 500);
     }
+
+    $responseData = $response->json();
+    
+    // Check if the response has the expected structure
+    if (!isset($responseData['contents']['balance'])) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid balance response structure',
+            'response' => $responseData
+        ], 500);
+    }
+
+    return response()->json([
+        'success' => true,
+        'balance' => number_format($responseData['contents']['balance'], 2),
+        'raw_response' => $responseData 
+    ]);
+}
+
+
 
     public function filterData(Request $request)
     {

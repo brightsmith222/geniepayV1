@@ -154,7 +154,7 @@
                                     </table>
                                 </div>
                                 <div class="d-flex justify-content-center mt-4">
-                                    {{ $transactions->links() }}
+                                    {{ $transactions->links('vendor.pagination.bootstrap-4') }}
                                 </div>
                                 <!-- Transaction Details Modal -->
                                 @foreach($transactions as $transaction)
@@ -465,7 +465,7 @@
                                 </table>
                             </div>
                             <div class="d-flex justify-content-center mt-4">
-                                {{ $airtimeTransactions->links() }}
+                                {{ $airtimeTransactions->links('vendor.pagination.bootstrap-4') }}
                             </div>
                             <!-- Airtime Details Modal -->
                             @foreach($airtimeTransactions as $transaction)
@@ -618,7 +618,7 @@
                                 </table>
                             </div>
                             <div class="d-flex justify-content-center mt-4">
-                                {{ $cableTransactions->links() }}
+                                {{ $cableTransactions->links('vendor.pagination.bootstrap-4') }}
                             </div>
                             <!-- Cable Details Modal -->
                             @foreach($cableTransactions as $transaction)
@@ -772,7 +772,7 @@
                                 </table>
                             </div>
                             <div class="d-flex justify-content-center mt-4">
-                                {{ $electricityTransactions->links() }}
+                                {{ $electricityTransactions->links('vendor.pagination.bootstrap-4') }}
                             </div>
                             <!-- Electricity Details Modal -->
                             @foreach($electricityTransactions as $transaction)
@@ -926,7 +926,7 @@
                                 </table>
                             </div>
                             <div class="d-flex justify-content-center mt-4">
-                                {{ $examTransactions->links() }}
+                                {{ $examTransactions->links('vendor.pagination.bootstrap-4') }}
                             </div>
                             <!-- Exam Details Modal -->
                             @foreach($examTransactions as $transaction)
@@ -977,32 +977,9 @@
         </div>
 </div>
 
-<script>
-    function filterData(filter, type, startDate = null, endDate = null) {
-    let url = `/filter-data`;
-    let formData = new FormData();
-    formData.append('filter', filter);
-    formData.append('type', type);
-    if (startDate && endDate) {
-        formData.append('startDate', startDate);
-        formData.append('endDate', endDate);
-    }
 
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-        },
-        body: formData,
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log(data); // Log the server response
-        // Update the UI with the filtered data
-    })
-    .catch(error => console.error('Error fetching data:', error));
-}
-</script>
+@endsection
 
-@stop
+@section('scripts')
+    <script src="{{ URL::to('assets/js/transactions.js')}}"></script>
+@endsection

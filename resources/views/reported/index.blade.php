@@ -114,7 +114,7 @@
                             </table>
                         </div>
                         <div class="d-flex justify-content-center mt-4">
-                            {{ $reportedTransactions->links() }}
+                            {{ $reportedTransactions->links('vendor.pagination.bootstrap-4') }}
                         </div>
                         <!-- Transaction Details Modal -->
     @foreach($reportedTransactions as $transaction)
@@ -164,5 +164,9 @@
                 </div>
             </div>
         </div>
+    @endsection
 
-@stop
+    @section('scripts')
+        <script src="{{ URL::to('assets/js/reported.js')}}"></script>
+    @endsection
+    

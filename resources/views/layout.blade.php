@@ -14,6 +14,9 @@
   <link href="{{ URL::to('nexhublogo.png')}}" rel="icon">
   <link href="{{ URL::to('nexhublogo.png')}}" rel="apple-touch-icon">
 
+  <!-- Font awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
   <!-- Google Fonts -->
   <link href="https://fonts.gstatic.com" rel="preconnect">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -90,6 +93,7 @@
             <li><a href="{{ URL::to('sliders') }}"><span class="material-icons-outlined">person</span> Slider</a></li>
             <li><a href="{{ URL::to('data_settings')}}"><span class="material-icons-outlined">assignment</span> Data Settings</a></li>
             <li><a href="{{ URL::to('notifications') }}"><span class="material-icons-outlined">group</span> Notification</a></li>
+            <li><a href="{{ URL::to('settings') }}"><span class="material-icons-outlined">group</span> Settings</a></li>
         </ul>
     </div>
 
@@ -144,6 +148,9 @@
 
   <!-- Template Main JS File -->
   <script src="{{ URL::to('assets/js/script.js')}}"></script>
+
+    <!-- Yield script for each page -->
+    @yield('scripts')
 
     
 
