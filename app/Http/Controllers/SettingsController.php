@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Settings;
 use Illuminate\Http\Request;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class SettingsController extends Controller
 {
@@ -12,8 +15,12 @@ class SettingsController extends Controller
      */
     public function index()
     {
-        return view('settings.index');
+        // Get the authenticated user's data
+        $user = Auth::user();
+        return view('settings.index', compact('user'));
     }
+
+
 
     /**
      * Show the form for creating a new resource.

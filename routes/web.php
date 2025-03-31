@@ -102,9 +102,10 @@ Route::get('edit-slider/{id}', [SliderController::class, 'edit'])->name('edit-sl
 Route::post('update-slider/{id}', [SliderController::class, 'update'])->name('update-slider');
 Route::delete('delete-slider/{id}', [SliderController::class, 'destroy'])->name('delete-slider');
 
-  // Settings Routes
-  Route::get('settings', [SettingsController::class, 'index'])->name('setting');
-  
+// Settings Routes
+Route::get('settings', [SettingsController::class, 'index'])->name('settings');
+Route::post('settings/profile', [SettingsController::class, 'updateProfile'])->name('settings.profile.update');
+Route::post('settings/password', [SettingsController::class, 'updatePassword'])->name('settings.password.update');
 });
 
 

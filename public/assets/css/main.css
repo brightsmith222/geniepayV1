@@ -2074,3 +2074,35 @@ margin-bottom: 0 !important;
         padding: 20px;
     }
 }
+
+.spinner-border {
+    vertical-align: middle;
+    margin-left: 5px;
+}
+
+.error {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+.alert {
+    padding: 0.75rem 1.25rem;
+    margin-top: 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.25rem;
+    display: none;
+}
+
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}

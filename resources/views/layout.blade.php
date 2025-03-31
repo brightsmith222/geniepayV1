@@ -74,10 +74,10 @@
             <img src="{{ URL::to('assets/img/avatar.png')}}" alt="Avatar" class="avatar rounded-circle" id="avatarDropdown" width="40" height="40" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <div class="dropdown-menu" id="profileMenu">
                 <a class="dropdown-item" href="#">Profile</a>
-                <form id="logout-form" action="{{ route('admin.logout') }}" method="POST" style="display: none;">
+                <form id="logout-forms" action="{{ route('admin.logout') }}" method="POST" style="display: none;">
                   @csrf
               </form>
-              <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"> Logout
+              <a href="#" onclick="event.preventDefault(); document.getElementById('logout-forms').submit();"> Logout
               </a>
             </div>
         </div>
