@@ -15,12 +15,22 @@ class SettingController extends Component
     public $current_password;
     public $new_password;
     public $new_password_confirmation;
+    public $activeTab = 'profile';
+
+    public function setActiveTab($tab)
+    {
+        $this->activeTab = $tab;
+        session()->put('active_tab', $tab);
+    }
+    
 
     public function mount()
     {
         $user = Auth::user();
         $this->name = $user->full_name;
         $this->email = $user->email;
+
+        $this->activeTab = session()->get('active_tab', 'profile');
     }
 
     public function updateProfile()
@@ -47,7 +57,10 @@ class SettingController extends Component
 
         if (!Hash::check($this->current_password, Auth::user()->password)) {
             $this->addError('current_password', 'Current password is incorrect');
-            return;
+            flash()->error('Current password is incorrect');
+
+            session()->put('active_tab', 'security');
+            $this->activeTab = 'security';
         }
 
         Auth::user()->update([
@@ -57,6 +70,8 @@ class SettingController extends Component
         flash()->success('Password changed successfully!');
 
         $this->reset(['current_password', 'new_password', 'new_password_confirmation']);
+        session()->put('active_tab', 'security');
+        $this->activeTab = 'security';
     }
 
     public function render()

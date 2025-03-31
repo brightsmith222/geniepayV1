@@ -1578,12 +1578,13 @@ margin-bottom: 0 !important;
         color: #333;
     }
     
-    .menu-item.active {
+    .active-tab {
         color: #0066cc;
         border-left: 3px solid #0066cc;
         background-color: white;
         font-weight: 500;
     }
+    
     
     .menu-item i {
         margin-right: 10px;

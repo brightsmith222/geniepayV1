@@ -1,36 +1,42 @@
 <div class="settings-container">
     <div class="settings-menu">
         <div class="menu-category">ACCOUNT</div>
-        <div class="menu-item active" data-section="profile">
+        <div wire:click="setActiveTab('profile')" 
+        class="menu-item {{ $activeTab === 'profile' ? 'active-tab' : '' }}">
             <i class="fas fa-user"></i>
             Profile
         </div>
-        <div class="menu-item" data-section="security">
+        <div wire:click="setActiveTab('security')" 
+        class="menu-item {{ $activeTab === 'security' ? 'active-tab' : '' }}">
             <i class="fas fa-lock"></i>
             Security
         </div>
-        <div class="menu-item" data-section="preferences">
+        <div wire:click="setActiveTab('preferences')" 
+        class="menu-item {{ $activeTab === 'preferences' ? 'active-tab' : '' }}">
             <i class="fas fa-cog"></i>
             Preferences
         </div>
         
         <div class="menu-category">ACTIONS</div>
-        <div class="menu-item" data-section="api">
+        <div wire:click="setActiveTab('api')" 
+        class="menu-item {{ $activeTab === 'api' ? 'active-tab' : '' }}">
             <i class="fas fa-key"></i>
             API Settings
         </div>
-        <div class="menu-item" data-section="database">
+        <div wire:click="setActiveTab('database')" 
+        class="menu-item {{ $activeTab === 'database' ? 'active-tab' : '' }}">
             <i class="fas fa-key"></i>
             Database Settings
         </div>
-        <div class="menu-item" data-section="danger">
+        <div wire:click="setActiveTab('danger')" 
+        class="menu-item {{ $activeTab === 'danger' ? 'active-tab' : '' }}">
             <i class="fas fa-exclamation-triangle"></i>
             Danger Zone
         </div>
     </div>
     
     <div class="settings-content">
-        <div id="profile" class="content-section active">
+        <div id="profile" class="content-section" @if($activeTab === 'profile') style="display:block;" @else style="display:none;" @endif>
             <h1>Profile Settings</h1>
             <p>Manage your profile and account settings.</p>
             
@@ -72,7 +78,7 @@
         </div>
         
         <!-- Security Section -->
-        <div id="security" class="content-section">
+        <div id="security" class="content-section" @if($activeTab === 'security') style="display:block;" @else style="display:none;" @endif>
             <h1>Security Settings</h1>
             <p>Manage your account security and authentication.</p>
             
@@ -128,7 +134,7 @@
         </div>
         
         <!-- Preferences Section -->
-        <div id="preferences" class="content-section">
+        <div id="preferences" class="content-section" @if($activeTab === 'preferences') style="display:block;" @else style="display:none;" @endif>
             <h1>Preferences</h1>
             <p>Customize your application experience.</p>
             
@@ -158,7 +164,7 @@
         </div>
 
         <!-- API Section -->
-        <div id="api" class="content-section">
+        <div id="api" class="content-section" @if($activeTab === 'api') style="display:block;" @else style="display:none;" @endif>
             <h1>API Settings</h1>
             <p>Configure your API connections and credentials.</p>
             
@@ -248,7 +254,7 @@
         </div>
         
         <!-- Database  Section -->
-        <div id="database" class="content-section">
+        <div id="database" class="content-section" @if($activeTab === 'database') style="display:block;" @else style="display:none;" @endif>
             <h1>Danger Zone</h1>
             
             <div class="database-zone">
@@ -285,7 +291,7 @@
         </div>
 
         <!-- Danger Zone Section -->
-        <div id="danger" class="content-section">
+        <div id="danger" class="content-section" @if($activeTab === 'danger') style="display:block;" @else style="display:none;" @endif>
             <h1>Danger Zone</h1>
             
             <div class="danger-zone">
