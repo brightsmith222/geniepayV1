@@ -130,20 +130,7 @@
                 <button class="btn btn-primary">Save Preferences</button>
             </div>
             
-            <div class="section">
-                <h2>Language & Region</h2>
-                <div class="form-group">
-                    <label for="language">Language</label>
-                    <select id="language" style="padding: 8px 12px; border-radius: 4px; border: 1px solid #ddd;">
-                        <option>English</option>
-                        <option>Spanish</option>
-                        <option>French</option>
-                        <option>German</option>
-                    </select>
-                </div>
-                
-                <button class="btn btn-primary">Save Changes</button>
-            </div>
+            
         </div>
 
         <!-- API Section -->
