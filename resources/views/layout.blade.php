@@ -94,6 +94,14 @@
             <li><a href="{{ URL::to('data_settings')}}"><span class="material-icons-outlined">assignment</span> Data Settings</a></li>
             <li><a href="{{ URL::to('notifications') }}"><span class="material-icons-outlined">group</span> Notification</a></li>
             <li><a href="{{ URL::to('settings') }}"><span class="material-icons-outlined">group</span> Settings</a></li>
+            <li>
+              <form id="logout-form" action="{{ route('admin.logout') }}" method="POST" style="display: none;">
+                  @csrf
+              </form>
+              <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                  <span class="material-icons-outlined">logout</span> Logout
+              </a>
+          </li>
         </ul>
     </div>
 

@@ -1,3 +1,4 @@
+//********Start of Settings Sidebar */
 document.addEventListener('DOMContentLoaded', function() {
     // Get all menu items
     const menuItems = document.querySelectorAll('.menu-item');
@@ -54,4 +55,41 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
+});
+
+//********Start of Api tabs */
+document.addEventListener('DOMContentLoaded', function() {
+    // API Tab Switching
+    const apiTabs = document.querySelectorAll('.api-tab');
+    apiTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const tabId = this.getAttribute('data-tab');
+            
+            // Remove active class from all tabs and contents
+            document.querySelectorAll('.api-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.api-tab-content').forEach(c => c.classList.remove('active'));
+            
+            // Add active class to clicked tab and corresponding content
+            this.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+    
+    // Toggle password visibility
+    document.querySelectorAll('.btn-toggle-visibility').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const icon = this.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        });
+    });
+    
 });

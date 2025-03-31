@@ -33,7 +33,21 @@ Route::get('/', function (Request $request) {
 });
 
 
+
+// Admin Authentication routes
+Route::middleware('web')->group(function () {
+Route::get('login', [DashboardController::class, 'showLoginForm'])->name('login');
+Route::get('admin/login', [DashboardController::class, 'showLoginForm'])->name('admin.login');
+Route::post('admin/login', [DashboardController::class, 'login'])->name('admin.login.submit');
+Route::match(['get', 'post'], 'logout', [DashboardController::class, 'logout'])->name('admin.logout');
+});
+
+
+// Protected admin routes
+Route::middleware(['auth', AdminMiddleware::class])->group(function () {
+
 //Dashboard
+Route::get('dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 Route::get('dashboard', [AdminDashboardController::class, 'myAdmin'])->name('dashboard');
 Route::get('/filter-data', [AdminDashboardController::class, 'filterData']);
 Route::get('/get-wallet-balance', [AdminDashboardController::class, 'getWalletBalance'])->name('get.wallet.balance');
@@ -90,8 +104,8 @@ Route::delete('delete-slider/{id}', [SliderController::class, 'destroy'])->name(
 
   // Settings Routes
   Route::get('settings', [SettingsController::class, 'index'])->name('setting');
-
-
+  
+});
 
 
 
@@ -114,7 +128,6 @@ Route::get('/db-info', function () {
     ];
 });
 
-Route::get('/login', [DashboardController::class, 'showLoginForm'])->name('admin.login');
 
 
 Route::prefix('admin')->group(function () {
@@ -123,14 +136,15 @@ Route::prefix('admin')->group(function () {
     // Route::get('/users', 'Admin\UserController@index')->name('admin.users');
     // Route::get('/reports', 'Admin\ReportController@index')->name('admin.reports');
     // Route::get('/settings', 'Admin\SettingsController@index')->name('admin.settings');
-    Route::get('/logout', [DashboardController::class, 'logout'])->name('admin.logout');
+   // Route::get('/logout', [DashboardController::class, 'logout'])->name('admin.logout');
     // Route::get('/login', [DashboardController::class, 'showLoginForm'])->name('admin.login');
     // Route::post('/login', [DashboardController::class, 'login'])->name('admin.login');
     // Route::post('/logout', [DashboardController::class, 'logout'])->name('admin.logout');
 
-    Route::middleware(['auth', AdminMiddleWare::class, ])->group(function () {
-        Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
-    });
+    //Route::middleware(['auth', AdminMiddleWare::class, ])->group(function () {
+   //     Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
+   // });
+   
 });
 
 

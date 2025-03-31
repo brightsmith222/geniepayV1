@@ -15,6 +15,11 @@ class Kernel extends HttpKernel
         \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
     ];
 
+    protected $routeMiddleware = [
+        // ...
+        'admin' => \App\Http\Middleware\AdminMiddleware::class,
+    ];
+
     protected $middlewareGroups = [
         'web' => [
             \Illuminate\Session\Middleware\StartSession::class,

@@ -7,34 +7,29 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 
-
-class AdminMiddleWare
+class AdminMiddleware
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user()) { // Check if the user is authenticated
-            if ($request->user()->role == '1') { // Check if the user role is '1' (admin)
-                Log::info('In the side of AdminMiddleWare as role 1.');
+        if (Auth::check()) {
+            if (Auth::user()->role == '1') {
+                Log::info('Admin access granted', [
+                    'user_id' => Auth::id(),
+                    'route' => $request->path()
+                ]);
                 return $next($request);
-            } else {
-                Log::info('In the side of AdminMiddleWare Login to dashboard.');
-                return redirect('/login')->withErrors('You are not an admin');
-                // return new RedirectResponse('/login', 302, ['errors' => 'You are not logged in']);
             }
-        } else {
-            Log::info('In the side of AdminMiddleWare logout.');
-            return redirect('/login')->withErrors('You are not logged in');
-            // return new RedirectResponse('/login', 302, ['errors' => 'You are not logged in']);
-          
+            
+            Log::warning('Non-admin access attempt', [
+                'user_id' => Auth::id(),
+                'route' => $request->path()
+            ]);
+            Auth::logout();
+            return redirect()->route('admin.login')->with('error', 'You do not have admin privileges.');
         }
-       
-        
+
+        Log::info('Unauthenticated access attempt', ['route' => $request->path()]);
+        return redirect()->route('admin.login')->with('error', 'Please login to access this page.');
     }
 }

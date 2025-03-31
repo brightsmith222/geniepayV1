@@ -26,6 +26,7 @@ return new class extends Migration
             $table->string('electricity_token')->nullable();
             $table->string('balance_before')->nullable();
             $table->string('balance_after')->nullable();
+            $table->string('updated_by');
 
             $table->timestamps();
 
