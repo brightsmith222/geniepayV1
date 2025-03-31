@@ -74,36 +74,42 @@
             <img src="{{ URL::to('assets/img/avatar.png')}}" alt="Avatar" class="avatar rounded-circle" id="avatarDropdown" width="40" height="40" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <div class="dropdown-menu" id="profileMenu">
                 <a class="dropdown-item" href="#">Profile</a>
-                <a class="dropdown-item" href="#">Logout</a>
+                <form id="logout-form" action="{{ route('admin.logout') }}" method="POST" style="display: none;">
+                  @csrf
+              </form>
+              <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"> Logout
+              </a>
             </div>
         </div>
         
     </nav>
     <div class="sidebar" id="sidebar">
-        <!-- Logo at the top of the sidebar -->
-        <div class="sidebar-logo">
-            <img src="{{ URL::to('assets/img/logo.png')}}" alt="Logo">
-        </div>
-        <ul>
-            <li><a href="{{ URL::to('dashboard') }}"><span class="material-icons-outlined">dashboard</span> Dashboard</a></li>
-            <li><a href="{{ URL::to('reported') }}"><span class="material-icons-outlined">receipt</span> Reported</a></li>
-            <li><a href="{{ URL::to('transaction') }}"><span class="material-icons-outlined">receipt</span> Transactions</a></li>
-            <li><a href="{{ URL::to('wallet_transac') }}"><span class="material-icons-outlined">trending_up</span> Wallet Transac</a></li>
-            <li><a href="{{ URL::to('users') }}"><span class="material-icons-outlined">people</span> Users</a></li>
-            <li><a href="{{ URL::to('sliders') }}"><span class="material-icons-outlined">person</span> Slider</a></li>
-            <li><a href="{{ URL::to('data_settings')}}"><span class="material-icons-outlined">assignment</span> Data Settings</a></li>
-            <li><a href="{{ URL::to('notifications') }}"><span class="material-icons-outlined">group</span> Notification</a></li>
-            <li><a href="{{ URL::to('settings') }}"><span class="material-icons-outlined">group</span> Settings</a></li>
-            <li>
-              <form id="logout-form" action="{{ route('admin.logout') }}" method="POST" style="display: none;">
-                  @csrf
-              </form>
-              <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                  <span class="material-icons-outlined">logout</span> Logout
-              </a>
-          </li>
-        </ul>
+    <!-- Logo at the top of the sidebar -->
+    <div class="sidebar-logo">
+        <img src="{{ URL::to('assets/img/logo.png')}}" alt="Logo">
     </div>
+    <ul>
+        <li><a href="{{ URL::to('dashboard') }}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+        <li><a href="{{ URL::to('reported') }}"><i class="fas fa-flag"></i> Reported</a></li>
+        <li><a href="{{ URL::to('transaction') }}"><i class="fas fa-exchange-alt"></i> Transactions</a></li>
+        <li><a href="{{ URL::to('wallet_transac') }}"><i class="fas fa-wallet"></i> Wallet Transac</a></li>
+        <li><a href="{{ URL::to('users') }}"><i class="fas fa-users"></i> Users</a></li>
+        <li><a href="{{ URL::to('sliders') }}"><i class="fas fa-sliders-h"></i> Slider</a></li>
+        <li><a href="{{ URL::to('data_settings')}}"><i class="fas fa-database"></i> Data Settings</a></li>
+        <li><a href="{{ URL::to('notifications') }}"><i class="fas fa-bell"></i> Notification</a></li>
+        <li><a href="{{ URL::to('settings') }}"><i class="fas fa-cog"></i> Settings</a></li>
+        
+        <!-- Logout Button -->
+        <li class="logout-item">
+            <form id="logout-form" action="{{ route('admin.logout') }}" method="POST">
+                @csrf
+                <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </form>
+        </li>
+    </ul>
+</div>
 
 
 
