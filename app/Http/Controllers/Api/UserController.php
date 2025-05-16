@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Mail\EmailVerification;
+use App\Mail\EmailForgotPassword;
+use App\Mail\EmailChangePin;
 use App\Models\User;
 use App\Models\Wallet;
 use Illuminate\Http\Client\RequestException;
@@ -13,6 +15,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
+use App\Models\GeneralSettings;
+use Jenssegers\Agent\Agent;
+
 
 
 use Illuminate\Support\Facades\Mail;
@@ -80,6 +85,8 @@ class UserController extends Controller
 
     public function registerUser(Request $request)
     {
+        $isReferralEnabled = GeneralSettings::where('name', 'referral')->value('is_enabled');
+        
         $validator = Validator::make($request->all(), [
             'email' => 'required|string|email|max:255|unique:users',
             'full_name' => 'string|required',
@@ -126,7 +133,13 @@ class UserController extends Controller
             $user->phone_number = $phone;
             // $user->status  = $status;
             $user->username  = $username;
-            $user->ref_code  = $ref_code;
+            if ($ref_code) {
+                $referrer = User::where('username', $ref_code)->first();
+                if ($referrer) {
+                    $user->referred_by = $referrer->id;
+                }
+            }
+            $user->referral_bonus_eligible = $isReferralEnabled;
             // $user->photo  = $photo;
             // $user->country  = $country;
 
@@ -305,13 +318,13 @@ class UserController extends Controller
             if ($user) {
                 $userPassword = $user->password;
                 $epin = $user->pin;
-                Log::info('pin value '. $epin . $userPassword);
 
                 if (Hash::check($password, $userPassword)) {
 
                     // $credentials = $request->only('email', 'password');
 
                     $token = $user->createToken($email)->plainTextToken;
+                    $user->last_login_at = now();
                     $user->fcm_token = $request->fcm_token;
                     $user->save();
                     return response()->json([
@@ -382,6 +395,57 @@ class UserController extends Controller
 
             // Send the code via email
             Mail::to($email)->send(new EmailVerification($code));
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Verification code sent to your email! ' . $email
+            ], 200);
+        } catch (\Throwable $th) {
+            Log::error('Error sending verification code: ' . $th->getMessage());
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred. Please try again later. ' . $th->getMessage()], 500);
+        }
+    }
+
+    public function sendForgotPasswordCode(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|exists:users,email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(
+                [
+                    'status' => false,
+                    'message' => $validator->errors()->first()
+                ],
+                422
+            );
+        }
+
+        try {
+            $email = $request->input('email');
+            // $code = Str::random(4, '0123456789');
+            // $code = Random::number(4);
+            $code = rand(100000, 999999);
+
+            // Update user with the verification code and expiration time
+            $user = User::where('email', $email)->first();
+            $user->verification_code = $code;
+            $user->verification_code_expires_at = now()->addMinutes(15); // Code expires in 15 minutes
+            $user->save();
+            $ip = request()->ip();
+
+            // Get the user's device information
+            $agent = new Agent();
+            $device = $agent->device();
+            $platform = $agent->platform();
+            $browser = $agent->browser();
+            $deviceInfo = "{$device} ({$platform}, {$browser})";
+
+            // Send the code via email
+            Mail::to($email)->send(new EmailForgotPassword($code, $deviceInfo, $ip));
 
             return response()->json([
                 'status' => true,
@@ -785,6 +849,59 @@ class UserController extends Controller
             );
         }
     }
+
+    public function sendChangePinVerificationCode(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|exists:users,email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(
+                [
+                    'status' => false,
+                    'message' => $validator->errors()->first()
+                ],
+                422
+            );
+        }
+
+        try {
+            $email = $request->input('email');
+            // $code = Str::random(4, '0123456789');
+            // $code = Random::number(4);
+            $code = rand(100000, 999999);
+
+            // Update user with the verification code and expiration time
+            $user = User::where('email', $email)->first();
+            $user->verification_code = $code;
+            $user->verification_code_expires_at = now()->addMinutes(15); // Code expires in 15 minutes
+            $user->save();
+
+            // Get the user's IP address
+            $ip = request()->ip();
+
+            // Get the user's device information
+            $agent = new Agent();
+            $device = $agent->device();
+            $platform = $agent->platform();
+            $browser = $agent->browser();
+            $deviceInfo = "{$device} ({$platform}, {$browser})";
+            // Send the code via email
+            Mail::to($email)->send(new EmailChangePin($code, $deviceInfo, $ip));
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Verification code sent to your email! ' . $email
+            ], 200);
+        } catch (\Throwable $th) {
+            Log::error('Error sending verification code: ' . $th->getMessage());
+            return response()->json([
+                'status' => false,
+                'message' => 'An error occurred. Please try again later. ' . $th->getMessage()], 500);
+        }
+    }
+
 
 
 

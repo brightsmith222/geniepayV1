@@ -1,5 +1,27 @@
 <div class="settings-container">
-    <div class="settings-menu">
+
+    <!-- Tab Navigation for Small Screens -->
+    <div class="settings-tabs" id="settingsTabs">
+        <button wire:click="setActiveTab('profile')" 
+                class="tab-item {{ $activeTab === 'profile' ? 'active-tab' : '' }}">
+            <i class="fas fa-user"></i> Profile
+        </button>
+        <button wire:click="setActiveTab('security')" 
+                class="tab-item {{ $activeTab === 'security' ? 'active-tab' : '' }}">
+            <i class="fas fa-lock"></i> Security
+        </button>
+        <button wire:click="setActiveTab('preferences')" 
+                class="tab-item {{ $activeTab === 'preferences' ? 'active-tab' : '' }}">
+            <i class="fas fa-cog"></i> Preferences
+        </button>
+        <button wire:click="setActiveTab('danger')" 
+                class="tab-item {{ $activeTab === 'danger' ? 'active-tab' : '' }}">
+            <i class="fas fa-exclamation-triangle"></i> Danger Zone
+        </button>
+    </div>
+
+        <!-- Sidebar Menu for Larger Screens -->
+    <div class="settings-menu card">
         <div class="menu-category">ACCOUNT</div>
         <div wire:click="setActiveTab('profile')" 
         class="menu-item {{ $activeTab === 'profile' ? 'active-tab' : '' }}">
@@ -18,16 +40,7 @@
         </div>
         
         <div class="menu-category">ACTIONS</div>
-        <div wire:click="setActiveTab('api')" 
-        class="menu-item {{ $activeTab === 'api' ? 'active-tab' : '' }}">
-            <i class="fas fa-key"></i>
-            API Settings
-        </div>
-        <div wire:click="setActiveTab('database')" 
-        class="menu-item {{ $activeTab === 'database' ? 'active-tab' : '' }}">
-            <i class="fas fa-key"></i>
-            Database Settings
-        </div>
+       
         <div wire:click="setActiveTab('danger')" 
         class="menu-item {{ $activeTab === 'danger' ? 'active-tab' : '' }}">
             <i class="fas fa-exclamation-triangle"></i>
@@ -35,7 +48,7 @@
         </div>
     </div>
     
-    <div class="settings-content">
+    <div class="settings-content card">
         <div id="profile" class="content-section" @if($activeTab === 'profile') style="display:block;" @else style="display:none;" @endif>
             <h1>Profile Settings</h1>
             <p>Manage your profile and account settings.</p>
@@ -136,160 +149,111 @@
         <!-- Preferences Section -->
         <div id="preferences" class="content-section" @if($activeTab === 'preferences') style="display:block;" @else style="display:none;" @endif>
             <h1>Preferences</h1>
-            <p>Customize your application experience.</p>
+            <p>Customize application settings.</p>
             
             <div class="section">
-                <h2>Notification Settings</h2>
-                <p>Manage how you receive notifications.</p>
+                <h2>Manage Settings</h2>
+                <p>Enable or Disable a service.</p>
                 
                 <div class="form-group">
                     <label class="toggle-switch">
-                        <input type="checkbox" class="toggle-input" checked>
+                        <span class="toggle-label">Enable Referral</span>
+                        <input type="checkbox"class="toggle-input" @change="$wire.toggleSetting('referral')" {{ $referralEnabled ? 'checked' : '' }}>
                         <span class="toggle-slider"></span>
-                        <span class="toggle-label">Email notifications</span>
+                        <span class="toggle-label">
+                            <span class="{{ $referralEnabled ? 'state-on' : 'state-off' }}">
+                                {{ $referralEnabled ? 'On' : 'Off' }}
+                            </span>
+                        </span>
                     </label>
                 </div>
                 <div class="form-group">
                     <label class="toggle-switch">
-                        <input type="checkbox" class="toggle-input" checked>
+                        <span class="toggle-label">Enable VTpass</span>
+                        <input type="checkbox"class="toggle-input" @change="$wire.toggleSetting('vtpass')" {{ $vtpassEnabled ? 'checked' : '' }}>
                         <span class="toggle-slider"></span>
-                        <span class="toggle-label">Push notifications</span>
+                        <span class="toggle-label">
+                            <span class="{{ $vtpassEnabled ? 'state-on' : 'state-off' }}">
+                                {{ $vtpassEnabled ? 'On' : 'Off' }}
+                            </span>
+                        </span>
                     </label>
                 </div>
-                
-                <button class="btn btn-primary">Save Preferences</button>
-            </div>
-            
-            
-        </div>
-
-        <!-- API Section -->
-        <div id="api" class="content-section" @if($activeTab === 'api') style="display:block;" @else style="display:none;" @endif>
-            <h1>API Settings</h1>
-            <p>Configure your API connections and credentials.</p>
-            
-            <div class="api-tabs">
-                <div class="api-tab-header">
-                    <div class="api-tab active" data-tab="vtpass">VTpass API</div>
-                    <div class="api-tab" data-tab="glad">Glad API</div>
+                <div class="form-group">
+                    <label class="toggle-switch">
+                        <span class="toggle-label">Enable ARTX</span>
+                        <input type="checkbox"class="toggle-input" @change="$wire.toggleSetting('artx')" {{ $artxEnabled ? 'checked' : '' }}>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">
+                            <span class="{{ $artxEnabled ? 'state-on' : 'state-off' }}">
+                                {{ $artxEnabled ? 'On' : 'Off' }}
+                            </span>
+                        </span>
+                    </label>
                 </div>
-                
-                <div class="api-tab-content active" id="vtpass">
-                    <div class="api-card">
-                        <label class="toggle-switch">
-                            <input type="checkbox" class="toggle-input" checked>
-                            <span class="toggle-slider"></span>
-                            <span class="toggle-label">Enable VTpass API</span>
+                <div class="form-group">
+                    <label class="toggle-switch">
+                        <span class="toggle-label">Enable Glad</span>
+                        <input type="checkbox"class="toggle-input" @change="$wire.toggleSetting('glad')" {{ $gladEnabled ? 'checked' : '' }}>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">
+                            <span class="{{ $gladEnabled ? 'state-on' : 'state-off' }}">
+                                {{ $gladEnabled ? 'On' : 'Off' }}
+                            </span>
+                        </span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="toggle-switch">
+                        <span class="toggle-label">Enable Artx Giftcard</span>
+                        <input type="checkbox"class="toggle-input" @change="$wire.toggleSetting('artx_giftcard')" {{ $artxgiftcardEnabled ? 'checked' : '' }}>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">
+                            <span class="{{ $artxgiftcardEnabled ? 'state-on' : 'state-off' }}">
+                                {{ $artxgiftcardEnabled ? 'On' : 'Off' }}
+                            </span>
+                        </span>
+                    </label>
+                </div>
+                <div class="bonus-control">
+                    <div class="bonus-header">
+                        <label for="referral_bonus" class="bonus-label">
+                            <i class="fas fa-gift bonus-icon"></i>
+                            Referral Bonus
                         </label>
-
-                        <div class="form-group">
-                            <label for="vtpass-api-key">API Key</label>
-                            <div class="text-input-container">
-                                <input type="text" id="vtpass-api-key" class="api-input" placeholder="Enter your VTpass API key">
-                                
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="vtpass-public-key">Public Key</label>
-                            <div class="text-input-container">
-                                <input type="text" id="vtpass-public-key" class="api-input" placeholder="Enter your VTpass public key">
-                                
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="vtpass-private-key">Private Key</label>
-                            <div class="text-input-container">
-                                <input type="password" id="vtpass-private-key" class="api-input" placeholder="Enter your VTpass private key">
-                                <button class="btn-toggle-visibility" data-target="vtpass-private-key">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <button class="btn btn-primary">Save VTpass Settings</button>
+                        <span class="bonus-currency">NGN</span>
                     </div>
-                </div>
-                
-                <div class="api-tab-content" id="glad">
-                    <div class="api-card">
-                        <label class="toggle-switch">
-                            <input type="checkbox" class="toggle-input">
-                            <span class="toggle-slider"></span>
-                            <span class="toggle-label">Enable Glad API</span>
-                        </label>
-
-                        <div class="form-group">
-                            <label for="glad-api-key">API Key</label>
-                            <div class="text-input-container">
-                                <input type="text" id="glad-api-key" class="api-input" placeholder="Enter your Glad API key">
-                                
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="glad-public-key">Public Key</label>
-                            <div class="text-input-container">
-                                <input type="text" id="glad-public-key" class="api-input" placeholder="Enter your Glad public key">
-                                
-                            </div>
-                        </div>
+                    
+                    <div class="bonus-input-group">
+                        <input type="number" 
+                               id="referral_bonus" 
+                               step="0.01" 
+                               min="0"
+                               wire:model.defer="referralBonus"
+                               class="bonus-input"
+                               placeholder="0.00">
                         
-                        <div class="form-group">
-                            <label for="glad-private-key">Private Key</label>
-                            <div class="text-input-container">
-                                <input type="password" id="glad-private-key" class="api-input" placeholder="Enter your Glad private key">
-                                <button class="btn-toggle-visibility" data-target="glad-private-key">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <button class="btn btn-primary">Save Glad Settings</button>
+                               <button wire:click="saveReferralBonus" 
+                               class="bonus-save-btn"
+                               wire:loading.attr="disabled"
+                               wire:target="saveReferralBonus">
+                           <span wire:loading.remove wire:target="saveReferralBonus">
+                               <i class="fas fa-check"></i> Update
+                           </span>
+                           <span wire:loading wire:target="saveReferralBonus">
+                               <i class="fas fa-spinner fa-spin"></i> Saving
+                           </span>
+                       </button>
                     </div>
+                    
+                    <div class="bonus-hint">Set the amount rewarded for each successful referral</div>
                 </div>
-
+                
+                
             </div>
-        </div>
-        
-        <!-- Database  Section -->
-        <div id="database" class="content-section" @if($activeTab === 'database') style="display:block;" @else style="display:none;" @endif>
-            <h1>Danger Zone</h1>
             
-            <div class="database-zone">
-                
-                    <div class="form-group">
-                        <label for="database-name">Database Name</label>
-                        <div class="text-input-container">
-                            <input type="text" id="database-name" class="api-input" placeholder="Enter Database Name">
-                            
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="database-username">Database Username</label>
-                        <div class="text-input-container">
-                            <input type="text" id="database-username" class="api-input" placeholder="Enter Database Username">
-                            
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="database-password">Database Password</label>
-                        <div class="text-input-container">
-                            <input type="password" id="database-password" class="api-input" placeholder="Enter Database Password">
-                            <button class="btn-toggle-visibility" data-target="database-password">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <button class="btn btn-primary">Save Settings</button>
-                
-            </div>
+            
         </div>
-
         <!-- Danger Zone Section -->
         <div id="danger" class="content-section" @if($activeTab === 'danger') style="display:block;" @else style="display:none;" @endif>
             <h1>Danger Zone</h1>
@@ -303,8 +267,28 @@
                     <p class="warning">Please proceed with caution, this cannot be undone.</p>
                 </div>
                 
-                <button class="btn btn-danger">Delete Account</button>
+                <button class="btn btn-danger" id="deleteAccountBtn">
+                    Delete Account
+                </button>                
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    document.getElementById('deleteAccountBtn').addEventListener('click', function () {
+        Swal.fire({
+            title: "Are you sure?",
+            text: "This action cannot be undone!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: "Yes, delete it!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                @this.call('deleteAccount'); 
+            }
+        });
+    });
+</script>

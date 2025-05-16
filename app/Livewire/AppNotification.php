@@ -8,6 +8,7 @@ use App\Models\Notification;
 use App\Models\User;
 use App\Services\FCMService;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Livewire\WithPagination;
 
 
@@ -16,15 +17,15 @@ class AppNotification extends Component
     use WithFileUploads, WithPagination;
 
     protected $paginationTheme = 'bootstrap';
+    protected $listeners = ['deleteNotification' => 'deleteNotification'];
 
     // Form fields
     public $notification_title;
     public $notification_message;
     public $include_image = false;
     public $image;
-    public $sendTo = 'all';
-    public $specific_users = [];
-    public $selectedUsers = []; 
+    public $sendTo = 'all'; 
+    public $recipients; 
     public $showImageUpload = false; 
     public $showSpecificUsers = false; 
     public $searchTerm = ''; 
@@ -35,33 +36,70 @@ class AppNotification extends Component
         'notification_message' => 'required|string',
         'include_image' => 'boolean',
         'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        'sendTo' => 'required|in:all,specific',
-        'specific_users' => 'required_if:sendTo,specific|array',
+        'sendTo' => 'required|in:all,inactive_7_days,inactive_1_month,inactive_3_months,inactive_6_months',
     ];
+
+    public function mount()
+    {
+        $this->recipients = collect(); 
+    }
 
     // Render the component view
     public function render()
-{
-    // Fetch users dynamically for the search
-    $users = [];
-    if (!empty($this->searchTerm)) {
-        $users = User::where('username', 'like', '%' . $this->searchTerm . '%')
-            ->limit(5)
-            ->get();
+    {
+        $users = [];
+        if (!empty($this->searchTerm)) {
+            $users = User::where('username', 'like', '%' . $this->searchTerm . '%')
+                ->limit(5)
+                ->get();
+        }
+
+        $notifications = Notification::latest()->paginate(6)->onEachSide(1);
+
+        return view('livewire.app-notification', [
+            'users' => $users,
+            'notifications' => $notifications,
+        ]);
     }
 
-    // Fetch latest notifications with pagination
-    $notifications = Notification::latest()->paginate(6);
 
-    // Get selected users' details
-    $selectedUserModels = User::whereIn('id', $this->selectedUsers)->get();
+    // Update the recipients based on the selected option
+    public function updateRecipientFilter()
+    {
+        switch ($this->sendTo) {
+            case 'all':
+                $this->recipients = User::whereNotNull('fcm_token')->get(); 
+                break;
 
-    return view('livewire.app-notification', [
-        'users' => $users,
-        'notifications' => $notifications,
-        'selectedUserModels' => $selectedUserModels,
-    ])->extends('layouts.app')->section('content');
-}
+            case 'inactive_7_days':
+                $this->recipients = User::whereDoesntHave('transactions', function ($query) {
+                    $query->where('created_at', '>=', now()->subDays(7));
+                })->whereNotNull('fcm_token')->get();
+                break;
+
+            case 'inactive_1_month':
+                $this->recipients = User::whereDoesntHave('transactions', function ($query) {
+                    $query->where('created_at', '>=', now()->subMonth());
+                })->whereNotNull('fcm_token')->get();
+                break;
+
+            case 'inactive_3_months':
+                $this->recipients = User::whereDoesntHave('transactions', function ($query) {
+                    $query->where('created_at', '>=', now()->subMonths(3));
+                })->whereNotNull('fcm_token')->get();
+                break;
+
+            case 'inactive_6_months':
+                $this->recipients = User::whereDoesntHave('transactions', function ($query) {
+                    $query->where('created_at', '>=', now()->subMonths(6));
+                })->whereNotNull('fcm_token')->get();
+                break;
+
+            default:
+                $this->recipients = collect();
+                break;
+        }
+    }
 
 protected function getListeners()
 {
@@ -76,36 +114,44 @@ protected function getListeners()
     // Handle form submission
     public function submit()
 {
-    $imagePath = null;
-    
     $this->validate();
 
+    $imageUrl = null;
+    
     // Handle image upload if needed
     if ($this->include_image && $this->image) {
-        $imagePath = $this->image->store('notifications', 'public');
+        try {
+            $ext = $this->image->getClientOriginalExtension();
+            $fileName = 'notif_'.time().'_'.Str::random(5).'.'.$ext;
+            
+            // Store in public disk
+            $path = $this->image->storeAs('notifications', $fileName, 'public');
+            
+            // Use this format for the URL
+            $imageUrl = 'storage/notifications/'.$fileName;
+            
+        } catch (\Exception $e) {
+            session()->flash('failed', 'File upload failed: '.$e->getMessage());
+            return;
+        }
     }
 
-    // Decode the selected users if they're specific
-    $receiverId = $this->sendTo === 'all' 
-        ? null  
-        : json_encode($this->selectedUsers); 
+    
 
     // Save the notification
     $notification = Notification::create([
         'notification_title'  => $this->notification_title,
         'notification_message'=> $this->notification_message,
-        'image'               => $imagePath,
-        'receiver_id'         => $receiverId,
+        'image'              => $imageUrl,
+        'receiver_id'        => $this->sendTo === 'all' ? null : json_encode($this->recipients->pluck('id')->toArray()),
     ]);
 
     // Send the notification
-    $this->sendNotification($notification);
-
-    // Emit an event to refresh the table
-    $this->dispatch('notificationAdded');
+   // $this->sendNotification($notification);
 
     // Reset form fields
-    $this->reset();
+    $this->resetForm();
+    flash()->success('Notification sent successfully!');
 }
 
 
@@ -115,33 +161,23 @@ protected function getListeners()
 
     // Send notification to users
     protected function sendNotification($notification)
-{
-    $fcmService = new FCMService();
+    {
+        $fcmService = new FCMService();
 
-    // Determine which users to send the notification to
-    if ($this->sendTo === 'all') {
-        // Send to all users who have an FCM token
-        $users = User::whereNotNull('fcm_token')->get();
-    } else {
-        // Send to specific users who have an FCM token
-        $users = User::whereIn('id', $this->selectedUsers)
-            ->whereNotNull('fcm_token')
-            ->get();
+        // Send the push notification to each recipient
+        foreach ($this->recipients as $user) {
+            dispatch(function () use ($user, $notification, $fcmService) {
+                $imagePath = $notification->image ? asset('storage/' . $notification->image) : null;
+        
+                $fcmService->sendNotification(
+                    $user->fcm_token,
+                    $notification->notification_title,
+                    $notification->notification_message,
+                    $imagePath
+                );
+            });
+        }
     }
-
-    // Send the push notification to each user
-    foreach ($users as $user) {
-        // If there's an image, pass it; otherwise, pass null
-        $imagePath = $notification->image ? asset('storage/' . $notification->image) : null;
-
-        $fcmService->sendNotification(
-            $user->fcm_token,
-            $notification->notification_title,
-            $notification->notification_message,
-            $imagePath // Include the image if available
-        );
-    }
-}
 
 
 
@@ -154,39 +190,36 @@ protected function getListeners()
             'include_image',
             'image',
             'sendTo',
-            'specific_users',
+            'recipients',
+            'showImageUpload',
         ]);
     }
 
-    public function toggleUser($userId)
-{
-    if (in_array($userId, $this->selectedUsers)) {
-        // Remove user from selected list
-        $this->selectedUsers = array_values(array_diff($this->selectedUsers, [$userId]));
-    } else {
-        // Add user to selected list
-        $this->selectedUsers[] = $userId;
-    }
 
-    // Force Livewire to refresh the UI
-    $this->dispatch('refreshComponent');
+
+public function confirmDelete($id)
+{
+    $this->emit('swal:confirm', [
+        'type' => 'warning',
+        'title' => 'Are you sure?',
+        'text' => "You won't be able to revert this!",
+        'id' => $id
+    ]);
 }
 
-
-public function selectFirstUser()
+public function deleteNotification($id)
 {
-    // Get the first user from the filtered list
-    $user = User::where('username', 'like', '%' . $this->searchTerm . '%')->first();
-
-    if ($user) {
-        // Toggle the user selection
-        $this->toggleUser($user->id);
-        
-        // Clear the search term after selection
-        $this->searchTerm = '';
+    $notification = Notification::find($id);
+    
+    if ($notification->image) {
+        $imagePath = str_replace('storage/', '', $notification->image);
+        Storage::disk('public')->delete($imagePath);
     }
+    
+    $notification->delete();
+    
+    flash()->success('Notification deleted successfully');
 }
-
 
    
 }

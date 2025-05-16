@@ -13,9 +13,10 @@ return new class extends Migration
     {
         Schema::create('airtime_topup_percentages', function (Blueprint $table) {
             $table->id();
-            // $table->string('network_name')->nullable();
+            $table->string('network_name')->nullable();
             $table->string('network_id');
             $table->string('network_percentage');
+            $table->boolean('is_enabled')->default(false);
             $table->timestamps();
         });
     }

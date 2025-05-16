@@ -11,20 +11,23 @@ function updateReportedCount(count) {
 function updateTickerDisplay() {
     const $ticker = $("#reportTicker");
     $ticker.empty();
-    
+
     if (reportedTransactions.length === 0) {
         $ticker.append('<div class="ticker-item">No active reported transactions</div>');
         return;
     }
-    
+
     reportedTransactions.forEach(report => {
         const message = `User ${report.username} reported ${report.service} (₦${report.amount})`;
         $ticker.append(`<div class="ticker-item">${message}</div>`);
     });
 }
 
+
+
 function fetchReportedTransactions() {
-    $.getJSON("/reported", function(response) {
+
+    $.getJSON("dash-reported", function(response) {
         if (response.success) {
             reportedTransactions = response.reports;
             updateReportedCount(response.count);
@@ -101,7 +104,6 @@ function filterData(filter, type, startDate = null, endDate = null) {
     })
     .then(response => response.json())
     .then(data => {
-        console.log(data); // Log the server response
         if (type === 'sales') {
             // Update sales statistics
             document.getElementById('total-sales').textContent = `₦${data.totalSales.toLocaleString()}`;

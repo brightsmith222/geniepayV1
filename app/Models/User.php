@@ -28,7 +28,52 @@ class User extends Authenticatable
         'gender',
         'pin',
         'role',
+        'image',
+        'referred_by',
+        'referral_bonus_given',
+        'referral_bonus_eligible',
+        'last_login_at',
+
     ];
+
+    public function isAdmin()
+{
+    return $this->role == 1; 
+}
+
+
+public function transactions()
+{
+    return $this->hasMany(Transactions::class, 'username', 'username');
+}
+
+public function walletTransactions()
+{
+    return $this->hasMany(WalletTransactions::class, 'username', 'username');
+}
+
+public function user()
+{
+    return $this->belongsTo(User::class, 'username', 'username');
+}
+
+public function referrer()
+{
+    return $this->belongsTo(User::class, 'referred_by');
+}
+
+// Get the users referred by this user
+public function referrals()
+{
+    return $this->hasMany(User::class, 'referred_by');
+}
+
+public function referralBonuses()
+{
+    return $this->hasMany(ReferralBonus::class, 'referrer_id');
+}
+
+
 
     /**
      * The attributes that should be hidden for serialization.
@@ -50,6 +95,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_login_at' => 'datetime',
+
         ];
     }
 }

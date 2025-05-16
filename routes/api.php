@@ -11,7 +11,8 @@ use App\Http\Controllers\Api\PaymentController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\SliderController;
 use App\Http\Controllers\Api\TransactionReportController;
-
+use App\Http\Controllers\Api\GiftCardController;
+use App\Http\Controllers\Api\EsimController;
 
 
 // Route::get('/user', function (Request $request) {
@@ -57,6 +58,18 @@ Route::get('/slider/{id}', [SliderController::class, 'show']);
 
 
 Route::post('/transaction-report', [TransactionReportController::class, 'transactionReport']);
+
+// Gift Cards
+Route::get('/countries', [GiftCardController::class, 'getCountries']);
+Route::get('/giftcards', [GiftCardController::class, 'getGiftCards']);
+Route::get('/denominations', [GiftCardController::class, 'getDenominations']);
+Route::post('/purchase-giftcard', [GiftCardController::class, 'purchase']);
+
+// eSIM
+Route::get('/esim-countries', [EsimController::class, 'getCountries']);
+Route::get('/esim-plans', [EsimController::class, 'getPlans']);
+Route::post('/esim-purchase', [EsimController::class, 'purchase']);
+
 
 });
 

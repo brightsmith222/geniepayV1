@@ -1,93 +1,167 @@
-$(document).ready(function () {
-
-// ********** START OF REFUND REPORTED TRANSACTION *********
-
-$(document).on('click', '.refunds-btns', function () {
-    let transactionId = $(this).data('id');
-
-    // Show a confirmation dialog before proceeding
-    Swal.fire({
-        title: 'Are you sure?',
-        text: 'You are about to refund this transaction. This action cannot be undone!',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, refund it!',
-        cancelButtonText: 'Cancel'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Proceed with the refund if the user confirms
-            $.ajax({
-                url: `/reported/${transactionId}/reportrefund`,
-                type: 'POST',
-                data: {
-                    _token: $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function (response) {
-                    // Display success or error message using SweetAlert2
-                    if (response.type === 'success') {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Success!',
-                            text: response.message,
-                            confirmButtonColor: '#3085d6',
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                // Reload the page or update the UI
-                                location.reload();
-                            }
-                        });
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error!',
-                            text: response.message,
-                            confirmButtonColor: '#d33',
-                        });
-                    }
-                },
-                error: function (xhr) {
-                    // Handle AJAX errors
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error!',
-                        text: xhr.responseJSON.message || 'An error occurred. Please try again.',
-                        confirmButtonColor: '#d33',
-                    });
-                }
-            });
+$(document).ready(function() {
+    // Initialize CSRF token for all AJAX requests
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         }
     });
-});
+    
 
-//Currency formatter function
-let formatter = new Intl.NumberFormat('en-NG', {
-    style: 'currency',
-    currency: 'NGN',
-    minimumFractionDigits: 2
-});
+    // Currency formatter
+    const formatter = new Intl.NumberFormat('en-NG', {
+        style: 'currency',
+        currency: 'NGN',
+        minimumFractionDigits: 2
+    });
 
-    // Reported Modal Functionality
-    $(document).on("click", ".reportedvisibility", function () {
-        let row = $(this).closest("tr");
-        $("#reportedmodalInvoice").text(row.data("invoice"));
-        $("#reportedmodalStatus").text(row.data("status"));
-        $("#reportedmodalUsername").text(row.data("username"));
-        $("#reportedmodalType").text(row.data("type"));
-        $("#reportedmodalService").text(row.data("service"));
-        $("#reportedmodalSender").text(row.data("sender-email"));
-        $("#reportedmodalReceiver").text(row.data("receiver-email"));
-        $("#reportedmodalAmount").text(formatter.format(row.data("amount") || 0));
-        $("#reportedmodalBalanceBefore").text(formatter.format(row.data("balance-before") || 0));
-        $("#reportedmodalBalanceAfter").text(formatter.format(row.data("balance-after") || 0));
-        $('#reportedrefundBtn').data('id', row.data('id'));
-        if (row.data('status').toLowerCase() === 'refunded') {
-            $('#reportedrefundBtn').prop('disabled', true);
+    // Debounce function for search
+    function debounce(func, wait) {
+        let timeout;
+        return function() {
+            const context = this, args = arguments;
+            clearTimeout(timeout);
+            timeout = setTimeout(function() {
+                func.apply(context, args);
+            }, wait);
+        };
+    }
+
+    $(function () {
+        // Restore active tab on page load
+        const savedTab = localStorage.getItem('activeTransactionTab');
+        if (savedTab && $('#transactionTabs a[href="' + savedTab + '"]').length) {
+            $('#transactionTabs a[href="' + savedTab + '"]').tab('show');
         } else {
-            $('#reportedrefundBtn').prop('disabled', false);
+            $('#transactionTabs a:first').tab('show'); // fallback
         }
-        $("#reportedtransactionModal").modal("show");
+    
+        // Load data based on restored tab
+        const tabId = (savedTab || '#reported').substring(1);
+        if (tabId === 'resolved') {
+            loadResolvedTransactions();
+        } else {
+            loadReportedTransactions();
+        }
+    
+        // Handle tab click
+        $('#transactionTabs a').on('click', function (e) {
+            e.preventDefault();
+            const tabId = $(this).attr('href');
+            localStorage.setItem('activeTransactionTab', tabId);
+            $(this).tab('show');
+    
+            const tabContentId = tabId.substring(1);
+            if (tabContentId === 'resolved') {
+                loadResolvedTransactions();
+            } else {
+                loadReportedTransactions();
+            }
+        });
     });
+    
 
+    // Load functions for both tabs
+    function loadReportedTransactions(params = {}) {
+        loadTransactions('reported', params);
+    }
+
+    function loadResolvedTransactions(params = {}) {
+        loadTransactions('resolved', params);
+    }
+
+    function loadTransactions(type, params = {}) {
+        const container = $(`#${type}-table-container`);
+    
+        const sortValue = $(`#${type}Sort`).val();
+        let sortColumn = type === 'resolved' ? 'updated_at' : 'created_at';
+        let sortDirection = 'desc';
+        
+        if (sortValue) {
+            const parts = sortValue.split('_');
+            if (parts.length === 2 && ['asc', 'desc'].includes(parts[1])) {
+                sortColumn = parts[0];
+                sortDirection = parts[1];
+            }
+        }
+        
+        // Get search input value and ensure it's a string
+        const searchInput = $(`#${type}SearchInput`).val();
+        const searchTerm = typeof searchInput === 'string' ? searchInput : '';
+    
+    
+        const requestParams = {
+            page: params.page || 1,
+            sort_column: sortColumn,
+            sort_direction: sortDirection
+        };
+        
+        if (searchTerm.trim() !== '') {
+            requestParams[type === 'resolved' ? 'resolved_search' : 'search'] = searchTerm;
+        }
+    
+        container.html(loadingSpinner()); // Show loading spinner
+
+        $.ajax({
+            url: $(`#${type}IndexRoute`).val(),
+            type: 'GET',
+            data: requestParams,
+            success: function(response) {
+                const section = response[type]; 
+                container.html(section.table);
+                $(`#${type}-pagination-container`).html(section.pagination);
+            },
+            error: handleAjaxError.bind(null, type)
+        });
+    }
+    
+
+    function loadingSpinner() {
+        return `
+            <div class="text-center p-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <p>Loading transactions...</p>
+            </div>
+        `;
+    }
+
+    function handleAjaxError(type, xhr) {
+        console.error(`Error loading ${type} transactions:`, xhr.responseText);
+        $(`#${type}-table-container`).html(`
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i> 
+                Error loading transactions. Please try again.
+            </div>
+        `);
+    }
+
+    // Initialize event listeners
+    function initEventListeners() {
+        // Search inputs
+        $('#reportedSearchInput, #resolvedSearchInput').on('keyup', debounce(function() {
+            const type = this.id.replace('SearchInput', '');
+            loadTransactions(type);
+        }, 300));
+
+        // Sort dropdowns
+        $('#reportedSort, #resolvedSort').on('change', function() {
+            const type = this.id.replace('Sort', '');
+            loadTransactions(type);
+        });
+
+        // Pagination
+        $(document).on('click', '#reported-pagination-container a, #resolved-pagination-container a', function(e) {
+            e.preventDefault();
+            const page = $(this).attr('href').split('page=')[1];
+            const container = $(this).closest('[id$="-pagination-container"]');
+            const type = container.attr('id').replace('-pagination-container', '');
+            loadTransactions(type, { page: page });
+        });
+    }
+
+
+    // Initial load
+    initEventListeners();
+    loadReportedTransactions();  // Load reported transactions initially
 });

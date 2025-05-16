@@ -12,6 +12,7 @@ use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use App\MyFunctions;
+use App\Services\VtpassService;
 
 class CableTvController extends Controller
 {
@@ -22,14 +23,16 @@ class CableTvController extends Controller
 
         try {
 
-            $url = "https://vtpass.com/api/service-variations?serviceID=" . $serviceID;
-
-            $headers = [
-                'api-key' => '6f8493837a1d4b0e5715fd72849cb087', //$webconfig['VTPASS_API_KEY'],
-                'secret-key' => 'SK_925ad054b329478d807b776ce071ed7e01d7c903914', 
-                'public-key' => 'PK_42554e477a0c32098989c8a7240f66381b9ca6e1f3a',
-                'Content-Type' => 'application/json',
-            ];
+            $vtpass = new VtpassService();
+            $url = config('api.vtpass.base_url')."service-variations?serviceID=" . $serviceID;
+            if ($vtpass->isVtpassEnabled()) {
+                $headers = $vtpass->getHeaders();
+            } else {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Server call service is currently disabled.',
+                ]);
+            }
 
             $response = Http::withHeaders($headers)->get($url);
 
@@ -47,7 +50,6 @@ class CableTvController extends Controller
                         200
                     );
                 }
-
             } else {
                 // Log::error("Error Occured: " . $data['message']);
                 return response()->json([
@@ -70,26 +72,24 @@ class CableTvController extends Controller
                 'message' => $e->getMessage()
             ], 500);
         }
-
-
-
     }
 
 
-    public function getCableProviders()
+    public function getCableProviders(VtpassService $vtpass)
     {
 
         try {
 
 
-            $url = "https://sandbox.vtpass.com/api/services?identifier=tv-subscription";
-
-            $headers = [
-                'api-key' => '6f8493837a1d4b0e5715fd72849cb087', //$webconfig['VTPASS_API_KEY'],
-                'secret-key' => 'SK_925ad054b329478d807b776ce071ed7e01d7c903914', //$webconfig['VTPASS_SK'],
-                'public-key' => 'PK_42554e477a0c32098989c8a7240f66381b9ca6e1f3a',
-                'Content-Type' => 'application/json',
-            ];
+            $url = config('api.vtpass.base_url')."services?identifier=tv-subscription";
+            if ($vtpass->isVtpassEnabled()) {
+                $headers = $vtpass->getHeaders();
+            } else {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Server call service is currently disabled.',
+                ]);
+            }
 
             $response = Http::withHeaders($headers)->get($url);
 
@@ -105,7 +105,6 @@ class CableTvController extends Controller
                         200
                     );
                 }
-
             } else {
                 // Log::error("Error Occured: " . $data['message']);
                 return response()->json([
@@ -128,13 +127,12 @@ class CableTvController extends Controller
                 'message' => $e->getMessage()
             ], 500);
         }
-
     }
 
 
 
 
-    public function verifySmartCard(Request $request)
+    public function verifySmartCard(Request $request, VtpassService $vtpass)
     {
         //$webconfig = config('webconfig'); // Assuming you have your web configurations in config/webconfig.php
 
@@ -159,15 +157,9 @@ class CableTvController extends Controller
                 $serviceId = $request->input('serviceID');
                 $planName = $request->input('planName');
 
-                $url = "https://sandbox.vtpass.com/api/merchant-verify";
+                $url = config('api.vtpass.base_url')."merchant-verify";
 
-                $headers = [
-
-                    'api-key' => '6f8493837a1d4b0e5715fd72849cb087', //$webconfig['VTPASS_API_KEY'],
-                    'secret-key' => 'SK_925ad054b329478d807b776ce071ed7e01d7c903914', //$webconfig['VTPASS_SK'],
-                    'public-key' => 'PK_42554e477a0c32098989c8a7240f66381b9ca6e1f3a',
-                    'Content-Type' => 'application/json',
-                ];
+                $headers = $vtpass->getHeaders();
 
                 $data = [
                     'billersCode' => $billersCode,
@@ -234,7 +226,7 @@ class CableTvController extends Controller
         return response()->json(['message' => 'Invalid request method'], 405);
     }
 
-    public function cableSubscription(Request $request)
+    public function cableSubscription(Request $request, VtpassService $vtpass)
     {
 
 
@@ -245,7 +237,7 @@ class CableTvController extends Controller
             'cable_plan' => 'string|required',
             'amount' => 'string|required',
             'image' => 'string|nullable'
-            
+
         ]);
 
         if ($validator->fails()) {
@@ -295,14 +287,16 @@ class CableTvController extends Controller
 
             ];
 
-            $url = "https://sandbox.vtpass.com/api/pay";
+            $url = config('api.vtpass.base_url')."pay";
 
-            $headers = [
-                'api-key' => '6f8493837a1d4b0e5715fd72849cb087', //$webconfig['VTPASS_API_KEY'],
-                'secret-key' => 'SK_925ad054b329478d807b776ce071ed7e01d7c903914', //$webconfig['VTPASS_SK'],
-                'public-key' => 'PK_42554e477a0c32098989c8a7240f66381b9ca6e1f3a',
-                'Content-Type' => 'application/json',
-            ];
+            if ($vtpass->isVtpassEnabled()) {
+                $headers = $vtpass->getHeaders();
+            } else {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Server call service is currently disabled.',
+                ]);
+            }
 
             $response = Http::withHeaders($headers)->post($url, $data);
 
@@ -325,7 +319,8 @@ class CableTvController extends Controller
 
                 if ($data['code'] == '000' || $data['code'] == '099') {
 
-                    $url = "https://sandbox.vtpass.com/api/requery";
+                    $baseUrl = config('api.vtpass.base_url');
+                    $url = $baseUrl."requery";
                     $payload = [
                         'request_id' => $data['requestId']
                     ];
@@ -379,7 +374,7 @@ class CableTvController extends Controller
                             return response()->json([
                                 'status' => true,
                                 'message' => '',
-                                 'data' => $transaction
+                                'data' => $transaction
                             ], 200);
                         }
                     }

@@ -13,6 +13,7 @@ class Notification extends Model
         'notification_title',
         'notification_message',
         'image',
+        'receiver_type',
         'receiver_id',
     ];
 }

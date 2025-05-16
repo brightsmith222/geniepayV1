@@ -2,76 +2,104 @@
 
 @section('dashboard-content')
 
-<div class="card shadow-sm">
-  <div class="card-body">
-
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h3 class="card-title mb-0">Update Slider</h3>
-      <a href="{{ URL::to('sliders') }}" class="btn btn-primary" style="background-color: #9900CE; border: none; border-radius: 5px; padding: 10px 20px;">
-        <i class="fas fa-arrow-left"></i> View Sliders
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="h3 mb-0 text-gray-800">
+          <i class="fas fa-edit text-primary mr-2"></i>Edit Slider
+      </h1>
+      <a href="{{ URL::to('sliders') }}" class="btn btn-primary">
+          <i class="fas fa-arrow-left mr-2"></i> Back to Sliders
       </a>
-    </div>
+  </div>
 
-    <!-- Success and Error Messages -->
-    @if(Session::get('success'))
+  <!-- Success and Error Messages -->
+  @if(Session::get('success'))
       <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <strong>{{ Session::get('success') }}</strong>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
+          <i class="fas fa-check-circle mr-2"></i> {{ Session::get('success') }}
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+          </button>
       </div>
-    @endif
+  @endif
 
-    @if(Session::get('failed'))
+  @if(Session::get('failed'))
       <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <strong>{{ Session::get('failed') }}</strong>
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
+          <i class="fas fa-exclamation-circle mr-2"></i> {{ Session::get('failed') }}
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+          </button>
       </div>
-    @endif
+  @endif
 
-    <!-- Edit Form -->
-    <form action="{{ URL::to('update-slider') }}/{{ $slider->id }}" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
-      @csrf
+  <!-- Edit Form Card -->
+  <div class="slider-card shadow-sm border-0">
+      <div class="card-body p-4">
+          <form action="{{ URL::to('update-slider') }}/{{ $slider->id }}" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+              @csrf
 
-      <!-- Slider Title -->
-      <div class="form-group mb-4">
-        <label for="slider_title" class="form-label">Slider Title (Optional)</label>
-        <input type="text" class="form-control" id="slider_title" name="slider_title" value="{{ $slider->slider_title }}" placeholder="Enter Slider Title">
+              <!-- Form Sections -->
+              <div class="row">
+                  <!-- Left Column - Form Fields -->
+                  <div class="col-lg-8">
+                      <!-- Slider Title -->
+                      <div class="form-group mb-4">
+                          <label for="slider_title" class="font-weight-bold text-primary mb-2">
+                              <i class="fas fa-heading mr-2"></i>Slider Title (Optional)
+                          </label>
+                          <input type="text" class="form-control border-primary" id="slider_title" name="slider_title" 
+                                 value="{{ $slider->slider_title }}" placeholder="Enter a catchy title for your slider">
+                      </div>
+
+                      <!-- Slider Message -->
+                      <div class="form-group mb-4">
+                          <label for="slider_message" class="font-weight-bold text-primary mb-2">
+                              <i class="fas fa-comment-alt mr-2"></i>Slider Message (Optional)
+                          </label>
+                          <textarea class="form-control border-primary" id="editor1" name="slider_message" 
+                                    rows="5" placeholder="Enter your slider message here">{{ $slider->slider_message }}</textarea>
+                      </div>
+                  </div>
+
+                  <!-- Right Column - Image Upload -->
+                  <div class="col-lg-4">
+                      <div class="slider-card border-0 shadow-sm mb-4">
+                          <div class="card-header bg-white">
+                              <h6 class="font-weight-bold text-primary mb-0">
+                                  <i class="fas fa-image mr-2"></i>Slider Image
+                              </h6>
+                          </div>
+                          <div class="card-body text-center">
+                              <!-- Current Image Preview -->
+                              <div class="mb-3">
+                                  <img src="{{ $slider->image }}" id="photo" 
+                                       class="img-fluid rounded shadow" 
+                                       style="max-height: 200px; width: auto;">
+                              </div>
+                              
+                              <!-- Image Upload -->
+                              <div class="form-group">
+                                  <div class="custom-file">
+                                      <input type="file" class="custom-file-input" id="image" 
+                                             name="image" onchange="loadPhoto(event)">
+                                      <label class="custom-file-label" for="image">Choose new image</label>
+                                  </div>
+                                  <input type="hidden" name="image_update" value="{{ $slider->image }}">
+                                  <small class="form-text text-muted">Recommended size: 1920×800 pixels</small>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- Submit Button -->
+              <div class="form-group text-center mt-4">
+                  <button type="submit" class="btn btn-primary btn-lg px-5">
+                      <i class="fas fa-save mr-2"></i> Update Slider
+                  </button>
+              </div>
+          </form>
       </div>
-
-      <!-- Slider Message -->
-      <div class="form-group mb-4">
-        <label for="slider_message" class="form-label">Slider Message (Optional)</label>
-        <textarea class="form-control" id="editor1" name="slider_message" rows="4" placeholder="Enter Slider Message">{{ $slider->slider_message }}</textarea>
-      </div>
-
-      <!-- Slider Image -->
-      <div class="form-group mb-4">
-        <label for="image" class="form-label">Slider Image *</label>
-        <div class="custom-file">
-          <input type="file" class="custom-file-input" id="image" name="image" onchange="loadPhoto(event)">
-          <label class="custom-file-label" for="image">Choose file</label>
-        </div>
-        <input type="hidden" name="image_update" value="{{ $slider->image }}">
-        <small class="form-text text-muted">Upload a new image to replace the existing one.</small>
-      </div>
-
-      <!-- Image Preview -->
-      <div class="form-group mb-4 text-center">
-        <img src="{{ $slider->image }}" id="photo" class="img-thumbnail" style="width: 150px; height: 150px; border-radius: 10px; object-fit: cover;">
-      </div>
-
-      <!-- Submit Button -->
-      <div class="form-group text-center">
-        <button type="submit" class="btn btn-primary" style="background-color: #9900CE; border: none; border-radius: 5px; padding: 10px 30px;">
-          <i class="fas fa-save"></i> Update Slider
-        </button>
-      </div>
-    </form>
-
   </div>
 </div>
 

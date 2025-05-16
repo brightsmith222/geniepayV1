@@ -1,131 +1,63 @@
 @extends('layout')
 
 @section('dashboard-content')
-
-<!-- Table Row -->
 <div class="row">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Wallet Transaction</h5>
-                         <!-- Search Input -->
-                         <div class="d-flex justify-content-end mb-3">
-                            <input type="hidden" id="walletIndexRoute" value="{{ route('wallet_transac.index') }}">
-                                  <div class="search-container">
-                                    <form>
-                                        <input type="text" 
-                                               id="walletSearchInput" 
-                                               class="form-control search-box" 
-                                               placeholder="Search wallet..." 
-                                               data-route="{{ route('wallet_transac.index') }}" 
-                                               data-table="#wallet-table" 
-                                               data-pagination=".wallet-pagination">
-                                        <span class="search-icon"><i class="material-icons-outlined">search</i></span>
-                                    </form>
-                                  </div>
-                        </div>
-                        <!-- Sorting Dropdown -->
-                        <div class="mb-3">
-                            <label for="sort">Sort By:</label>
-                            <select id="sort" onchange="window.location.href = this.value;">
-                                <option value="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'direction' => 'desc']) }}"
-                                        {{ request('sort') === 'created_at' && request('direction') === 'desc' ? 'selected' : '' }}>
-                                    Newest First
-                                </option>
-                                <option value="{{ request()->fullUrlWithQuery(['sort' => 'created_at', 'direction' => 'asc']) }}"
-                                        {{ request('sort') === 'created_at' && request('direction') === 'asc' ? 'selected' : '' }}>
-                                    Oldest First
-                                </option>
-                                <option value="{{ request()->fullUrlWithQuery(['sort' => 'amount', 'direction' => 'desc']) }}"
-                                        {{ request('sort') === 'amount' && request('direction') === 'desc' ? 'selected' : '' }}>
-                                    Amount (High to Low)
-                                </option>
-                                <option value="{{ request()->fullUrlWithQuery(['sort' => 'amount', 'direction' => 'asc']) }}"
-                                        {{ request('sort') === 'amount' && request('direction') === 'asc' ? 'selected' : '' }}>
-                                    Amount (Low to High)
-                                </option>
-                                <option value="{{ request()->fullUrlWithQuery(['sort' => 'status', 'direction' => 'asc']) }}"
-                                        {{ request('sort') === 'status' && request('direction') === 'asc' ? 'selected' : '' }}>
-                                    Status (A-Z)
-                                </option>
-                                <option value="{{ request()->fullUrlWithQuery(['sort' => 'status', 'direction' => 'desc']) }}"
-                                        {{ request('sort') === 'status' && request('direction') === 'desc' ? 'selected' : '' }}>
-                                    Status (Z-A)
-                                </option>
-                            </select>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table" id="wallet-transaction-table">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Invoice Id</th>
-                                        <th>Status</th>
-                                        <th>Username</th>
-                                        <th>Trans Type</th>
-                                        <th>Service</th>
-                                        <th>Sender Email</th>
-                                        <th>Receiver Email</th>
-                                        <th>Amount</th>
-                                        <th>Bal Before</th>
-                                        <th>Bal. After</th>
-                                        <th>Date</th>
-                                        <th>Action</th>
-                                        
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @if($walletTransactions->isEmpty())
-                                      <tr>
-                                          <td colspan="15" class="text-center">No data available</td>
-                                          </tr>
-                                      @else
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Wallet Transactions</h5>
+                
+               <!-- Modern Filter + Search Header -->
+               <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
 
-                                        @foreach($walletTransactions as $transaction)
-                                        <tr data-id="{{ $transaction->id }}" 
-                                            data-invoice="{{ $transaction->transaction_id }}" 
-                                            data-status="{{ $transaction->status }}" 
-                                            data-username="{{ $transaction->user }}"
-                                            data-type="{{ $transaction->trans_type }}"
-                                            data-service="{{ $transaction->service }}"
-                                            data-sender-email="{{ $transaction->sender_email }}"
-                                            data-receiver-email="{{ $transaction->receiver_email }}"
-                                            data-amount="{{ $transaction->amount }}"
-                                            data-balance-before="{{ $transaction->balance_before }}"
-                                            data-balance-after="{{ $transaction->balance_after }}">
+                <!-- Search Field -->
+                <div class="position-relative" style="max-width: 320px; width: 100%;">
+                    <input type="text" 
+                               id="walletSearchInput"
+                               class="form-control pe-5 py-2 rounded-pill border border-secondary-subtle shadow-sm" 
+                               placeholder="Search transactions..."
+                               value="{{ $searchTerm ?? '' }}">
+                    <span class="position-absolute top-50 end-0 translate-middle-y pe-3 text-muted">
+                        <i class="material-icons-outlined" style="font-size: 18px; line-height: 1;">search</i>
+                    </span>
+                </div>
+                
 
-                                        <td>{{ $transaction->id }}</td>
-                                        <td>{{ $transaction->transaction_id }}</td>
-                                        <td><span class="status {{ strtolower($transaction->status) === 'successful' ? 'completed #198754' : 'cancel #dc3545' }}">
-                                            {{ ucfirst($transaction->status) }}
-                                        </span></td>
-                                        <td>{{ $transaction->user }}</td>
-                                        <td>{{ $transaction->trans_type }}</td>                                        
-                                        <td>{{ $transaction->service }}</td>
-                                        <td>{{ $transaction->sender_email }}</td>
-                                        <td>{{ $transaction->receiver_email }}</td>
-                                        <td>₦{{ number_format($transaction->amount ?? 0, 2) }}</td>                                        
-                                        <td>₦{{ number_format($transaction->balance_before ?? 0, 2) }}</td>
-                                        <td>₦{{ number_format($transaction->balance_after ?? 0, 2) }}</td>
-                                        <td>{{ $transaction->created_at->format('d/m/Y') }}</td>
-                                        <td>
-                                            <span class="material-icons-outlined walletvisibility visib" data-toggle="modal" data-target="#wallettransactionModal">visibility</span>
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                    @endif
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="d-flex justify-content-center mt-4">
-                            {{ $walletTransactions->links('vendor.pagination.bootstrap-4') }}
-                        </div>
-                        <!-- Transaction Details Modal -->
-  @foreach($walletTransactions as $transaction)
+                <!-- Sort Dropdown -->
+                <div class="d-flex align-items-center gap-2">
+                    <label for="walletSort" class="text-muted fw-semibold mb-0">Sort:</label>
+                    <select id="walletSort"
+                                    class="form-select rounded-pill shadow-sm border-secondary-subtle"
+                                    style="min-width: 240px;">
+                        <option value="created_at_desc" {{ $sortColumn == 'created_at' && $sortDirection == 'desc' ? 'selected' : '' }}>🕒 Newest First</option>
+                        <option value="created_at_asc" {{ $sortColumn == 'created_at' && $sortDirection == 'asc' ? 'selected' : '' }}>📅 Oldest First</option>
+                        <option value="username_asc" {{ $sortColumn == 'username' && $sortDirection == 'asc' ? 'selected' : '' }}>🔤 Username (A-Z)</option>
+                        <option value="username_desc" {{ $sortColumn == 'username' && $sortDirection == 'desc' ? 'selected' : '' }}>🔡 Username (Z-A)</option>
+                        <option value="wallet_balance_desc" {{ $sortColumn == 'wallet_balance' && $sortDirection == 'desc' ? 'selected' : '' }}>💰 Amount (High → Low)</option>
+                        <option value="wallet_balance_asc" {{ $sortColumn == 'wallet_balance' && $sortDirection == 'asc' ? 'selected' : '' }}>💸 Amount (Low → High)</option>
+                    </select>
+                </div>
+
+            </div>
+                
+                <!-- Transactions Table Container -->
+                <div id="wallet-table-container" class="table-responsive">
+                    @include('wallet_transac.partials.table', ['walletTransactions' => $walletTransactions])
+                </div>
+                
+                <!-- Pagination Container -->
+                <div id="wallet-pagination-container" class="d-flex justify-content-center mt-4">
+                    {{ $walletTransactions->links('vendor.pagination.bootstrap-4') }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction Details Modal -->
 <div class="modal fade" id="wallettransactionModal" tabindex="-1" aria-labelledby="wallettransactionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <form>
             <div class="modal-header">
                 <h5 class="modal-title" id="transactionModalLabel">Transaction Details</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -147,33 +79,25 @@
                         <p><strong>Amount:</strong> <span id="walletmodalAmount"></span></p>
                         <p><strong>Balance Before:</strong> <span id="walletmodalBalanceBefore"></span></p>
                         <p><strong>Balance After:</strong> <span id="walletmodalBalanceAfter"></span></p>
-                        
                     </div>
                 </div>
             </div>
-
-
             <div class="modal-footer">
-                <a href="javascript:void(0);" class="btn btn-danger refund-btns" id="walletrefundBtn"
-                data-id="{{ $transaction->id }}"
-                {{ $transaction->status == 'Refunded' ? 'disabled' : '' }}>
-                Refund
-              </a>
-                  <a href="" class="btn btn-warning" id="debitBtn">Debit</a>
-              </div>
-            </form>
+                <button class="btn btn-danger refund-btns" id="walletrefundBtn" disabled>
+                    Refund
+                </button>
+                <button class="btn btn-warning" id="debitBtn">Debit</button>
+            </div>
         </div>
     </div>
 </div>
-@endforeach
 
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- Hidden fields for routes and CSRF -->
+<input type="hidden" id="walletIndexRoute" value="{{ route('wallet_transac.index') }}">
+<meta name="csrf-token" content="{{ csrf_token() }}">
 
 @endsection
 
 @section('scripts')
-    <script src="{{ URL::to('assets/js/wallet.js')}}"></script>
+    <script src="{{ asset('assets/js/wallet.js') }}"></script>
 @endsection

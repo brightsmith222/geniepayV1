@@ -8,4 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class DataSettings extends Model
 {
     use HasFactory;
+    
 }

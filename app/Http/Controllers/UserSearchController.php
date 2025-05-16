@@ -24,4 +24,6 @@ class UserSearchController extends Controller
 
         return response()->json($users); // Ensure JSON response
     }
+
+    
 }

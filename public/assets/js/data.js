@@ -1,9 +1,12 @@
 $(document).ready(function () {
+    // ******* START OF TAB FOR DATA SETTING ******
 
-      // ******* START OF TAB FOR DATA SETTING ******
     function setActiveDataTab(tabId) {
-        $(`#${tabId}-tab`).addClass('active');
-        $(`#${tabId}`).addClass('show active');
+        $('.data-nav-link').removeClass('active'); // Remove active class from all tab links
+        $('.data-tab-pane').removeClass('show active'); // Remove active from all tab content
+
+        $(`#${tabId}-tab`).addClass('active'); // Activate the selected tab link
+        $(`#${tabId}`).addClass('show active'); // Show the selected tab content
     }
 
     function saveActiveDataTab(tabId) {
@@ -15,7 +18,7 @@ $(document).ready(function () {
         if (activeDataTab) {
             setActiveDataTab(activeDataTab);
         } else {
-            setActiveDataTab('net-mtn-tab');
+            setActiveDataTab('net-mtn'); // Default to MTN
         }
     }
 
@@ -27,5 +30,4 @@ $(document).ready(function () {
     loadActiveDataTab();
 
     // ******* END OF TAB FOR DATA SETTING ******
-
 });

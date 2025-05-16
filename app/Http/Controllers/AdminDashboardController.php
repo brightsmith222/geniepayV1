@@ -8,66 +8,86 @@ use App\Models\TransactionReport;
 use Illuminate\Support\Facades\Http;
 use App\Models\User;
 use Carbon\Carbon;
+use App\Services\VtpassService;
 use Illuminate\Support\Facades\Log;
 
 class AdminDashboardController extends Controller
 {
     public function myAdmin(Request $request)
-{
+    {
 
-    // Default filter (Today)
-    $filter = $request->input('filter', 'all_time');
+        // Default filter (Today)
+        $filter = $request->input('filter', 'all_time');
 
-    // Get data based on the filter
-    $data = $this->getFilteredData($filter);
+        // Get data based on the filter
+        $data = $this->getFilteredData($filter);
 
-    // Add filter and transaction to the data array
-    $data['filter'] = $filter;
+        $data['greeting'] = $this->getGreeting() . ', ' . auth()->user()->username;
 
-    // Debugging: Log the data being passed to the view
-    Log::info('Data passed to view:', $data);
+        // Add filter and transaction to the data array
+        $data['filter'] = $filter;
 
-    // Pass data to the view
-    return view('dashboard', $data);
-}
+        // Debugging: Log the data being passed to the view
+        Log::info('Data passed to view:', $data);
 
-public function getWalletBalance()
-{
-    $headers = [
-        'api-key' => '6f8493837a1d4b0e5715fd72849cb087',
-        'secret-key' => 'SK_5139159efe5bb9bd7bec71f13cece42899e4d29611a',
-        'public-key' => 'PK_5438116e83f6e4454bb7055ddd5960b363a9661143b',
-        'Content-Type' => 'application/json',
-    ];
-
-    $url = "https://sandbox.vtpass.com/api/balance";
-    $response = Http::withHeaders($headers)->withoutVerifying()->get($url);
-
-    if ($response->failed()) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to fetch balance',
-            'error' => $response->json()
-        ], 500);
+        // Pass data to the view
+        return view('dashboard', $data);
     }
 
-    $responseData = $response->json();
-    
-    // Check if the response has the expected structure
-    if (!isset($responseData['contents']['balance'])) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Invalid balance response structure',
-            'response' => $responseData
-        ], 500);
+    //greeting function
+    public function getGreeting()
+    {
+        $hour = now()->format('H');
+
+        if ($hour < 12) {
+            return 'Good morning';
+        } elseif ($hour < 16) {
+            return 'Good afternoon';
+        } else {
+            return 'Good evening';
+        }
     }
 
-    return response()->json([
-        'success' => true,
-        'balance' => number_format($responseData['contents']['balance'], 2),
-        'raw_response' => $responseData 
-    ]);
-}
+    public function getWalletBalance(VtpassService $vtpass)
+    {
+        if ($vtpass->isVtpassEnabled()) {
+            $headers = $vtpass->getHeaders();
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => 'API service is currently disabled.',
+            ]);
+        }
+
+        $baseUrl = config('api.vtpass.base_url');
+        $url = $baseUrl . "balance";
+        $response = Http::withHeaders($headers)->withoutVerifying()->get($url);
+
+        if ($response->failed()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch balance',
+                'error' => $response->json()
+            ], 500);
+        }
+
+        $responseData = $response->json();
+
+        // Check if the response has the expected structure
+        if (!isset($responseData['contents']['balance'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid balance response structure',
+                'response' => $responseData
+            ], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'balance' => number_format($responseData['contents']['balance'], 2),
+            'raw_response' => $responseData
+        ]);
+    }
 
 
 
@@ -93,7 +113,7 @@ public function getWalletBalance()
     private function getFilteredData($filter, $startDate = null, $endDate = null)
     {
         $now = Carbon::now();
-    
+
         // Initialize variables for date ranges
         if ($filter === 'custom' && $startDate && $endDate) {
             // Use the provided custom date range
@@ -115,7 +135,7 @@ public function getWalletBalance()
                     'suspendedUsers' => 0,
                     'blockedUsers' => 0,
                     'reportedTransactionsCount' => 0,
-                    'previousTotalSales' => 0, // Add previous period data
+                    'previousTotalSales' => 0,
                     'previousTotalDataSales' => 0,
                     'previousTotalAirtimeSales' => 0,
                     'previousTotalElectricitySales' => 0,
@@ -182,61 +202,62 @@ public function getWalletBalance()
                     break;
             }
         }
-    
+
         // Fetch data for the current period
         $transactions = Transactions::when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
             return $query->whereBetween('created_at', [$startDate, $endDate]);
-        })->get();
-    
+        })->where('status', 'successful')->get();
+
         $reportedTransactions = TransactionReport::when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
             return $query->whereBetween('created_at', [$startDate, $endDate]);
         })->get();
-    
+
         $users = User::when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
             return $query->whereBetween('created_at', [$startDate, $endDate]);
         })->get();
-    
+
         // Fetch data for the previous period
         $previousTransactions = Transactions::when($previousStartDate && $previousEndDate, function ($query) use ($previousStartDate, $previousEndDate) {
             return $query->whereBetween('created_at', [$previousStartDate, $previousEndDate]);
         })->get();
-    
+
         $previousReportedTransactions = TransactionReport::when($previousStartDate && $previousEndDate, function ($query) use ($previousStartDate, $previousEndDate) {
             return $query->whereBetween('created_at', [$previousStartDate, $previousEndDate]);
         })->get();
-    
+
         $previousUsers = User::when($previousStartDate && $previousEndDate, function ($query) use ($previousStartDate, $previousEndDate) {
             return $query->whereBetween('created_at', [$previousStartDate, $previousEndDate]);
         })->get();
-    
+
         // Calculate statistics for the current period
+
         $totalSales = $transactions->sum('amount');
         $totalDataSales = $transactions->where('service', 'data')->sum('amount');
         $totalAirtimeSales = $transactions->where('service', 'airtime')->sum('amount');
         $totalElectricitySales = $transactions->where('service', 'electricity')->sum('amount');
         $totalCableSales = $transactions->where('service', 'cable')->sum('amount');
         $totalExamSales = $transactions->where('service', 'exam')->sum('amount');
-    
+
         $totalUsers = $users->count();
         $activeUsers = $users->where('status', 'active')->count();
         $suspendedUsers = $users->where('status', 'suspended')->count();
         $blockedUsers = $users->where('status', 'blocked')->count();
         $reportedTransactionsCount = $reportedTransactions->count();
-    
+
         // Calculate statistics for the previous period
-        $previousTotalSales = $previousTransactions->sum('amount');
-        $previousTotalDataSales = $previousTransactions->where('service', 'data')->sum('amount');
-        $previousTotalAirtimeSales = $previousTransactions->where('service', 'airtime')->sum('amount');
-        $previousTotalElectricitySales = $previousTransactions->where('service', 'electricity')->sum('amount');
-        $previousTotalCableSales = $previousTransactions->where('service', 'cable')->sum('amount');
-        $previousTotalExamSales = $previousTransactions->where('service', 'exam')->sum('amount');
-    
+        $previousTotalSales = $previousTransactions->where('status', 'successful')->sum('amount');
+        $previousTotalDataSales = $previousTransactions->where('status', 'successful')->where('service', 'data')->sum('amount');
+        $previousTotalAirtimeSales = $previousTransactions->where('status', 'successful')->where('service', 'airtime')->sum('amount');
+        $previousTotalElectricitySales = $previousTransactions->where('status', 'successful')->where('service', 'electricity')->sum('amount');
+        $previousTotalCableSales = $previousTransactions->where('status', 'successful')->where('service', 'cable')->sum('amount');
+        $previousTotalExamSales = $previousTransactions->where('status', 'successful')->where('service', 'exam')->sum('amount');
+
         $previousTotalUsers = $previousUsers->count();
         $previousActiveUsers = $previousUsers->where('status', 'active')->count();
         $previousSuspendedUsers = $previousUsers->where('status', 'suspended')->count();
         $previousBlockedUsers = $previousUsers->where('status', 'blocked')->count();
         $previousReportedTransactionsCount = $previousReportedTransactions->count();
-    
+
         // Return the data
         return [
             'totalSales' => $totalSales ?? 0,
@@ -262,5 +283,17 @@ public function getWalletBalance()
             'previousBlockedUsers' => $previousBlockedUsers ?? 0,
             'previousReportedTransactionsCount' => $previousReportedTransactionsCount ?? 0,
         ];
+    }
+
+    public function getReportedTransactions()
+    {
+        // Fetch reported transactions with 'reported' status
+        $reports = TransactionReport::where('status', 'reported')->get();
+
+        return response()->json([
+            'success' => true,
+            'count' => $reports->count(),
+            'reports' => $reports,
+        ]);
     }
 }

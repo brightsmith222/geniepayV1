@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('api_key');
             $table->string('api_public');
-            $table->string('api_secret');
+            $table->string('api_secret', 512);
             $table->string('status');
             $table->timestamps();
         });

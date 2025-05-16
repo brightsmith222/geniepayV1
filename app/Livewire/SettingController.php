@@ -2,11 +2,12 @@
 
 namespace App\Livewire;
 use App\Models\User;
+use App\Models\GeneralSettings;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
 use Livewire\Component;
+use Illuminate\Support\Facades\Log;
 
 class SettingController extends Component
 {
@@ -16,6 +17,15 @@ class SettingController extends Component
     public $new_password;
     public $new_password_confirmation;
     public $activeTab = 'profile';
+    public $referralEnabled;
+    public $vtpassEnabled;
+    public $gladEnabled;
+    public $artxEnabled;
+    public $artxgiftcardEnabled;
+    public $referralBonus;
+    protected $listeners = ['deleteAccount'];
+    
+
 
     public function setActiveTab($tab)
     {
@@ -25,14 +35,72 @@ class SettingController extends Component
     
 
     public function mount()
-    {
-        $user = Auth::user();
-        $this->name = $user->full_name;
-        $this->email = $user->email;
+{
+    $user = Auth::user();
+    $this->name = $user->full_name;
+    $this->email = $user->email;
+    $this->activeTab = session()->get('active_tab', 'profile');
 
-        $this->activeTab = session()->get('active_tab', 'profile');
+    // Initialize toggle values from database
+    $this->referralEnabled = (bool) GeneralSettings::where('name', 'referral')->value('is_enabled');
+    $this->vtpassEnabled = (bool) GeneralSettings::where('name', 'vtpass')->value('is_enabled');
+    $this->gladEnabled = (bool) GeneralSettings::where('name', 'glad')->value('is_enabled');
+    $this->artxEnabled = (bool) GeneralSettings::where('name', 'artx')->value('is_enabled');
+    $this->artxgiftcardEnabled = (bool) GeneralSettings::where('name', 'artx_giftcard')->value('is_enabled');
+    $this->referralBonus = GeneralSettings::where('name', 'referral')->value('referral_bonus') ?? 0;
+
+}
+
+
+// Update database when the toggle is changed
+public function toggleSetting($name)
+{
+    $setting = GeneralSettings::firstOrCreate(['name' => $name]);
+    $setting->is_enabled = !$setting->is_enabled;
+    $setting->save();
+
+    if ($name === 'referral') {
+        $this->referralEnabled = $setting->is_enabled;
     }
 
+    if ($name === 'vtpass') {
+        $this->vtpassEnabled = $setting->is_enabled;
+    }
+
+    if ($name === 'glad') {
+        $this->gladEnabled = $setting->is_enabled;
+    }
+
+    if ($name === 'artx') {
+        $this->artxEnabled = $setting->is_enabled;
+    }
+
+    if ($name === 'artx_giftcard') {
+        $this->artxgiftcardEnabled = $setting->is_enabled;
+    }
+
+    flash()->success('Setting updated successfully!');
+}
+
+
+
+public function saveReferralBonus()
+{
+    Log::info('Saving referral bonus: ' . $this->referralBonus);
+
+    GeneralSettings::updateOrCreate(
+        ['name' => 'referral'],
+        ['referral_bonus' => $this->referralBonus]
+    );
+
+    flash()->success('Referral bonus updated successfully!');
+
+}
+
+
+  
+  
+// Update profile information
     public function updateProfile()
     {
         $this->validate([
@@ -48,6 +116,7 @@ class SettingController extends Component
         flash()->success('Profile updated successfully!');
     }
 
+    // Update password
     public function updatePassword()
     {
         $this->validate([
@@ -56,12 +125,23 @@ class SettingController extends Component
         ]);
 
         if (!Hash::check($this->current_password, Auth::user()->password)) {
-            $this->addError('current_password', 'Current password is incorrect');
             flash()->error('Current password is incorrect');
 
             session()->put('active_tab', 'security');
             $this->activeTab = 'security';
+
+            return;
         }
+
+        // Check if the new password is the same as the old password
+    if (Hash::check($this->new_password, Auth::user()->password)) {
+        flash()->error('New password cannot be the same as the current password');
+
+        session()->put('active_tab', 'security');
+        $this->activeTab = 'security';
+
+        return; 
+    }
 
         Auth::user()->update([
             'password' => Hash::make($this->new_password)
@@ -73,6 +153,24 @@ class SettingController extends Component
         session()->put('active_tab', 'security');
         $this->activeTab = 'security';
     }
+
+    
+
+
+    // Delete account
+    public function deleteAccount()
+{
+    $user = Auth::user();
+    $userId = $user->id;
+    Auth::logout();
+    session()->invalidate();
+    session()->regenerateToken();
+    User::where('id', $userId)->delete(); // Use forceDelete() if using soft deletes
+    return redirect('/')->with('success', 'Your account has been deleted.');
+}
+
+    
+
 
     public function render()
     {

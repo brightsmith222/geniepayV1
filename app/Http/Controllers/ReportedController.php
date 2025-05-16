@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Client\RequestException;
 use App\Models\User;
+use App\Services\VtpassService;
 use Illuminate\Support\Facades\Log;
 
 
@@ -18,67 +19,132 @@ class ReportedController extends Controller
      */
     public function index(Request $request)
 {
-    if ($request->ajax()) {
-        $reports = TransactionReport::where('status', 'Reported')
-            ->orderBy('created_at', 'desc')
-            ->take(5)
-            ->get()
-            ->map(function($report) {
-                return [
-                    'username' => $report->username,
-                    'service' => $report->service,
-                    'amount' => number_format($report->amount, 2),
-                    'service_plan' => $report->service_plan,
-                    'created_at' => $report->created_at->diffForHumans()
-                ];
-            });
+    // Reported Transactions
+    $reportedData = $this->getReportedTransactions($request);
+    
+    // Resolved/Refunded Transactions
+    $resolvedData = $this->getResolvedTransactions($request);
 
+    // AJAX response
+    if ($request->ajax()) {
         return response()->json([
-            'success' => true,
-            'count' => TransactionReport::where('status', 'Reported')->count(),
-            'reports' => $reports
+            'reported' => [
+                'table' => view('reported.partials.table', [
+                    'transactions' => $reportedData['transactions'],
+                ])->render(),
+                'pagination' => $reportedData['transactions']->links('vendor.pagination.bootstrap-4')->render()
+            ],
+            'resolved' => [
+                'table' => view('reported.partials.resolved_table', [
+                    'transactions' => $resolvedData['transactions'],
+                ])->render(),
+                'pagination' => $resolvedData['transactions']->links('vendor.pagination.bootstrap-4')->render()
+            ]
         ]);
     }
 
-    // Default sorting column and direction
-    $sortColumn = request('sort', 'created_at'); // Default to 'created_at'
-    $sortDirection = request('direction', 'desc'); // Default to 'desc'
-
-    // Validate the sort column to prevent SQL injection
-    $validColumns = ['id', 'amount', 'created_at', 'status'];
-    if (!in_array($sortColumn, $validColumns)) {
-        $sortColumn = 'created_at'; // Fallback to a valid column
-    }
-
-    // Get the search term from the request
-    $searchTerm = $request->input('search');
-
-    // Log the search term for debugging
-    \Log::info('Search Term:', ['searchTerm' => $searchTerm]);
-
-    // Base query for all transactions
-    $reportedQuery = TransactionReport::where('status', 'Reported')->orderBy($sortColumn, $sortDirection);
-
-    // Apply search filter if a search term is provided
-    if ($searchTerm) {
-        $reportedQuery->where(function ($query) use ($searchTerm) {
-            $query->where('transaction_id', 'like', "%{$searchTerm}%")
-                  ->orWhere('service', 'like', "%{$searchTerm}%")
-                  ->orWhere('user', 'like', "%{$searchTerm}%")
-                  ->orWhere('amount', 'like', "%{$searchTerm}%")
-                  ->orWhere('status', 'like', "%{$searchTerm}%");
-        });
-    }
-
-    // Paginate the results
-    $reportedTransactions = $reportedQuery->paginate(7);
-
-    // Log the query results for debugging
-    \Log::info('Query Results:', ['results' => $reportedTransactions]);
-
-    // Render the view and pass the necessary data
-    return view('reported.index', compact('reportedTransactions'));
+    // Regular response remains the same
+    return view('reported.index', [
+        'reportedTransactions' => $reportedData['transactions'],
+        'resolvedTransactions' => $resolvedData['transactions'],
+        'searchTerm' => $reportedData['searchTerm'],
+        'sortColumn' => $reportedData['sortColumn'],
+        'sortDirection' => $reportedData['sortDirection'],
+        'resolvedSearchTerm' => $resolvedData['resolvedSearchTerm'],
+        'resolvedSortColumn' => $resolvedData['resolvedSortColumn'],
+        'resolvedSortDirection' => $resolvedData['resolvedSortDirection']
+    ]);
 }
+
+protected function getReportedTransactions(Request $request)
+{
+    $validated = $request->validate([
+        'sort_column' => 'sometimes|string|in:created_at,amount,updated_at',
+        'sort_direction' => 'sometimes|string|in:asc,desc',
+        'search' => 'nullable|string',
+        'page' => 'sometimes|integer'
+    ]);
+
+    $sortColumn = $validated['sort_column'] ?? 'created_at';
+    $sortDirection = $validated['sort_direction'] ?? 'desc';
+    $searchTerm = $validated['search'] ?? null; 
+
+    $query = TransactionReport::where('status', 'Reported')
+        ->when($searchTerm, function($query) use ($searchTerm) {
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('transaction_id', 'like', "%{$searchTerm}%")
+                  ->orWhere('service', 'like', "%{$searchTerm}%")
+                  ->orWhere('username', 'like', "%{$searchTerm}%")
+                  ->orWhere('amount', 'like', "%{$searchTerm}%");
+            });
+        })
+        ->orderBy($sortColumn, $sortDirection);
+
+    $transactions = $query->paginate(7)
+        ->appends([
+            'search' => $searchTerm,
+            'sort_column' => $sortColumn,
+            'sort_direction' => $sortDirection
+        ]);
+
+    return [
+        'transactions' => $transactions,
+        'searchTerm' => $searchTerm,
+        'sortColumn' => $sortColumn,
+        'sortDirection' => $sortDirection
+    ];
+}
+
+protected function getResolvedTransactions(Request $request)
+{
+    $validated = $request->validate([
+        'resolved_sort_column' => 'sometimes|string|in:updated_at,amount,created_at',
+        'resolved_sort_direction' => 'sometimes|string|in:asc,desc',
+        'resolved_search' => 'nullable|string',
+        'page' => 'sometimes|integer'
+    ]);
+
+    $sortColumn = $validated['resolved_sort_column'] ?? 'updated_at';
+    $sortDirection = $validated['resolved_sort_direction'] ?? 'desc';
+    $searchTerm = $validated['resolved_search'] ?? null;
+
+    $query = TransactionReport::whereIn('status', ['Refunded', 'resolved'])
+        ->when($searchTerm, function($query) use ($searchTerm) {
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('transaction_id', 'like', "%{$searchTerm}%")
+                  ->orWhere('service', 'like', "%{$searchTerm}%")
+                  ->orWhere('username', 'like', "%{$searchTerm}%")
+                  ->orWhere('amount', 'like', "%{$searchTerm}%")
+                  ->orWhere('updated_by', 'like', "%{$searchTerm}%");
+            });
+        })
+        ->orderBy($sortColumn, $sortDirection);
+
+    $transactions = $query->paginate(7)->onEachSide(1)
+        ->appends([
+            'resolved_search' => $searchTerm,
+            'resolved_sort_column' => $sortColumn,
+            'resolved_sort_direction' => $sortDirection
+        ]);
+
+    return [
+        'transactions' => $transactions, // Changed from 'resolvedTransactions' for consistency
+        'resolvedSearchTerm' => $searchTerm,
+        'resolvedSortColumn' => $sortColumn,
+        'resolvedSortDirection' => $sortDirection
+    ];
+}
+
+public function resolved(Request $request)
+{
+    $resolvedData = $this->getResolvedTransactions($request);
+    
+    return response()->json([
+        'table' => view('reported.partials.resolved_tab', ['transactions' => $resolvedData['resolvedTransactions']])->render(),
+        'pagination' => $resolvedData['resolvedTransactions']->links('vendor.pagination.bootstrap-4')->render()
+    ]);
+}
+
 
 public function reportedrefund($requestId) 
 {
@@ -87,9 +153,10 @@ public function reportedrefund($requestId)
     try {
         // Find by API transaction ID instead of primary key
         $reportedtransaction = TransactionReport::where('transaction_id', $requestId)->firstOrFail();
+        $adminUsername = auth()->user()->username;
 
         // Log the current status for debugging
-        \Log::info('Checking transaction status:', [
+        Log::info('Checking transaction status:', [
             'transaction_id' => $reportedtransaction->requestId,
             'status' => $reportedtransaction->status,
         ]);
@@ -99,7 +166,7 @@ public function reportedrefund($requestId)
 
         // Check if THIS SPECIFIC TRANSACTION is already refunded
         if ($status === 'refunded') {
-            \Log::warning('Transaction already refunded:', [
+            Log::warning('Transaction already refunded:', [
                 'transaction_id' => $reportedtransaction->requestId,
             ]);
             return response()->json([
@@ -112,7 +179,7 @@ public function reportedrefund($requestId)
         $user = User::where('username', $reportedtransaction->username)->first();
 
         if (!$user) {
-            \Log::error('User not found for transaction:', [
+            Log::error('User not found for transaction:', [
                 'transaction_id' => $reportedtransaction->requestId,
                 'username' => $reportedtransaction->username,
             ]);
@@ -130,7 +197,7 @@ public function reportedrefund($requestId)
         $user->wallet_balance = $expectedBalance;
 
         if (!$user->save()) {
-            \Log::error('Failed to update user balance:', [
+            Log::error('Failed to update user balance:', [
                 'user_id' => $user->id,
                 'transaction_id' => $reportedtransaction->requestId
             ]);
@@ -142,7 +209,7 @@ public function reportedrefund($requestId)
         
         // Compare with a small epsilon to account for floating point precision
         if (abs($user->wallet_balance - $expectedBalance) > 0.0001) {
-            \Log::error('Balance update verification failed:', [
+            Log::error('Balance update verification failed:', [
                 'expected' => $expectedBalance,
                 'actual' => $user->wallet_balance,
                 'difference' => abs($user->wallet_balance - $expectedBalance)
@@ -152,8 +219,9 @@ public function reportedrefund($requestId)
 
         // Update THIS SPECIFIC TRANSACTION'S status to "refunded"
         $reportedtransaction->status = 'Refunded';
+        $reportedtransaction->updated_by = $adminUsername;
         if (!$reportedtransaction->save()) {
-            \Log::error('Failed to update transaction status:', [
+            Log::error('Failed to update transaction status:', [
                 'transaction_id' => $reportedtransaction->requestId
             ]);
             throw new \Exception('Failed to update transaction status');
@@ -161,9 +229,10 @@ public function reportedrefund($requestId)
 
         DB::commit();
 
-        \Log::info('Transaction refunded successfully:', [
+        Log::info('Transaction refunded successfully:', [
             'transaction_id' => $reportedtransaction->requestId,
             'new_status' => $reportedtransaction->status,
+            'admin' => $adminUsername,
             'user_new_balance' => $user->wallet_balance
         ]);
 
@@ -174,7 +243,7 @@ public function reportedrefund($requestId)
 
     } catch (\Exception $e) {
         DB::rollBack();
-        \Log::error('Refund failed:', [
+        Log::error('Refund failed:', [
             'error' => $e->getMessage(),
             'request_id' => $requestId
         ]);
@@ -185,39 +254,6 @@ public function reportedrefund($requestId)
         ], 500);
     }
 }
-
-public function queryApiStatus($requestId)
-{
-    $headers = [
-        'api-key' => '6f8493837a1d4b0e5715fd72849cb087',
-        'secret-key' => 'SK_5139159efe5bb9bd7bec71f13cece42899e4d29611a',
-        'public-key' => 'PK_5438116e83f6e4454bb7055ddd5960b363a9661143b',
-        'Content-Type' => 'application/json',
-    ];
-
-    $url = "https://sandbox.vtpass.com/api/requery";
-    $payload = [
-        'request_id' => $requestId,
-    ];
-
-    try {
-        $response = Http::withHeaders($headers)->post($url, $payload);
-        $data = $response->json();
-
-        Log::info('API Response: ', $data);
-
-        // Ensure 'requestId' exists before accessing
-        if (isset($data['requestId'])) {
-            return response()->json($data, 200);
-        }
-
-        return response()->json(['status' => 'Failed to fetch status', 'error' => 'Missing requestId'], 500);
-    } catch (\Exception $e) {
-        Log::error('API Error: ' . $e->getMessage());
-        return response()->json(['status' => 'Error fetching transaction details'], 500);
-    }
-}
-
 
 
     /**
@@ -240,16 +276,12 @@ public function queryApiStatus($requestId)
      * Display the specified resource.
      */
 
-     public function show($transactionId)
+     public function show($transactionId, VtpassService $vtpass)
 {
-    //Live header
-    $headers = [
-        'api-key' => '7e34e6b7628b552ab6572a989ad28bf6',
-        'secret-key' => 'SK_69981ef530cd8a7eaf8f379e14baa5042e02957bed0',
-        'public-key' => 'PK_3667469c9f7e5b8229d8a9cb0586ade01e4d8659655',
-        'Content-Type' => 'application/json',
-    ];
-
+    // First get the transaction from your local database
+    $localTransaction = TransactionReport::where('transaction_id', $transactionId)->first();
+    
+    $headers = $vtpass->getHeaders();
     $url = "https://vtpass.com/api/requery";
     $payload = [
         'request_id' => $transactionId,
@@ -263,13 +295,27 @@ public function queryApiStatus($requestId)
         $responseData = $response->json();
         Log::info('Full API Response:', ['response' => $responseData]);
 
-        $transaction = $responseData['content']['transactions'];
+        // Check if the response contains transactions data
+        if (!isset($responseData['content']['transactions'])) {
+            Log::error('Transactions data missing in API response', ['response' => $responseData]);
+            return back()->with('error', 'Transaction details not found in API response');
+        }
 
+        // Prepare transaction data
+        $transaction = $responseData['content']['transactions'];
+        
         // Add additional details from the main response
         $transaction['requestId'] = $responseData['requestId'] ?? 'N/A';
         $transaction['transaction_date'] = $responseData['transaction_date'] ?? 'N/A';
         $transaction['purchased_code'] = $responseData['purchased_code'] ?? 'N/A';
         $transaction['response_description'] = $responseData['response_description'] ?? 'N/A';
+
+        // Add the status from your local database
+        $transaction['local_status'] = $localTransaction ? $localTransaction->status : 'N/A';
+        $transaction['local_balance_before'] = $localTransaction ? $localTransaction->balance_before : 'N/A';
+        $transaction['local_balance_after'] = $localTransaction ? $localTransaction->balance_after : 'N/A';
+        $transaction['id'] = $localTransaction ? $localTransaction->id : 'N/A';
+        $transaction['image'] = $localTransaction ? $localTransaction->image : 'N/A';
 
         // Format the transaction date
         if ($transaction['transaction_date'] !== 'N/A') {
@@ -278,6 +324,7 @@ public function queryApiStatus($requestId)
                 $transaction['formatted_date'] = $date->format('M d, Y - h:iA');
             } catch (\Exception $e) {
                 $transaction['formatted_date'] = $transaction['transaction_date'];
+                Log::warning('Failed to format transaction date', ['error' => $e->getMessage()]);
             }
         } else {
             $transaction['formatted_date'] = 'N/A';
@@ -295,27 +342,4 @@ public function queryApiStatus($requestId)
 
     
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Reported $reported)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Reported $reported)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Reported $reported)
-    {
-        //
-    }
 }

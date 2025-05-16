@@ -13,7 +13,7 @@ class SliderController extends Controller
     public function index()
     {
         
-        $sliders = Slider::paginate(3); 
+        $sliders = Slider::paginate(3)->onEachSide(1); 
         return view('slider.index', compact('sliders'));
     }
 
@@ -58,7 +58,7 @@ class SliderController extends Controller
             }
 
             if ($model->save()) {
-                return redirect()->back()->with('success', 'Slider  saved successfully!');
+                return redirect()->back()->with('success', 'Slider  uploaded successfully!');
             }
             return redirect()->back()->with('failed', 'Slider could not be saved!');
         }
@@ -126,8 +126,6 @@ class SliderController extends Controller
                 return redirect()->back()->with('success', 'Slider  updated successfully!');
             }
             return redirect()->back()->with('failed', 'Slider could not be updated!');
-        // }
-        // return redirect()->back()->with('failed', 'Please fill all the compulsory fields!');
     }
 
     /**
@@ -144,10 +142,14 @@ class SliderController extends Controller
             $slider->delete();
     
             // Redirect with success message
-            return redirect()->back()->with('deleted', 'Slider deleted successfully!');
+            flash()->success('Slider deleted successfully!');
+        
+            return redirect()->back();
         }
     
         // If the slider does not exist, redirect with error message
-        return redirect()->back()->with('delete-failed', 'Slider not found!');
+        flash()->error('Slider not found!');
+        
+        return redirect()->back();
     }
 }

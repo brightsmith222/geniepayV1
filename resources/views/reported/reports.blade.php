@@ -16,8 +16,8 @@
                         <div class="d-none d-lg-flex gap-15 align-content-center align-items-center">   
                             <div class="circle-xxl neutral-300-bg align-self-start">
                                 <div class="circle-xxmd">
-                                    <div class="circle-xxmd blue-100-bg">
-                                        <img src="img/wallet.png" width="50px" class="img-fluid" style="">
+                                    <div class="circle-xxmd blue-100-bg ">
+                                        <img src="/{{ ($transaction['image'] ?? 'N/A') }}" class="img-fluid " style="">
                                     </div>
                                 </div>
                             </div>
@@ -94,6 +94,10 @@
                                                         </svg>
                                                     </div>
                                                 </div>
+                                                <div id="custom-toast">
+                                                    Copied to clipboard!
+                                                </div>
+                                                
                                                 <div class="d-flex flex-column">
                                                     <div class="d-flex gap-15 align-content-center">
                                                         <p class="summary-title">Transaction ID</p>
@@ -130,23 +134,48 @@
                                 </div>
                                 <div class="d-flex gap-10 justify-content-between flex-row flex-md-column align-content-center align-items-center problem-with-transaction" style="max-width: 210px;">
                                     <div class="modal-footer">
-                <a href="javascript:void(0);" class="btn btn-danger refunds-btns" id="reportedrefundBtn"
-                data-id="{{$transaction['requestId'] }}">
-                Refund
-              </a>
-              </div>
+                                        @php
+                                            $status = strtolower($transaction['local_status'] ?? '');
+                                            $disabled = in_array($status, ['refunded', 'resolved']);
+                                        @endphp
+                                        <a href="javascript:void(0);" class="btn btn-danger refunds-btns" id="reportedrefundBtn"
+                                           data-id="{{ $transaction['requestId'] }}"
+                                           @if(in_array($status, ['refunded', 'resolved'])) disabled @endif>
+                                            Refund
+                                        </a>
+                                        <button 
+                                            class="btn btn-secondary resolve-btn" id="resolveBtn" 
+                                            data-id="{{ $transaction['requestId'] }}"
+                                            @if($disabled) disabled @endif
+                                        >
+                                            Resolve
+                                        </button> 
+                                    </div>
+                                    <div class="d-flex gap-15 justify-content-between mb-0">
+                                        <p class="mb-0 neutral-600-text">Our System Status:</p>
+                                        <p class="mb-0 font-weight-bold neutral-950-text">
+                                            <span class="badge text-center 
+                                                @if(strtolower($transaction['local_status'] ?? '') === 'refunded') 
+                                                    red-100-bg red-500-text
+                                                @else
+                                                    yellow-100-bg yellow-500-text
+                                                @endif">
+                                                {{ $transaction['local_status'] ?? 'Not recorded' }}
+                                            </span>
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         <div class="d-flex d-lg-none flex-column">
                             <div class="d-flex gap-10 align-content-center align-items-center">
-                                <div class="circle-xl neutral-300-bg align-self-start">
-                                    <div class="circle-xl">
-                                       <div class="circle-xl blue-100-bg">
-                                                <img src="img/wallet.png" width="50px" class="img-fluid" style="">
-                                       </div>
+                                <div class="circle-xxl neutral-300-bg align-self-start">
+                                    <div class="circle-xxmd">
+                                        <div class="circle-xxmd blue-100-bg ">
+                                            <img src="/{{ ($transaction['image'] ?? 'N/A') }}" class="img-fluid " style="">
+                                        </div>
                                     </div>
-                                </div>  
+                                </div>
                              </div>
                             <hr class="w-100">  
                             <div class="d-flex flex-column flex-wrap gap-10">
@@ -188,6 +217,24 @@
                                 <div class="d-flex gap-15 justify-content-between mb-0">
                                     <p class="mb-0 neutral-600-text">Transaction Date:</p>
                                     <p class="mb-0 font-weight-bold neutral-950-text">{{ $transaction['formatted_date'] ?? 'N/A' }}</p>
+                                </div>
+                                <div class="d-flex gap-15 justify-content-between mb-0">
+                                @php
+                                            $status = strtolower($transaction['local_status'] ?? '');
+                                            $disabled = in_array($status, ['refunded', 'resolved']);
+                                        @endphp
+                                        <a href="javascript:void(0);" class="btn btn-danger refunds-btns" id="reportedrefundBtn"
+                                           data-id="{{ $transaction['requestId'] }}"
+                                           @if(in_array($status, ['refunded', 'resolved'])) disabled @endif>
+                                            Refund
+                                        </a>
+                                        <button 
+                                            class="btn btn-secondary resolve-btn" id="resolveBtn" 
+                                            data-id="{{ $transaction['requestId'] }}"
+                                            @if($disabled) disabled @endif
+                                        >
+                                            Resolve
+                                        </button> 
                                 </div>
                             </div>
                         </div>
@@ -506,5 +553,5 @@
     @endsection
 
     @section('scripts')
-        <script src="{{ URL::to('assets/js/reported.js')}}"></script>
+        <script src="{{ URL::to('assets/js/report_reports.js')}}"></script>
     @endsection

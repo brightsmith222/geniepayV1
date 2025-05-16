@@ -40,8 +40,7 @@
         
         .image-section {
             flex: 1;
-            background: url('https://source.unsplash.com/random/1600x900/?nature,water') center/cover no-repeat;
-            position: relative;
+            background: url('{{ asset('storage/login/background.jpg') }}') center/cover no-repeat;            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
