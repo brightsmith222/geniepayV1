@@ -17,7 +17,7 @@ class ArtxAirtimeService extends BaseApiService implements ApiServiceInterface
 
     public function __construct()
     {
-        $this->serviceName = 'artx';
+        $this->serviceName = 'artx_airtime';
         $this->baseUrl = config('api.artx.base_url');
         $this->username = config('api.artx.username');
         $this->passwordHash = sha1(config('api.artx.password')); // First hash (SHA1)

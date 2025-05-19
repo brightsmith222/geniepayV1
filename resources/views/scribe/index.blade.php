@@ -143,14 +143,32 @@
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-GETapi-countries">
                                 <a href="#endpoints-GETapi-countries">GET api/countries</a>
                             </li>
-                                                                                <li class="tocify-item level-2" data-unique="endpoints-GETapi-cards">
-                                <a href="#endpoints-GETapi-cards">GET api/cards</a>
+                                                                                <li class="tocify-item level-2" data-unique="endpoints-GETapi-giftcards">
+                                <a href="#endpoints-GETapi-giftcards">GET api/giftcards</a>
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-GETapi-denominations">
                                 <a href="#endpoints-GETapi-denominations">GET api/denominations</a>
                             </li>
-                                                                                <li class="tocify-item level-2" data-unique="endpoints-POSTapi-purchase">
-                                <a href="#endpoints-POSTapi-purchase">POST api/purchase</a>
+                                                                                <li class="tocify-item level-2" data-unique="endpoints-POSTapi-purchase-giftcard">
+                                <a href="#endpoints-POSTapi-purchase-giftcard">POST api/purchase-giftcard</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="endpoints-GETapi-esim-countries">
+                                <a href="#endpoints-GETapi-esim-countries">GET api/esim-countries</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="endpoints-GETapi-esim-plans">
+                                <a href="#endpoints-GETapi-esim-plans">GET api/esim-plans</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="endpoints-POSTapi-esim-purchase">
+                                <a href="#endpoints-POSTapi-esim-purchase">POST api/esim-purchase</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="endpoints-POSTapi-smile-verify">
+                                <a href="#endpoints-POSTapi-smile-verify">POST api/smile/verify</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="endpoints-GETapi-smile-plans">
+                                <a href="#endpoints-GETapi-smile-plans">GET api/smile/plans</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="endpoints-POSTapi-smile-purchase">
+                                <a href="#endpoints-POSTapi-smile-purchase">POST api/smile/purchase</a>
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-POSTapi-login">
                                 <a href="#endpoints-POSTapi-login">POST api/login</a>
@@ -187,7 +205,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: May 9, 2025</li>
+        <li>Last updated: May 18, 2025</li>
     </ul>
 </div>
 
@@ -1504,9 +1522,8 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"cable_Id\": \"architecto\",
     \"cable_plan_Id\": \"architecto\",
     \"cable_plan\": \"architecto\",
-    \"amount\": 4326.41688,
-    \"image\": \"architecto\",
-    \"phone\": \"architecto\"
+    \"amount\": \"architecto\",
+    \"image\": \"architecto\"
 }"
 </code></pre></div>
 
@@ -1526,9 +1543,8 @@ let body = {
     "cable_Id": "architecto",
     "cable_plan_Id": "architecto",
     "cable_plan": "architecto",
-    "amount": 4326.41688,
-    "image": "architecto",
-    "phone": "architecto"
+    "amount": "architecto",
+    "image": "architecto"
 };
 
 fetch(url, {
@@ -1657,14 +1673,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>amount</code></b>&nbsp;&nbsp;
-<small>number</small>&nbsp;
+<small>string</small>&nbsp;
  &nbsp;
-                <input type="number" style="display: none"
-               step="any"               name="amount"                data-endpoint="POSTapi-cable-subscription"
-               value="4326.41688"
+                <input type="text" style="display: none"
+                              name="amount"                data-endpoint="POSTapi-cable-subscription"
+               value="architecto"
                data-component="body">
     <br>
-<p>Example: <code>4326.41688</code></p>
+<p>Example: <code>architecto</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>image</code></b>&nbsp;&nbsp;
@@ -1672,17 +1688,6 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="image"                data-endpoint="POSTapi-cable-subscription"
-               value="architecto"
-               data-component="body">
-    <br>
-<p>Example: <code>architecto</code></p>
-        </div>
-                <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>phone</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="phone"                data-endpoint="POSTapi-cable-subscription"
                value="architecto"
                data-component="body">
     <br>
@@ -3663,20 +3668,20 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                         </form>
 
-                    <h2 id="endpoints-GETapi-cards">GET api/cards</h2>
+                    <h2 id="endpoints-GETapi-giftcards">GET api/giftcards</h2>
 
 <p>
 </p>
 
 
 
-<span id="example-requests-GETapi-cards">
+<span id="example-requests-GETapi-giftcards">
 <blockquote>Example request:</blockquote>
 
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost/api/cards" \
+    --get "http://localhost/api/giftcards" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -3687,7 +3692,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/cards"
+    "http://localhost/api/giftcards"
 );
 
 const headers = {
@@ -3707,7 +3712,7 @@ fetch(url, {
 
 </span>
 
-<span id="example-responses-GETapi-cards">
+<span id="example-responses-GETapi-giftcards">
             <blockquote>
             <p>Example response (401):</p>
         </blockquote>
@@ -3725,43 +3730,43 @@ access-control-allow-origin: *
 }</code>
  </pre>
     </span>
-<span id="execution-results-GETapi-cards" hidden>
+<span id="execution-results-GETapi-giftcards" hidden>
     <blockquote>Received response<span
-                id="execution-response-status-GETapi-cards"></span>:
+                id="execution-response-status-GETapi-giftcards"></span>:
     </blockquote>
-    <pre class="json"><code id="execution-response-content-GETapi-cards"
+    <pre class="json"><code id="execution-response-content-GETapi-giftcards"
       data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
 </span>
-<span id="execution-error-GETapi-cards" hidden>
+<span id="execution-error-GETapi-giftcards" hidden>
     <blockquote>Request failed with error:</blockquote>
-    <pre><code id="execution-error-message-GETapi-cards">
+    <pre><code id="execution-error-message-GETapi-giftcards">
 
 Tip: Check that you&#039;re properly connected to the network.
 If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
 You can check the Dev Tools console for debugging information.</code></pre>
 </span>
-<form id="form-GETapi-cards" data-method="GET"
-      data-path="api/cards"
+<form id="form-GETapi-giftcards" data-method="GET"
+      data-path="api/giftcards"
       data-authed="0"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
-      onsubmit="event.preventDefault(); executeTryOut('GETapi-cards', this);">
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-giftcards', this);">
     <h3>
         Request&nbsp;&nbsp;&nbsp;
                     <button type="button"
                     style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-tryout-GETapi-cards"
-                    onclick="tryItOut('GETapi-cards');">Try it out ⚡
+                    id="btn-tryout-GETapi-giftcards"
+                    onclick="tryItOut('GETapi-giftcards');">Try it out ⚡
             </button>
             <button type="button"
                     style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-canceltryout-GETapi-cards"
-                    onclick="cancelTryOut('GETapi-cards');" hidden>Cancel 🛑
+                    id="btn-canceltryout-GETapi-giftcards"
+                    onclick="cancelTryOut('GETapi-giftcards');" hidden>Cancel 🛑
             </button>&nbsp;&nbsp;
             <button type="submit"
                     style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-executetryout-GETapi-cards"
+                    id="btn-executetryout-GETapi-giftcards"
                     data-initial-text="Send Request 💥"
                     data-loading-text="⏱ Sending..."
                     hidden>Send Request 💥
@@ -3769,7 +3774,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </h3>
             <p>
             <small class="badge badge-green">GET</small>
-            <b><code>api/cards</code></b>
+            <b><code>api/giftcards</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
                                 <div style="padding-left: 28px; clear: unset;">
@@ -3777,7 +3782,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
-                              name="Content-Type"                data-endpoint="GETapi-cards"
+                              name="Content-Type"                data-endpoint="GETapi-giftcards"
                value="application/json"
                data-component="header">
     <br>
@@ -3788,7 +3793,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
-                              name="Accept"                data-endpoint="GETapi-cards"
+                              name="Accept"                data-endpoint="GETapi-giftcards"
                value="application/json"
                data-component="header">
     <br>
@@ -3800,7 +3805,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <small>string</small>&nbsp;
  &nbsp;
                 <input type="text" style="display: none"
-                              name="country"                data-endpoint="GETapi-cards"
+                              name="country"                data-endpoint="GETapi-giftcards"
                value="architecto"
                data-component="body">
     <br>
@@ -3953,20 +3958,20 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </div>
         </form>
 
-                    <h2 id="endpoints-POSTapi-purchase">POST api/purchase</h2>
+                    <h2 id="endpoints-POSTapi-purchase-giftcard">POST api/purchase-giftcard</h2>
 
 <p>
 </p>
 
 
 
-<span id="example-requests-POSTapi-purchase">
+<span id="example-requests-POSTapi-purchase-giftcard">
 <blockquote>Example request:</blockquote>
 
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://localhost/api/purchase" \
+    "http://localhost/api/purchase-giftcard" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -3980,7 +3985,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/purchase"
+    "http://localhost/api/purchase-giftcard"
 );
 
 const headers = {
@@ -4003,45 +4008,45 @@ fetch(url, {
 
 </span>
 
-<span id="example-responses-POSTapi-purchase">
+<span id="example-responses-POSTapi-purchase-giftcard">
 </span>
-<span id="execution-results-POSTapi-purchase" hidden>
+<span id="execution-results-POSTapi-purchase-giftcard" hidden>
     <blockquote>Received response<span
-                id="execution-response-status-POSTapi-purchase"></span>:
+                id="execution-response-status-POSTapi-purchase-giftcard"></span>:
     </blockquote>
-    <pre class="json"><code id="execution-response-content-POSTapi-purchase"
+    <pre class="json"><code id="execution-response-content-POSTapi-purchase-giftcard"
       data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
 </span>
-<span id="execution-error-POSTapi-purchase" hidden>
+<span id="execution-error-POSTapi-purchase-giftcard" hidden>
     <blockquote>Request failed with error:</blockquote>
-    <pre><code id="execution-error-message-POSTapi-purchase">
+    <pre><code id="execution-error-message-POSTapi-purchase-giftcard">
 
 Tip: Check that you&#039;re properly connected to the network.
 If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
 You can check the Dev Tools console for debugging information.</code></pre>
 </span>
-<form id="form-POSTapi-purchase" data-method="POST"
-      data-path="api/purchase"
+<form id="form-POSTapi-purchase-giftcard" data-method="POST"
+      data-path="api/purchase-giftcard"
       data-authed="0"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
-      onsubmit="event.preventDefault(); executeTryOut('POSTapi-purchase', this);">
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-purchase-giftcard', this);">
     <h3>
         Request&nbsp;&nbsp;&nbsp;
                     <button type="button"
                     style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-tryout-POSTapi-purchase"
-                    onclick="tryItOut('POSTapi-purchase');">Try it out ⚡
+                    id="btn-tryout-POSTapi-purchase-giftcard"
+                    onclick="tryItOut('POSTapi-purchase-giftcard');">Try it out ⚡
             </button>
             <button type="button"
                     style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-canceltryout-POSTapi-purchase"
-                    onclick="cancelTryOut('POSTapi-purchase');" hidden>Cancel 🛑
+                    id="btn-canceltryout-POSTapi-purchase-giftcard"
+                    onclick="cancelTryOut('POSTapi-purchase-giftcard');" hidden>Cancel 🛑
             </button>&nbsp;&nbsp;
             <button type="submit"
                     style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
-                    id="btn-executetryout-POSTapi-purchase"
+                    id="btn-executetryout-POSTapi-purchase-giftcard"
                     data-initial-text="Send Request 💥"
                     data-loading-text="⏱ Sending..."
                     hidden>Send Request 💥
@@ -4049,7 +4054,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </h3>
             <p>
             <small class="badge badge-black">POST</small>
-            <b><code>api/purchase</code></b>
+            <b><code>api/purchase-giftcard</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
                                 <div style="padding-left: 28px; clear: unset;">
@@ -4057,7 +4062,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
-                              name="Content-Type"                data-endpoint="POSTapi-purchase"
+                              name="Content-Type"                data-endpoint="POSTapi-purchase-giftcard"
                value="application/json"
                data-component="header">
     <br>
@@ -4068,7 +4073,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 &nbsp;
  &nbsp;
                 <input type="text" style="display: none"
-                              name="Accept"                data-endpoint="POSTapi-purchase"
+                              name="Accept"                data-endpoint="POSTapi-purchase-giftcard"
                value="application/json"
                data-component="header">
     <br>
@@ -4080,7 +4085,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <small>string</small>&nbsp;
  &nbsp;
                 <input type="text" style="display: none"
-                              name="operator"                data-endpoint="POSTapi-purchase"
+                              name="operator"                data-endpoint="POSTapi-purchase-giftcard"
                value="architecto"
                data-component="body">
     <br>
@@ -4091,7 +4096,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <small>string</small>&nbsp;
  &nbsp;
                 <input type="text" style="display: none"
-                              name="product_id"                data-endpoint="POSTapi-purchase"
+                              name="product_id"                data-endpoint="POSTapi-purchase-giftcard"
                value="architecto"
                data-component="body">
     <br>
@@ -4102,7 +4107,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <small>number</small>&nbsp;
  &nbsp;
                 <input type="number" style="display: none"
-               step="any"               name="amount"                data-endpoint="POSTapi-purchase"
+               step="any"               name="amount"                data-endpoint="POSTapi-purchase-giftcard"
                value="4326.41688"
                data-component="body">
     <br>
@@ -4113,11 +4118,856 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <small>integer</small>&nbsp;
  &nbsp;
                 <input type="number" style="display: none"
-               step="any"               name="quantity"                data-endpoint="POSTapi-purchase"
+               step="any"               name="quantity"                data-endpoint="POSTapi-purchase-giftcard"
                value="27"
                data-component="body">
     <br>
 <p>Must be at least 1. Example: <code>27</code></p>
+        </div>
+        </form>
+
+                    <h2 id="endpoints-GETapi-esim-countries">GET api/esim-countries</h2>
+
+<p>
+</p>
+
+
+
+<span id="example-requests-GETapi-esim-countries">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "http://localhost/api/esim-countries" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost/api/esim-countries"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-esim-countries">
+            <blockquote>
+            <p>Example response (401):</p>
+        </blockquote>
+                <details class="annotation">
+            <summary style="cursor: pointer;">
+                <small onclick="textContent = parentElement.parentElement.open ? 'Show headers' : 'Hide headers'">Show headers</small>
+            </summary>
+            <pre><code class="language-http">cache-control: no-cache, private
+content-type: application/json
+access-control-allow-origin: *
+ </code></pre></details>         <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;Unauthenticated.&quot;
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-esim-countries" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-esim-countries"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-esim-countries"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-esim-countries" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-esim-countries">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-esim-countries" data-method="GET"
+      data-path="api/esim-countries"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-esim-countries', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-esim-countries"
+                    onclick="tryItOut('GETapi-esim-countries');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-esim-countries"
+                    onclick="cancelTryOut('GETapi-esim-countries');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-esim-countries"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/esim-countries</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-esim-countries"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-esim-countries"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        </form>
+
+                    <h2 id="endpoints-GETapi-esim-plans">GET api/esim-plans</h2>
+
+<p>
+</p>
+
+
+
+<span id="example-requests-GETapi-esim-plans">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "http://localhost/api/esim-plans" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"country\": \"architecto\"
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost/api/esim-plans"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "country": "architecto"
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-esim-plans">
+            <blockquote>
+            <p>Example response (401):</p>
+        </blockquote>
+                <details class="annotation">
+            <summary style="cursor: pointer;">
+                <small onclick="textContent = parentElement.parentElement.open ? 'Show headers' : 'Hide headers'">Show headers</small>
+            </summary>
+            <pre><code class="language-http">cache-control: no-cache, private
+content-type: application/json
+access-control-allow-origin: *
+ </code></pre></details>         <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;Unauthenticated.&quot;
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-esim-plans" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-esim-plans"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-esim-plans"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-esim-plans" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-esim-plans">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-esim-plans" data-method="GET"
+      data-path="api/esim-plans"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-esim-plans', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-esim-plans"
+                    onclick="tryItOut('GETapi-esim-plans');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-esim-plans"
+                    onclick="cancelTryOut('GETapi-esim-plans');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-esim-plans"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/esim-plans</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-esim-plans"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-esim-plans"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>country</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="country"                data-endpoint="GETapi-esim-plans"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>Example: <code>architecto</code></p>
+        </div>
+        </form>
+
+                    <h2 id="endpoints-POSTapi-esim-purchase">POST api/esim-purchase</h2>
+
+<p>
+</p>
+
+
+
+<span id="example-requests-POSTapi-esim-purchase">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "http://localhost/api/esim-purchase" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"operator\": \"architecto\",
+    \"product_id\": \"architecto\",
+    \"amount\": 4326.41688,
+    \"quantity\": 27
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost/api/esim-purchase"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "operator": "architecto",
+    "product_id": "architecto",
+    "amount": 4326.41688,
+    "quantity": 27
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-esim-purchase">
+</span>
+<span id="execution-results-POSTapi-esim-purchase" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-esim-purchase"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-esim-purchase"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-esim-purchase" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-esim-purchase">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-esim-purchase" data-method="POST"
+      data-path="api/esim-purchase"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-esim-purchase', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-POSTapi-esim-purchase"
+                    onclick="tryItOut('POSTapi-esim-purchase');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-POSTapi-esim-purchase"
+                    onclick="cancelTryOut('POSTapi-esim-purchase');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-POSTapi-esim-purchase"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/esim-purchase</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-esim-purchase"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-esim-purchase"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>operator</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="operator"                data-endpoint="POSTapi-esim-purchase"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>Example: <code>architecto</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>product_id</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="product_id"                data-endpoint="POSTapi-esim-purchase"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>Example: <code>architecto</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>amount</code></b>&nbsp;&nbsp;
+<small>number</small>&nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="amount"                data-endpoint="POSTapi-esim-purchase"
+               value="4326.41688"
+               data-component="body">
+    <br>
+<p>Example: <code>4326.41688</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>quantity</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="quantity"                data-endpoint="POSTapi-esim-purchase"
+               value="27"
+               data-component="body">
+    <br>
+<p>Must be at least 1. Example: <code>27</code></p>
+        </div>
+        </form>
+
+                    <h2 id="endpoints-POSTapi-smile-verify">POST api/smile/verify</h2>
+
+<p>
+</p>
+
+
+
+<span id="example-requests-POSTapi-smile-verify">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "http://localhost/api/smile/verify" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"email\": \"gbailey@example.net\"
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost/api/smile/verify"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "email": "gbailey@example.net"
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-smile-verify">
+</span>
+<span id="execution-results-POSTapi-smile-verify" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-smile-verify"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-smile-verify"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-smile-verify" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-smile-verify">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-smile-verify" data-method="POST"
+      data-path="api/smile/verify"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-smile-verify', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-POSTapi-smile-verify"
+                    onclick="tryItOut('POSTapi-smile-verify');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-POSTapi-smile-verify"
+                    onclick="cancelTryOut('POSTapi-smile-verify');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-POSTapi-smile-verify"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/smile/verify</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-smile-verify"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-smile-verify"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>email</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="email"                data-endpoint="POSTapi-smile-verify"
+               value="gbailey@example.net"
+               data-component="body">
+    <br>
+<p>Must be a valid email address. Example: <code>gbailey@example.net</code></p>
+        </div>
+        </form>
+
+                    <h2 id="endpoints-GETapi-smile-plans">GET api/smile/plans</h2>
+
+<p>
+</p>
+
+
+
+<span id="example-requests-GETapi-smile-plans">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "http://localhost/api/smile/plans" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost/api/smile/plans"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-smile-plans">
+            <blockquote>
+            <p>Example response (401):</p>
+        </blockquote>
+                <details class="annotation">
+            <summary style="cursor: pointer;">
+                <small onclick="textContent = parentElement.parentElement.open ? 'Show headers' : 'Hide headers'">Show headers</small>
+            </summary>
+            <pre><code class="language-http">cache-control: no-cache, private
+content-type: application/json
+access-control-allow-origin: *
+ </code></pre></details>         <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;Unauthenticated.&quot;
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-smile-plans" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-smile-plans"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-smile-plans"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-smile-plans" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-smile-plans">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-smile-plans" data-method="GET"
+      data-path="api/smile/plans"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-smile-plans', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-smile-plans"
+                    onclick="tryItOut('GETapi-smile-plans');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-smile-plans"
+                    onclick="cancelTryOut('GETapi-smile-plans');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-smile-plans"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/smile/plans</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-smile-plans"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-smile-plans"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        </form>
+
+                    <h2 id="endpoints-POSTapi-smile-purchase">POST api/smile/purchase</h2>
+
+<p>
+</p>
+
+
+
+<span id="example-requests-POSTapi-smile-purchase">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "http://localhost/api/smile/purchase" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"email\": \"gbailey@example.net\",
+    \"variation_code\": \"architecto\",
+    \"amount\": 4326.41688
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost/api/smile/purchase"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "email": "gbailey@example.net",
+    "variation_code": "architecto",
+    "amount": 4326.41688
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-smile-purchase">
+</span>
+<span id="execution-results-POSTapi-smile-purchase" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-smile-purchase"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-smile-purchase"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-smile-purchase" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-smile-purchase">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-smile-purchase" data-method="POST"
+      data-path="api/smile/purchase"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-smile-purchase', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-POSTapi-smile-purchase"
+                    onclick="tryItOut('POSTapi-smile-purchase');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-POSTapi-smile-purchase"
+                    onclick="cancelTryOut('POSTapi-smile-purchase');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-POSTapi-smile-purchase"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/smile/purchase</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-smile-purchase"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-smile-purchase"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>email</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="email"                data-endpoint="POSTapi-smile-purchase"
+               value="gbailey@example.net"
+               data-component="body">
+    <br>
+<p>Must be a valid email address. Example: <code>gbailey@example.net</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>variation_code</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="variation_code"                data-endpoint="POSTapi-smile-purchase"
+               value="architecto"
+               data-component="body">
+    <br>
+<p>Example: <code>architecto</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>amount</code></b>&nbsp;&nbsp;
+<small>number</small>&nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="amount"                data-endpoint="POSTapi-smile-purchase"
+               value="4326.41688"
+               data-component="body">
+    <br>
+<p>Example: <code>4326.41688</code></p>
         </div>
         </form>
 

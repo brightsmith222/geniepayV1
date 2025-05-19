@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\SliderController;
 use App\Http\Controllers\Api\TransactionReportController;
 use App\Http\Controllers\Api\GiftCardController;
 use App\Http\Controllers\Api\EsimController;
+use App\Http\Controllers\Api\SmileController;
 
 
 // Route::get('/user', function (Request $request) {
@@ -37,6 +38,7 @@ Route::post('/verify-smart-card', [CableTvController::class, 'verifySmartCard'])
 Route::post('/cable-subscription', [CableTvController::class, 'cableSubscription']);
 Route::get('/cable-providers', [CableTvController::class, 'getCableProviders']);
 Route::get('/cable-plans/{serviceID}', [CableTvController::class, 'getCablePlan']);
+
 
 Route::get('/electricity-providers', [ElectricityController::class, 'getElectricityProviders']);
 
@@ -69,6 +71,11 @@ Route::post('/purchase-giftcard', [GiftCardController::class, 'purchase']);
 Route::get('/esim-countries', [EsimController::class, 'getCountries']);
 Route::get('/esim-plans', [EsimController::class, 'getPlans']);
 Route::post('/esim-purchase', [EsimController::class, 'purchase']);
+
+//Smile Data
+Route::post('/smile/verify', [SmileController::class, 'verifySmileAccount']);
+Route::get('/smile/plans', [SmileController::class, 'getSmilePlans']);
+Route::post('/smile/purchase', [SmileController::class, 'purchaseSmileData']);
 
 
 });

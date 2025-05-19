@@ -70,7 +70,7 @@ class BaseDataController extends Controller
         return true;
     }
 
-    protected function createTransaction($user, $amount, $network, $status, $mobile_number, $image, $transaction_id, $plan_size)
+    protected function createTransaction($user, $amount, $network, $status, $mobile_number, $image, $transaction_id, $plan_size, $plan_ids = null, $userReference = null)
     {
         $transaction = new Transactions();
         
@@ -84,6 +84,8 @@ class BaseDataController extends Controller
         $transaction->phone_number = $mobile_number;
         $transaction->transaction_id = $transaction_id;
         $transaction->service_plan = $plan_size;
+        $transaction->reference = $userReference;
+        $transaction->plan_id = $plan_ids;
         $transaction->save();
 
         return $transaction;
@@ -121,6 +123,8 @@ class BaseDataController extends Controller
             $transaction = $this->createTransaction(
                 $user, 
                 $amount, 
+                $handledResponse['plan_ids'],
+                $handledResponse['api_reference'],
                 $handledResponse['operator_name'], 
                 'Successful', 
                 $context['mobile_number'], 
@@ -154,6 +158,8 @@ class BaseDataController extends Controller
             $transaction = $this->createTransaction(
                 $user, 
                 $amount, 
+                $handledResponse['plan_ids'],
+                $handledResponse['api_reference'],
                 $handledResponse['operator_name'], 
                 'Pending', 
                 $context['mobile_number'], 

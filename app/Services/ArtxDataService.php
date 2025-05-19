@@ -16,7 +16,7 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
 
     public function __construct()
     {
-        $this->serviceName = 'artx';
+        $this->serviceName = 'artx_data';
         $this->baseUrl = config('api.artx.base_url');
         $this->username = config('api.artx.username');
         $this->passwordHash = sha1(config('api.artx.password'));
@@ -44,7 +44,7 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
                 'operator' => $this->mapNetwork($requestData['network']),
                 'msisdn' => $this->normalizePhoneNumber($requestData['mobile_number']),
                 'productId' => $requestData['plan_id'],
-                'amountOperator' => $requestData['amount'],
+                //'amountOperator' => $requestData['amount'],
                 'userReference' => MyFunctions::generateRequestId(),
                 'simulate' => 1,
             ];
@@ -81,6 +81,7 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
 
     public function handleResponse(array $response, array $context): array
     {
+        
         $statusCode = $response['status_code'];
         $responseData = $response['data'];
 
@@ -108,6 +109,7 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
 
         if ($statusType == 0) {
             $result['success'] = true;
+            $result['serviceName'] = $this->serviceName;
             $result['transaction_id'] = $responseData['result']['id'] ?? $result['transaction_id'];
             $result['message'] = $responseData['status']['name'] ?? 'Data purchase successful';
             $result['api_reference'] = $responseData['result']['operator']['reference'] ?? null;
@@ -121,6 +123,7 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
             $result['pending'] = true;
             $result['transaction_id'] = $responseData['result']['id'] ?? $result['transaction_id'];
             $result['message'] = $this->getPendingMessage($statusId);
+            $result['plan_ids'] = $responseData['result']['operator']['id'] ?? null;
             $result['api_reference'] = $responseData['result']['operator']['reference'] ?? null;
             $result['operator_name'] = $responseData['result']['operator']['name'] ?? null;
             $result['instructions'] = $responseData['result']['instructions'] ?? null;
@@ -196,7 +199,7 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
             1 => 1, // MTN Nigeria 
             2 => 19, // GLO Nigeria 
             3 => 20, // Airtel Nigeria 
-            6 => 539, // 9Mobile Nigeria 
+            6 => 18, // 9Mobile Nigeria 
             default => 0
         };
     }

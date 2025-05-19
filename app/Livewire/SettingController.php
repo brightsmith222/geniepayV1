@@ -19,8 +19,10 @@ class SettingController extends Component
     public $activeTab = 'profile';
     public $referralEnabled;
     public $vtpassEnabled;
-    public $gladEnabled;
-    public $artxEnabled;
+    public $gladDataEnabled;
+    public $artxDataEnabled;
+    public $gladAirtimeEnabled;
+    public $artxAirtimeEnabled;
     public $artxgiftcardEnabled;
     public $referralBonus;
     protected $listeners = ['deleteAccount'];
@@ -44,8 +46,10 @@ class SettingController extends Component
     // Initialize toggle values from database
     $this->referralEnabled = (bool) GeneralSettings::where('name', 'referral')->value('is_enabled');
     $this->vtpassEnabled = (bool) GeneralSettings::where('name', 'vtpass')->value('is_enabled');
-    $this->gladEnabled = (bool) GeneralSettings::where('name', 'glad')->value('is_enabled');
-    $this->artxEnabled = (bool) GeneralSettings::where('name', 'artx')->value('is_enabled');
+    $this->gladDataEnabled = (bool) GeneralSettings::where('name', 'glad_data')->value('is_enabled');
+    $this->artxDataEnabled = (bool) GeneralSettings::where('name', 'artx_data')->value('is_enabled');
+    $this->gladAirtimeEnabled = (bool) GeneralSettings::where('name', 'glad_airtime')->value('is_enabled');
+    $this->artxAirtimeEnabled = (bool) GeneralSettings::where('name', 'artx_airtime')->value('is_enabled');
     $this->artxgiftcardEnabled = (bool) GeneralSettings::where('name', 'artx_giftcard')->value('is_enabled');
     $this->referralBonus = GeneralSettings::where('name', 'referral')->value('referral_bonus') ?? 0;
 
@@ -67,17 +71,26 @@ public function toggleSetting($name)
         $this->vtpassEnabled = $setting->is_enabled;
     }
 
-    if ($name === 'glad') {
-        $this->gladEnabled = $setting->is_enabled;
+    if ($name === 'glad_airtime') {
+        $this->gladAirtimeEnabled = $setting->is_enabled;
     }
 
-    if ($name === 'artx') {
-        $this->artxEnabled = $setting->is_enabled;
+    if ($name === 'artx_airtime') {
+        $this->artxAirtimeEnabled = $setting->is_enabled;
+    }
+
+    if ($name === 'glad_data') {
+        $this->gladDataEnabled = $setting->is_enabled;
+    }
+
+    if ($name === 'artx_data') {
+        $this->artxDataEnabled = $setting->is_enabled;
     }
 
     if ($name === 'artx_giftcard') {
         $this->artxgiftcardEnabled = $setting->is_enabled;
     }
+    
 
     flash()->success('Setting updated successfully!');
 }

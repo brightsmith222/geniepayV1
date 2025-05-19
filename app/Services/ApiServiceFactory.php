@@ -9,16 +9,16 @@ class ApiServiceFactory
         switch ($serviceType) {
             case 'data':
                 return match ($serviceName) {
-                    'glad' => new GladDataService(),
-                    'artx' => new ArtxDataService(),
+                    'glad_data' => new GladDataService(),
+                    'artx_data' => new ArtxDataService(),
                     default => null
                 };
             
             case 'airtime':
             default:
                 return match ($serviceName) {
-                    'glad' => new GladAirtimeService(),
-                    'artx' => new ArtxAirtimeService(),
+                    'glad_airtime' => new GladAirtimeService(),
+                    'artx_airtime' => new ArtxAirtimeService(),
                     default => null
                 };
         }

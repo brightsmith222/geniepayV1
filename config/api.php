@@ -6,6 +6,8 @@ return [
         'api_key' => env('VTPASS_API_KEY'),       
         'public_key' => env('VTPASS_PUBLIC_KEY'),
         'private_key' => env('VTPASS_PRIVATE_KEY'),
+        'username' => env('VTPASS_USERNAME'),
+        'password' => env('VTPASS_PASSWORD'),
     ],
     'glad' => [
         'api_key' => env('GLAD_API_KEY'),

@@ -154,22 +154,12 @@
             <div class="section">
                 <h2>Manage Settings</h2>
                 <p>Enable or Disable a service.</p>
-                
+                <div class="card shadow-sm">
+                    <div class="card-body p-3">
+                        <p>Enable/Disable VTpass API</p>
                 <div class="form-group">
                     <label class="toggle-switch">
-                        <span class="toggle-label">Enable Referral</span>
-                        <input type="checkbox"class="toggle-input" @change="$wire.toggleSetting('referral')" {{ $referralEnabled ? 'checked' : '' }}>
-                        <span class="toggle-slider"></span>
-                        <span class="toggle-label">
-                            <span class="{{ $referralEnabled ? 'state-on' : 'state-off' }}">
-                                {{ $referralEnabled ? 'On' : 'Off' }}
-                            </span>
-                        </span>
-                    </label>
-                </div>
-                <div class="form-group">
-                    <label class="toggle-switch">
-                        <span class="toggle-label">Enable VTpass</span>
+                        <span class="toggle-label">VTpass API</span>
                         <input type="checkbox"class="toggle-input" @change="$wire.toggleSetting('vtpass')" {{ $vtpassEnabled ? 'checked' : '' }}>
                         <span class="toggle-slider"></span>
                         <span class="toggle-label">
@@ -179,30 +169,71 @@
                         </span>
                     </label>
                 </div>
+                    </div>
+                </div>
+                <div class="card shadow-sm">
+                <div class="card-body p-3">
+                    <p>Enable/Disable Airtime API</p>
                 <div class="form-group">
                     <label class="toggle-switch">
-                        <span class="toggle-label">Enable ARTX</span>
-                        <input type="checkbox"class="toggle-input" @change="$wire.toggleSetting('artx')" {{ $artxEnabled ? 'checked' : '' }}>
+                        <span class="toggle-label">ARTX API</span>
+                        <input type="checkbox"class="toggle-input" @change="$wire.toggleSetting('artx_airtime')" {{ $artxAirtimeEnabled ? 'checked' : '' }}>
                         <span class="toggle-slider"></span>
                         <span class="toggle-label">
-                            <span class="{{ $artxEnabled ? 'state-on' : 'state-off' }}">
-                                {{ $artxEnabled ? 'On' : 'Off' }}
+                            <span class="{{ $artxAirtimeEnabled ? 'state-on' : 'state-off' }}">
+                                {{ $artxAirtimeEnabled ? 'On' : 'Off' }}
                             </span>
                         </span>
                     </label>
                 </div>
                 <div class="form-group">
                     <label class="toggle-switch">
-                        <span class="toggle-label">Enable Glad</span>
-                        <input type="checkbox"class="toggle-input" @change="$wire.toggleSetting('glad')" {{ $gladEnabled ? 'checked' : '' }}>
+                        <span class="toggle-label">Glad API</span>
+                        <input type="checkbox"class="toggle-input" @change="$wire.toggleSetting('glad_airtime')" {{ $gladAirtimeEnabled ? 'checked' : '' }}>
                         <span class="toggle-slider"></span>
                         <span class="toggle-label">
-                            <span class="{{ $gladEnabled ? 'state-on' : 'state-off' }}">
-                                {{ $gladEnabled ? 'On' : 'Off' }}
+                            <span class="{{ $gladAirtimeEnabled ? 'state-on' : 'state-off' }}">
+                                {{ $gladAirtimeEnabled ? 'On' : 'Off' }}
                             </span>
                         </span>
                     </label>
                 </div>
+            </div>
+        </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-body p-3">
+                    <p>Enable/Disable Data API</p>
+                <div class="form-group">
+                    <label class="toggle-switch">
+                        <span class="toggle-label">ARTX API</span>
+                        <input type="checkbox"class="toggle-input" @change="$wire.toggleSetting('artx_data')" {{ $artxDataEnabled ? 'checked' : '' }}>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">
+                            <span class="{{ $artxDataEnabled ? 'state-on' : 'state-off' }}">
+                                {{ $artxDataEnabled ? 'On' : 'Off' }}
+                            </span>
+                        </span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label class="toggle-switch">
+                        <span class="toggle-label">Glad API</span>
+                        <input type="checkbox"class="toggle-input" @change="$wire.toggleSetting('glad_data')" {{ $gladDataEnabled ? 'checked' : '' }}>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">
+                            <span class="{{ $gladDataEnabled ? 'state-on' : 'state-off' }}">
+                                {{ $gladDataEnabled ? 'On' : 'Off' }}
+                            </span>
+                        </span>
+                    </label>
+                </div>
+            </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body p-3">
+                    <p>Enable/Disable Giftcard API</p>
                 <div class="form-group">
                     <label class="toggle-switch">
                         <span class="toggle-label">Enable Artx Giftcard</span>
@@ -215,7 +246,21 @@
                         </span>
                     </label>
                 </div>
-                <div class="bonus-control">
+                </div>
+            </div>
+                <div class="card shadow-sm">
+                    <div class="card-body p-3">
+                        <p>Enable/Disable Referral Service</p>
+                    <label class="toggle-switch">
+                        <span class="toggle-label">Enable Referral</span>
+                        <input type="checkbox"class="toggle-input" @change="$wire.toggleSetting('referral')" {{ $referralEnabled ? 'checked' : '' }}>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">
+                            <span class="{{ $referralEnabled ? 'state-on' : 'state-off' }}">
+                                {{ $referralEnabled ? 'On' : 'Off' }}
+                            </span>
+                        </span>
+                    </label>
                     <div class="bonus-header">
                         <label for="referral_bonus" class="bonus-label">
                             <i class="fas fa-gift bonus-icon"></i>
@@ -248,6 +293,7 @@
                     
                     <div class="bonus-hint">Set the amount rewarded for each successful referral</div>
                 </div>
+            </div>
                 
                 
             </div>

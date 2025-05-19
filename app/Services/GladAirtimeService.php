@@ -10,7 +10,7 @@ class GladAirtimeService extends BaseApiService implements ApiServiceInterface
 {
     public function __construct() 
     {
-        $this->serviceName = 'glad';
+        $this->serviceName = 'glad_airtime';
         $this->headers = [
             'Content-Type' => 'application/json',
             'Authorization' => 'Token ' . config('api.glad.api_key'),

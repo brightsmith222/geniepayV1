@@ -9,7 +9,7 @@ class GladDataService extends BaseApiService implements ApiServiceInterface
 {
     public function __construct() 
     {
-        $this->serviceName = 'glad';
+        $this->serviceName = 'glad_data';
         $this->headers = [
             'Content-Type' => 'application/json',
             'Authorization' => 'Token ' . config('api.glad.api_key'),
@@ -71,8 +71,10 @@ class GladDataService extends BaseApiService implements ApiServiceInterface
         if ($statusCode >= 200 && $statusCode < 300) {
             if (isset($responseData['Status']) && $responseData['Status'] === 'successful') {
                 $result['success'] = true;
+                $result['serviceName'] = $this->serviceName;
                 $result['transaction_id'] = $responseData['ident'];
                 $result['network_name'] = $responseData['plan_network'];
+                $result['plan_ids'] = $responseData['plan'];
                 $result['message'] = 'Data purchase successful';
             } else {
                 $result['message'] = $responseData['error'] ?? 'Transaction failed';
