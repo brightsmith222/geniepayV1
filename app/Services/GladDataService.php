@@ -7,6 +7,10 @@ use Illuminate\Support\Facades\Log;
 
 class GladDataService extends BaseApiService implements ApiServiceInterface
 {
+    protected $baseUrl;
+    protected $username;
+    protected $passwordHash;
+
     public function __construct() 
     {
         $this->serviceName = 'glad_data';
@@ -15,6 +19,11 @@ class GladDataService extends BaseApiService implements ApiServiceInterface
             'Authorization' => 'Token ' . config('api.glad.api_key'),
         ];
     }
+
+    public function getServiceName(): string
+{
+    return $this->serviceName;
+}
 
     public function supportsStatusCheck(): bool
     {
@@ -95,24 +104,51 @@ class GladDataService extends BaseApiService implements ApiServiceInterface
                             ->post($url);
 
             $responseData = $response->json();
+            Log::info('Glad Data Plans Response', ['response' => $responseData]);
 
-            $networkPlans = match($network) {
-                1 => $responseData['Dataplans']['MTN_PLAN']['ALL'] ?? [],
-                2 => $responseData['Dataplans']['GLO_PLAN']['ALL'] ?? [],
-                3 => $responseData['Dataplans']['AIRTEL_PLAN']['CORPORATE'] ?? [],
-                6 => $responseData['Dataplans']['9MOBILE_PLAN']['CORPORATE'] ?? [],
-                default => []
+            // Check if Dataplans key exists
+            if (!isset($responseData['Dataplans'])) {
+                Log::error('Dataplans key missing in response');
+                return [];
+            }
+
+            $dataplans = $responseData['Dataplans'];
+
+            // Dynamically fetch plans based on the network
+            $networkKey = match ($network) {
+                1 => 'MTN_PLAN',
+                2 => 'GLO_PLAN',
+                3 => 'AIRTEL_PLAN',
+                6 => '9MOBILE_PLAN',
+                default => null
+            };
+
+            if (!$networkKey || !isset($dataplans[$networkKey])) {
+                Log::error("Network key {$networkKey} missing in Dataplans");
+                return [];
+            }
+
+            // Fetch plans (use ALL or fallback to the first available key)
+            $networkPlans = $dataplans[$networkKey]['ALL'] ?? reset($dataplans[$networkKey]) ?? [];
+
+            // Map network ID to network name
+            $networkName = match ($network) {
+                1 => 'MTN',
+                2 => 'GLO',
+                3 => 'AIRTEL',
+                6 => '9MOBILE',
+                default => null
             };
 
             $formattedPlans = [];
             foreach ($networkPlans as $plan) {
                 $formattedPlans[] = [
-                    'plan_id' => $plan['dataplan_id'],
-                    'plan' => $plan['plan'],
-                    'network' => $plan['network'],
-                    'amount' => $plan['plan_amount'],
-                    'validity' => $plan['month_validate'],
-                    'data_volume' => $plan['plan']
+                    'plan_id' => $plan['dataplan_id'] ?? null,
+                    'plan' => $plan['plan'] ?? null,
+                    'network' => $networkName, // Use the mapped network name
+                    'amount' => $plan['plan_amount'] ?? null,
+                    'validity' => $plan['month_validate'] ?? null,
+                    'data_volume' => $plan['plan'] ?? null
                 ];
             }
 

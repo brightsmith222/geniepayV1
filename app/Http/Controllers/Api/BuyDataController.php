@@ -15,104 +15,132 @@ use Illuminate\Support\Facades\Cache;
 class BuyDataController extends BaseDataController
 {
     public function getDataPlan(Request $request, PercentageService $percentageService)
-{
-    try {
-        $apiService = $this->getActiveApiService();
+    {
+        try {
+            $apiService = $this->getActiveApiService();
 
-        if (!$apiService) {
-            return response()->json([
-                'status' => false,
-                'message' => 'No active data service available'
-            ], 503);
-        }
-
-        // Define a unique cache key based on the active API service
-        $cacheKey = "data_plans:{$apiService->serviceName}";
-
-        // Check if data plans are cached
-        $allPlans = Cache::remember($cacheKey, now()->addMinutes(60), function () use ($apiService) {
-            // Fetch plans by API
-            if ($apiService instanceof \App\Services\ArtxDataService) {
-                $mtnPlans     = $apiService->getDataPlans(1);
-                $gloPlans     = $apiService->getDataPlans(2);
-                $airtelPlans  = $apiService->getDataPlans(3);
-                $mobile9Plans = $apiService->getDataPlans(6);
-                return array_merge($mtnPlans, $gloPlans, $airtelPlans, $mobile9Plans);
-            } else {
-                return $apiService->getDataPlans(0); // Glad
+            if (!$apiService) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'No active data service available'
+                ], 503);
             }
-        });
 
-        // 🔁 Adjust the amount for each plan based on the percentage
-        $adjustedPlans = collect($allPlans)->map(function ($plan) use ($percentageService) {
-            $networkId = $this->mapNetworkToId($plan['network']); // Map network name to ID
-            $plan['amount'] = $percentageService->calculateDataDiscountedAmount($networkId, $plan['amount']);
-            return $plan;
-        });
+            // Define a unique cache key based on the active API service
+            $cacheKey = "data_plans:{$apiService->getServiceName()}";
 
-        // 🔁 Get network percentage
-        $networkPercent = DataTopupPercentage::all();
+            // Check if data plans are cached
+            $allPlans = Cache::remember($cacheKey, now()->addMinutes(60), function () use ($apiService) {
+                // Fetch plans by API
+                if ($apiService instanceof \App\Services\ArtxDataService) {
+                    $mtnPlans     = $apiService->getDataPlans(1);
+                    $gloPlans     = $apiService->getDataPlans(2);
+                    $airtelPlans  = $apiService->getDataPlans(3);
+                    $mobile9Plans = $apiService->getDataPlans(6);
+                    return array_merge($mtnPlans, $gloPlans, $airtelPlans, $mobile9Plans);
+                }
 
-        // 🔥 Fetch hot deals from transaction history
-        $activeApi = $apiService->serviceName;
+                if ($apiService instanceof \App\Services\GladDataService) {
+                    // Fetch plans for each network
+                    $mtnPlans     = $apiService->getDataPlans(1); // MTN
+                    $gloPlans     = $apiService->getDataPlans(2); // GLO
+                    $airtelPlans  = $apiService->getDataPlans(3); // Airtel
+                    $mobile9Plans = $apiService->getDataPlans(6); // 9Mobile
+                    return array_merge($mtnPlans, $gloPlans, $airtelPlans, $mobile9Plans);
+                }
+            });
 
-        $cacheKey = "hot_deals:{$activeApi}";
+            // 🔁 Adjust the amount for each plan based on the percentage
+            $adjustedPlans = collect($allPlans)->map(function ($plan) use ($percentageService) {
+                $networkId = $this->mapNetworkToId($plan['network']); // Map network name to ID
+                $plan['amount'] = round($percentageService->calculateDataDiscountedAmount($networkId, (float) str_replace(',', '', $plan['amount'])), 2);
+                return $plan;
+            });
 
-        $rawHotDeals = Cache::remember($cacheKey, now()->addMinutes(60), function () use ($activeApi) {
-            return \App\Models\Transactions::query()
-                ->where('status', 'Successful')
-                ->where('which_api', $activeApi)
-                ->where('service', 'data')
-                ->where('created_at', '>=', now()->subDays(30))
-                ->selectRaw('service_provider, service_plan, plan_id, COUNT(*) as purchases')
-                ->groupBy('service_provider', 'service_plan', 'plan_id')
-                ->orderByDesc('purchases')
-                ->limit(10)
-                ->get();
-        });
 
-        // 🔁 Map plans by ID for matching
-        $plansById = $adjustedPlans->keyBy('plan_id');
+            // 🔁 Group plans by network and then by validity
+            $groupedPlans = collect($adjustedPlans)->groupBy('network')->map(function ($plans) {
+                return $plans->groupBy(function ($plan) {
+                    $validity = strtolower($plan['validity'] ?? '');
 
-        $hotDeals = $rawHotDeals->map(function ($deal) use ($plansById) {
-            $plan = $plansById[$deal->plan_id] ?? null;
+                    // Extract the numeric value from the validity string
+                    preg_match('/\d+/', $validity, $matches);
+                    $days = isset($matches[0]) ? (int) $matches[0] : 0;
 
-            return [
-                'service_provider' => $deal->service_provider,
-                'service_plan'     => $deal->service_plan,
-                'plan_id'          => $deal->plan_id,
-                'purchases'        => $deal->purchases,
-                'amount'           => $plan['amount'] ?? null,
-                'network'          => $plan['network'] ?? null,
-                'validity'         => $plan['validity'] ?? null,
-                'data_volume'      => $plan['data_volume'] ?? null,
-            ];
-        });
+                    if ($days > 0) {
+                        if ($days < 7) {
+                            return 'daily';
+                        } elseif ($days >= 7 && $days < 30) {
+                            return 'weekly';
+                        } elseif ($days >= 30) {
+                            return 'monthly';
+                        }
+                    }
 
-        // 🧠 Get special plans (cheapest top 10)
-        $specialPlansCacheKey = "special_plans:{$apiService->serviceName}";
-        $specialPlans = Cache::remember($specialPlansCacheKey, now()->addMinutes(60), function () use ($adjustedPlans) {
-            return $adjustedPlans
-                ->sortBy('amount')
-                ->take(10)
-                ->values();
-        });
+                    return 'others'; // For plans that don't fit into the above categories
+                });
+            });
 
-        return response()->json([
-            'status'         => true,
-            'networkPercent' => $networkPercent,
-            'data'           => $adjustedPlans,
-            'special_plans'  => $specialPlans,
-            'hot_deals'      => $hotDeals,
-        ]);
-    } catch (\Exception $e) {
-        Log::error('Get Data Plans Error', ['error' => $e->getMessage()]);
-        return response()->json([
-            'status'  => false,
-            'message' => 'Failed to retrieve data plans'
-        ], 500);
+            // 🔥 Fetch hot deals from transaction history
+            $activeApi = $apiService->getServiceName();
+
+            $cacheKey = "hot_deals:{$activeApi}";
+
+            $rawHotDeals = Cache::remember($cacheKey, now()->addMinutes(60), function () use ($activeApi) {
+                return \App\Models\Transactions::query()
+                    ->where('status', 'Successful')
+                    ->where('which_api', $activeApi)
+                    ->where('service', 'data')
+                    ->where('created_at', '>=', now()->subDays(30))
+                    ->selectRaw('service_provider, service_plan, plan_id, COUNT(*) as purchases')
+                    ->groupBy('service_provider', 'service_plan', 'plan_id')
+                    ->orderByDesc('purchases')
+                    ->limit(10)
+                    ->get();
+            });
+
+            // 🔁 Map plans by ID for matching
+            $plansById = $adjustedPlans->keyBy('plan_id');
+
+            $hotDeals = $rawHotDeals->map(function ($deal) use ($plansById) {
+                $plan = $plansById[$deal->plan_id] ?? null;
+
+                return [
+                    'service_provider' => $deal->service_provider,
+                    'service_plan'     => $plan['plan'] ?? null,
+                    'plan_id'          => $deal->plan_id,
+                    'purchases'        => $deal->purchases,
+                    'amount'           => $plan['amount'] ?? null,
+                    'network'          => $plan['network'] ?? null,
+                    'validity'         => $plan['validity'] ?? null,
+                    'data_volume'      => $plan['data_volume'] ?? null,
+                ];
+            });
+
+            // 🧠 Get special plans (cheapest top 10)
+            $specialPlansCacheKey = "special_plans:{$apiService->getServiceName()}";
+            $specialPlans = Cache::remember($specialPlansCacheKey, now()->addMinutes(60), function () use ($adjustedPlans) {
+                return $adjustedPlans
+                    ->sortBy('amount')
+                    ->take(10)
+                    ->values();
+            });
+
+            return response()->json([
+                'status'         => true,
+                //'networkPercent' => $networkPercent,
+                'data'           => $groupedPlans,
+                'special_plans'  => $specialPlans,
+                'hot_deals'      => $hotDeals,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Get Data Plans Error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'status'  => false,
+                'message' => 'Failed to retrieve data plans'
+            ], 500);
+        }
     }
-}
 
 
     public function buyData(Request $request, PercentageService $percentageService)

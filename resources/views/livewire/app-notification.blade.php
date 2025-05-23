@@ -2,7 +2,7 @@
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0 text-gray-800">
-            <i class="fas fa-bell text-primary mr-2"></i>Push Notifications
+            <i class="fas fa-bell  mr-2"></i>Push Notifications
         </h1>
     </div>
 
@@ -19,7 +19,7 @@
     <!-- Notification Form Card -->
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-white py-3">
-            <h5 class="m-0 font-weight-bold text-primary">
+            <h5 class="m-0 font-weight-bold ">
                 <i class="fas fa-paper-plane mr-2"></i>Compose Notification
             </h5>
         </div>
@@ -27,7 +27,7 @@
             <form wire:submit.prevent="submit" class="needs-validation" novalidate>
                 <!-- Title Field -->
                 <div class="form-group mb-4">
-                    <label for="notificationTitle" class="font-weight-bold text-primary">
+                    <label for="notificationTitle" class="font-weight-bold ">
                         <i class="fas fa-heading mr-2"></i>Title
                     </label>
                     <input type="text" class="form-control border-primary" id="notificationTitle"
@@ -39,7 +39,7 @@
 
                 <!-- Message Field -->
                 <div class="form-group mb-4">
-                    <label for="notificationMessage" class="font-weight-bold text-primary">
+                    <label for="notificationMessage" class="font-weight-bold ">
                         <i class="fas fa-comment-alt mr-2"></i>Message
                     </label>
                     <textarea class="form-control border-primary" id="notificationMessage" wire:model="notification_message" rows="4"
@@ -54,7 +54,7 @@
                     <div class="custom-control custom-switch">
                         <input type="checkbox" class="custom-control-input" id="includeImageToggle"
                             wire:model="include_image" wire:click="$toggle('showImageUpload')">
-                        <label class="custom-control-label font-weight-bold text-primary" for="includeImageToggle">
+                        <label class="custom-control-label font-weight-bold " for="includeImageToggle">
                             <i class="fas fa-image mr-2"></i>Include Image
                         </label>
                     </div>
@@ -63,7 +63,7 @@
                 <!-- Image Upload (Conditional) -->
                 @if ($showImageUpload)
                     <div class="form-group mb-4 border-left border-primary pl-3">
-                        <label for="notificationImage" class="font-weight-bold text-primary">
+                        <label for="notificationImage" class="font-weight-bold ">
                             <i class="fas fa-upload mr-2"></i>Upload Image
                         </label>
                         <div class="custom-file">
@@ -96,7 +96,7 @@
 
                     <!-- Recipient Selection -->
                     <div class="form-group mb-4">
-                        <label for="sendTo" class="font-weight-bold text-primary d-block">
+                        <label for="sendTo" class="font-weight-bold  d-block">
                             <i class="fas fa-users mr-2"></i>Send To
                         </label>
                         <select id="sendTo" class="form-control border-primary" wire:model="sendTo"
@@ -132,7 +132,7 @@
     <!-- Notification History Card -->
     <div class="card shadow-sm">
         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-            <h5 class="m-0 font-weight-bold text-primary">
+            <h5 class="m-0 font-weight-bold ">
                 <i class="fas fa-history mr-2"></i>Notification History
             </h5>
         </div>

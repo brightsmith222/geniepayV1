@@ -86,7 +86,8 @@ class EsimController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'eSIM purchased successfully',
-                'pin' => $result['pin'] ?? null
+                'pin' => $result['pin'] ?? null,
+                'data' => $transaction
             ]);
         }
 

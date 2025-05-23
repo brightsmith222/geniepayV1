@@ -6,7 +6,7 @@
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0 text-gray-800">
-            <i class="fas fa-images text-primary mr-2"></i>Slider Management
+            <i class="fas fa-images  mr-2"></i>Slider Management
         </h1>
         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#uploadModal">
             <i class="fas fa-plus mr-2"></i>Add New Slider
@@ -80,7 +80,7 @@
     <!-- Sliders Table -->
     <div class="slider-card shadow mb-4">
         <div class="card-header py-3 bg-white">
-            <h6 class="m-0 font-weight-bold text-primary">
+            <h6 class="m-0 font-weight-bold ">
                 <i class="fas fa-list mr-2"></i>Current Sliders
             </h6>
         </div>

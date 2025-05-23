@@ -88,6 +88,26 @@ class PercentageService
         return $originalAmount;
     }
 
+    public function calculateSmileDiscountedAmount(float $originalAmount): float
+{
+    // Retrieve the percentage for Smile from the DataTopupPercentage table
+    $record = DataTopupPercentage::where('network_name', 'smile')->first();
+
+    if ($record && (bool) $record->status) {
+        $percentage = (float) $record->network_percentage;
+        return $originalAmount + $this->calculateDiscount($percentage, $originalAmount);
+    }
+
+    if (!$record) {
+        Log::warning("DataTopupPercentage record not found for network name: smile");
+    } elseif (!(bool) $record->status) {
+        Log::info("DataTopupPercentage is disabled for network name: smile");
+    }
+
+    // Return the original amount if no percentage is found or disabled
+    return $originalAmount;
+}
+
     /**
      * Calculate discount based on percentage.
      */

@@ -29,41 +29,41 @@ class SliderController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {
-        $slider_title = $request->input('slider_title');
-        $slider_message = $request->input('slider_message');
-        $image = $request->file('image');
+{
+    $slider_title = $request->input('slider_title');
+    $slider_message = $request->input('slider_message');
+    $image = $request->file('image');
 
-        if (
-            $image != null
-        ) {
+    if ($image != null) {
+        $model = new Slider();
+        $model->slider_title = $slider_title;
 
-            $model = new Slider();
-            $model->slider_title = $slider_title;
-            $slider_message = html_entity_decode($slider_message);
-            $slider_message = strip_tags($slider_message);
-            $model->slider_message = $slider_message;
+        $slider_message = html_entity_decode($slider_message);
+        $slider_message = strip_tags($slider_message);
+        $model->slider_message = $slider_message;
 
-            $ext = $image->getClientOriginalExtension();
-            $fileName = rand(10000, 50000) . '.' . $ext;
-            if ($ext == 'jpg' || $ext == 'png') {
-                if ($image->move(public_path(), $fileName)) {
+        $ext = $image->getClientOriginalExtension();
+        $fileName = rand(10000, 50000) . '.' . $ext;
 
-                    $model->image = url('/') . '/' . $fileName;
-                } else {
-                    return redirect()->back()->with('failed', 'failed to upload, please check your internet');
-                }
+        if (in_array($ext, ['jpg', 'png', 'jpeg'])) {
+            $filePath = $image->storeAs('sliders', $fileName, 'public'); // Store in public/storage/sliders
+
+            if ($filePath) {
+                $model->image = url('storage/' . $filePath); // Save the public URL of the file
             } else {
-                return redirect()->back()->with('failed', 'Please upload png or jpg/jpeg');
+                return redirect()->back()->with('failed', 'Failed to upload, please check your internet');
             }
-
-            if ($model->save()) {
-                return redirect()->back()->with('success', 'Slider  uploaded successfully!');
-            }
-            return redirect()->back()->with('failed', 'Slider could not be saved!');
+        } else {
+            return redirect()->back()->with('failed', 'Please upload a PNG or JPG/JPEG file');
         }
-        return redirect()->back()->with('failed', 'Please fill all the compulsory fields!');
+
+        if ($model->save()) {
+            return redirect()->back()->with('success', 'Slider uploaded successfully!');
+        }
+        return redirect()->back()->with('failed', 'Slider could not be saved!');
     }
+    return redirect()->back()->with('failed', 'Please fill all the compulsory fields!');
+}
 
     /**
      * Display the specified resource.
@@ -86,47 +86,42 @@ class SliderController extends Controller
      * Update the specified resource in storage.
      */
     public function update(Request $request, $id)
-    {
-        $slider_title = $request->input('slider_title');
-        $slider_message = $request->input('slider_message');
-        $image = $request->file('image');
+{
+    $slider_title = $request->input('slider_title');
+    $slider_message = $request->input('slider_message');
+    $image = $request->file('image');
 
-        // if (
-        //     $image != null
-        // ) {
+    $model = Slider::find($id);
+    $model->slider_title = $slider_title;
 
-            $model = Slider::find($id);
-            $model->slider_title = $slider_title;
+    $slider_message = html_entity_decode($slider_message);
+    $slider_message = strip_tags($slider_message);
+    $model->slider_message = $slider_message;
 
-            $slider_message = html_entity_decode($slider_message);
-            $slider_message = strip_tags($slider_message);
-            $model->slider_message = $slider_message;
+    if ($image != null) {
+        $ext = $image->getClientOriginalExtension();
+        $fileName = rand(10000, 50000) . '.' . $ext;
 
-            if ($image != null) {
+        if (in_array($ext, ['jpg', 'png', 'jpeg'])) {
+            $filePath = $image->storeAs('sliders', $fileName, 'public'); // Store in public/storage/sliders
 
-                $ext = $image->getClientOriginalExtension();
-                $fileName = rand(10000, 50000) . '.' . $ext;
-                if ($ext == 'jpg' || $ext == 'png') {
-                    if ($image->move(public_path(), $fileName)) {
-
-                        $model->image = url('/') . '/' . $fileName;
-                    } else {
-                        return redirect()->back()->with('failed', 'failed to upload, please check your internet');
-                    }
-                } else {
-                    return redirect()->back()->with('failed', 'Please upload png or jpg/jpeg');
-                }
+            if ($filePath) {
+                $model->image = url('storage/' . $filePath); // Save the public URL of the file
             } else {
-
-                $model->image = $request->input('image_update');
+                return redirect()->back()->with('failed', 'Failed to upload, please check your internet');
             }
-
-
-            if ($model->save()) {
-                return redirect()->back()->with('success', 'Slider  updated successfully!');
-            }
-            return redirect()->back()->with('failed', 'Slider could not be updated!');
+        } else {
+            return redirect()->back()->with('failed', 'Please upload a PNG or JPG/JPEG file');
+        }
+    } else {
+        $model->image = $request->input('image_update'); // Use the existing image if no new file is uploaded
     }
+
+    if ($model->save()) {
+        return redirect()->back()->with('success', 'Slider updated successfully!');
+    }
+    return redirect()->back()->with('failed', 'Slider could not be updated!');
+}
 
     /**
      * Remove the specified resource from storage.

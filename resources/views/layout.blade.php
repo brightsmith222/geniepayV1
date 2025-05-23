@@ -70,26 +70,32 @@
 
 
     <!-- ======= Header ======= -->
-    <nav class="navbar navbar-light bg-light">
-        <button class="navbar-toggler" type="button" id="toggleSidebar">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="dropdown ml-auto">
-            <img src="{{ URL::to('assets/img/avatar.png') }}" alt="Avatar" class="avatar rounded-circle"
-                id="avatarDropdown" width="40" height="40" data-toggle="dropdown" aria-haspopup="true"
-                aria-expanded="false">
-            <div class="dropdown-menu" id="profileMenu">
-                <a class="dropdown-item" href="#">Profile</a>
-                <form id="logout-forms" action="{{ route('admin.logout') }}" method="POST" style="display: none;">
-                    @csrf
-                </form>
-                <a href="#" onclick="event.preventDefault(); document.getElementById('logout-forms').submit();">
-                    Logout
-                </a>
-            </div>
-        </div>
-
-    </nav>
+    <nav class="navbar navbar-light">
+      <button class="navbar-toggler" type="button" id="toggleSidebar">
+          <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="dropdown ml-auto">
+          <img src="{{ URL::to('assets/img/avatar.png') }}" alt="Avatar" class="avatar rounded-circle"
+              id="avatarDropdown" width="40" height="40" data-toggle="dropdown" aria-haspopup="true"
+              aria-expanded="false">
+          <div class="dropdown-menu dropdown-menu-right" id="profileMenu">
+              <a class="dropdown-item d-flex align-items-center" href="{{ URL::to('settings') }}">
+                  <i class="fas fa-user-circle mr-2"></i> Profile
+              </a>
+              <a class="dropdown-item d-flex align-items-center" href="#" 
+                 onclick="event.preventDefault(); document.getElementById('logout-forms').submit();">
+                  <i class="fas fa-sign-out-alt mr-2"></i> Logout
+              </a>
+              <form id="logout-forms" action="{{ route('admin.logout') }}" method="POST" style="display: none;">
+                  @csrf
+              </form>
+          </div>
+      </div>
+      <!-- Dark Mode Toggle -->
+      <button id="darkModeToggle" class="btn btn-outline-secondary ml-3">
+          <i class="fas fa-moon"></i> Dark Mode
+      </button>
+  </nav>
     <div class="sidebar" id="sidebar">
         <!-- Logo at the top of the sidebar -->
         <div class="sidebar-logo">

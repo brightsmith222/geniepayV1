@@ -13,7 +13,7 @@
             <th>Bal Before</th>
             <th>Bal. After</th>
             <th>Date</th>
-            <th>Action</th>
+            <!-- <th>Action</th> -->
         </tr>
     </thead>
     <tbody>
@@ -46,9 +46,9 @@
             <td>₦{{ number_format($transaction->balance_before ?? 0, 2) }}</td>
             <td>₦{{ number_format($transaction->balance_after ?? 0, 2) }}</td>
             <td>{{ $transaction->created_at->format('d/m/Y') }}</td>
-            <td>
+           <!--  <td>
                 <span class="material-icons-outlined walletvisibility visib" data-toggle="modal" data-target="#wallettransactionModal">visibility</span>
-            </td>
+            </td> -->
         </tr>
         @empty
         <tr>

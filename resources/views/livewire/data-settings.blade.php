@@ -59,7 +59,7 @@
                                 <label for="net-{{ strtolower(str_replace(' ', '-', $network)) }}-percentage">
                                     Enter {{ $network }} Percentage:
                                 </label>
-                                <input type="number" class="form-control"
+                                <input type="number" step="0.01" class="form-control"
                                        id="net-{{ strtolower(str_replace(' ', '-', $network)) }}-percentage"
                                        wire:model="percentages.{{ $network }}"
                                        placeholder="e.g., 10">

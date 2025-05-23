@@ -22,6 +22,11 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
         $this->passwordHash = sha1(config('api.artx.password'));
     }
 
+    public function getServiceName(): string
+{
+    return $this->serviceName;
+}
+
     public function supportsStatusCheck(): bool
     {
         return true;
@@ -173,7 +178,7 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
                         'plan_id' => $productId,
                         'plan' => $product['name'],
                         'network' => $this->getNetworkName($network),
-                        'amount' => $product['price']['user'],
+                        'amount' => number_format($product['price']['user'], 2), // Format the amount
                         'validity' => $this->extractValidity($product['name']),
                         'data_volume' => $this->extractDataVolume($product['name'])
                     ];
@@ -183,7 +188,7 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
             return $plans;
 
         } catch (\Exception $e) {
-            Log::error('ARTX Data Plans Error', ['error' => $e->getMessage()]);
+            Log::error('Server Data Plans Error', ['error' => $e->getMessage()]);
             return [];
         }
     }

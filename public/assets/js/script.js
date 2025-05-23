@@ -108,7 +108,29 @@ $('.search-box').on('input', function () {
 
 
 
+
 });
+
+    // Get the toggle button
+    const darkModeToggle = document.getElementById('darkModeToggle');
+
+    // Check the user's saved preference
+    const savedMode = localStorage.getItem('theme');
+    if (savedMode === 'dark') {
+        document.body.classList.add('dark-mode');
+    }
+
+    // Toggle dark mode on button click
+    darkModeToggle.addEventListener('click', () => {
+        const isDarkMode = document.body.classList.toggle('dark-mode');
+
+        // Save the user's preference
+        if (isDarkMode) {
+            localStorage.setItem('theme', 'dark');
+        } else {
+            localStorage.setItem('theme', 'light');
+        }
+    });
 
 function toggleSubmenu(id) {
     const submenu = document.getElementById(id);

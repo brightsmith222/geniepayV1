@@ -13,6 +13,7 @@ use App\Services\ReferralService;
 use Illuminate\Support\Str;
 
 
+
 class BaseDataController extends Controller
 {
     protected function validateRequest(Request $request)
@@ -33,19 +34,29 @@ class BaseDataController extends Controller
     }
 
     protected function getActiveApiService(string $serviceType = 'data'): ?object
-    {
-        $apiServices = ['artx', 'glad'];
-        
-        foreach ($apiServices as $apiName) {
-            $service = ApiServiceFactory::create($apiName, $serviceType);
-            if ($service && $service->isEnabled()) {
+{
+    $apiServices = ['artx_data', 'glad_data'];
+
+    foreach ($apiServices as $apiName) {
+        Log::info("Attempting to create API service: {$apiName}");
+        $service = ApiServiceFactory::create($apiName, $serviceType);
+
+        if ($service) {
+            Log::info("Created API service: {$apiName}");
+            if ($service->isEnabled()) {
                 Log::info("Using API service: {$apiName} for {$serviceType}");
                 return $service;
+            } else {
+                Log::info("API service {$apiName} is not enabled.");
             }
+        } else {
+            Log::warning("Failed to create API service: {$apiName}");
         }
-        
-        return null;
     }
+
+    Log::error("No active API service found for {$serviceType}");
+    return null;
+}
 
     protected function validateNetworkAndNumber($apiService, $network, $mobile_number)
     {
