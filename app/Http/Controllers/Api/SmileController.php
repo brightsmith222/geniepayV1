@@ -89,15 +89,42 @@ class SmileController extends Controller
     $data = $response->json();
     Log::info('Smile Plans Response', ['response' => $data]);
 
-    // Adjust the amount for each plan based on the Smile discount
+    // Adjust the amount for each plan and extract validity
     $plans = collect($data['content']['varations'] ?? [])->map(function ($plan) use ($percentageService) {
-        $plan['amount'] = $percentageService->calculateSmileDiscountedAmount((float) $plan['amount']);
-        return $plan;
+        $plan['amount'] = $percentageService->calculateSmileDiscountedAmount((float) $plan['variation_amount']);
+
+        // Extract validity from the name field
+        preg_match('/(\d+)\s?(day|days|week|weeks|month|months|year|years)/i', $plan['name'], $matches);
+        if (isset($matches[1], $matches[2])) {
+            $number = (int) $matches[1];
+            $unit = strtolower($matches[2]);
+
+            // Ensure the unit is pluralized if the number is greater than 1
+            if ($number > 1) {
+                $unit = Str::plural($unit);
+            }
+
+            $plan['validity'] = "{$number} {$unit}";
+        } else {
+            $plan['validity'] = 'Unknown';
+        }
+
+        // Return only the required fields
+        return [
+            'variation_code' => $plan['variation_code'],
+            'plan' => $plan['name'],
+            'fixedPrice' => $plan['fixedPrice'],
+            'amount' => $plan['amount'],
+            'validity' => $plan['validity'],
+        ];
     });
+
+    // Sort the plans by validity_days in ascending order
+    $sortedPlans = $plans->sortBy('validity')->values();
 
     return response()->json([
         'status' => true,
-        'data' => $plans
+        'data' => $sortedPlans
     ]);
 }
 
@@ -164,7 +191,7 @@ class SmileController extends Controller
             $payload = [
                 'request_id'     => $transactionId,
                 'serviceID'      => 'smile-direct',
-                'billersCode'    => $accountId,
+                'billersCode'    => "08011111111", //$accountId,
                 'variation_code' => $request->variation_code,
                 'phone'          => $user->phone_number,
             ];
@@ -218,8 +245,9 @@ class SmileController extends Controller
             $transaction->status             = $status;
             $transaction->service_provider   = 'Smile';
             $transaction->service            = 'data';
+            $transaction->plan_id            = $request->variation_code ?? null;
             $transaction->smart_card_number  = $tx['unique_element'] ?? $request->email;
-            $transaction->service_plan       = $request->variation_code;
+            $transaction->service_plan       = $request->plan ?? null;
             $transaction->image              = $request->image ?? null;
             $transaction->transaction_id     = $transactionId;
             $transaction->quantity           = $tx['quantity'] ?? 1;

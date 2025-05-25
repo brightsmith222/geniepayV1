@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\GeneralSettings;
+use Illuminate\Support\Facades\Log;
 
 abstract class BaseApiService
 {

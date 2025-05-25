@@ -21,70 +21,102 @@ class BaseDataController extends Controller
         return Validator::make($request->all(), [
             'network' => 'required|integer',
             'amount' => 'required',
-            'plan' => 'string|required',
+            'original_amount' => 'nullable',
+            'plan' => 'required',
             'plan_size' => 'string|required',
             'image' => 'string|nullable',
-            'mobile_number' => [
-                'required',
-                'string',
-                'min:11',
-                'max:11'
-            ],
+            'mobile_number' => ['required', 'string', 'min:11', 'max:11'],
         ]);
     }
 
     protected function getActiveApiService(string $serviceType = 'data'): ?object
-{
-    $apiServices = ['artx_data', 'glad_data'];
+    {
+        $apiServices = ['artx_data', 'glad_data'];
 
-    foreach ($apiServices as $apiName) {
-        Log::info("Attempting to create API service: {$apiName}");
-        $service = ApiServiceFactory::create($apiName, $serviceType);
+        foreach ($apiServices as $apiName) {
+            Log::info("Attempting to create API service: {$apiName}");
+            $service = ApiServiceFactory::create($apiName, $serviceType);
 
-        if ($service) {
-            Log::info("Created API service: {$apiName}");
-            if ($service->isEnabled()) {
-                Log::info("Using API service: {$apiName} for {$serviceType}");
-                return $service;
+            if ($service) {
+                Log::info("Created API service: {$apiName}");
+                if ($service->isEnabled()) {
+                    Log::info("Using API service: {$apiName} for {$serviceType}");
+                    return $service;
+                } else {
+                    Log::info("API service {$apiName} is not enabled.");
+                }
             } else {
-                Log::info("API service {$apiName} is not enabled.");
+                Log::warning("Failed to create API service: {$apiName}");
             }
-        } else {
-            Log::warning("Failed to create API service: {$apiName}");
         }
-    }
 
-    Log::error("No active API service found for {$serviceType}");
-    return null;
-}
+        Log::error("No active API service found for {$serviceType}");
+        return null;
+    }
 
     protected function validateNetworkAndNumber($apiService, $network, $mobile_number)
-    {
-        $validationNumber = ($apiService instanceof \App\Services\ArtxDataService) 
-            ? '234' . substr($mobile_number, 1)
-            : $mobile_number;
+{
+    // Normalize the phone number for validation
+    $validationNumber = ($apiService instanceof \App\Services\ArtxDataService)
+        ? '234' . substr($mobile_number, 1)
+        : $mobile_number;
 
-        if (!$apiService->validateNumberForNetwork($validationNumber, $network)) {
-            $networkNames = [
-                1 => 'MTN',
-                2 => 'GLO',
-                3 => 'Airtel',
-                6 => '9Mobile'
-            ];
-            
-            return response()->json([
-                'status' => false,
-                'message' => "This is not a valid {$networkNames[$network]} number"
-            ], 400);
-        }
-        
-        return true;
+    // Get the network prefixes
+    $networkPrefixes = $apiService->getNetworkPrefixes();
+
+    // Check if the network is valid and has prefixes
+    if (!isset($networkPrefixes[$network])) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Invalid phone number'
+        ], 400);
     }
 
-    protected function createTransaction($user, $amount, $network, $status, $mobile_number, $image, $transaction_id, $plan_size, $plan_ids = null, $userReference = null)
+    // Check if the number matches any prefix for the selected network
+    $isValidPrefix = false;
+    foreach ($networkPrefixes[$network] as $prefix) {
+        if (str_starts_with($validationNumber, $prefix)) {
+            $isValidPrefix = true;
+            break;
+        }
+    }
+
+    if (!$isValidPrefix) {
+        $networkNames = [
+            1 => 'MTN',
+            2 => 'GLO',
+            3 => 'Airtel',
+            6 => '9Mobile'
+        ];
+
+        return response()->json([
+            'status' => false,
+            'message' => "This is not a valid {$networkNames[$network]} number"
+        ], 400);
+    }
+
+    // Validate the number using the API service
+    if (!$apiService->validateNumberForNetwork($validationNumber, $network)) {
+        $networkNames = [
+            1 => 'MTN',
+            2 => 'GLO',
+            3 => 'Airtel',
+            6 => '9Mobile'
+        ];
+
+        return response()->json([
+            'status' => false,
+            'message' => "This is not a valid {$networkNames[$network]} number"
+        ], 400);
+    }
+
+    return true;
+}
+
+    protected function createTransaction($user, $amount, $network, $status, $mobile_number, $image, $transaction_id, $plan_size, $plan_id = null, $userReference = null)
     {
         $transaction = new Transactions();
-        
+
         $transaction->user_id = $user->id;
         $transaction->username = $user->username;
         $transaction->amount = "{$amount}";
@@ -96,7 +128,7 @@ class BaseDataController extends Controller
         $transaction->transaction_id = $transaction_id;
         $transaction->service_plan = $plan_size;
         $transaction->reference = $userReference;
-        $transaction->plan_id = $plan_ids;
+        $transaction->plan_id = $plan_id;
         $transaction->save();
 
         return $transaction;
@@ -132,23 +164,23 @@ class BaseDataController extends Controller
             $user->save();
 
             $transaction = $this->createTransaction(
-                $user, 
-                $amount, 
-                $handledResponse['plan_ids'],
-                $handledResponse['api_reference'],
-                $handledResponse['operator_name'], 
-                'Successful', 
-                $context['mobile_number'], 
-                $context['image'], 
+                $user,
+                $amount,
+                $handledResponse['network_name'],
+                'Successful', // Set status to 'Successful'
+                $context['mobile_number'],
+                $context['image'],
                 $handledResponse['transaction_id'],
-                $context['plan_size']
+                $context['plan_size'],
+                $handledResponse['plan_id'],
+                $handledResponse['api_reference']
             );
 
             $this->createWalletTransaction(
-                $user, 
-                $amount, 
-                $handledResponse['transaction_id'], 
-                $balance_before, 
+                $user,
+                $amount,
+                $handledResponse['transaction_id'],
+                $balance_before,
                 $user->wallet_balance
             );
 
@@ -167,23 +199,23 @@ class BaseDataController extends Controller
             $user->save();
 
             $transaction = $this->createTransaction(
-                $user, 
-                $amount, 
-                $handledResponse['plan_ids'],
-                $handledResponse['api_reference'],
-                $handledResponse['operator_name'], 
-                'Pending', 
-                $context['mobile_number'], 
-                $context['image'], 
+                $user,
+                $amount,
+                $handledResponse['network_name'],
+                'Pending', // Set status to 'Pending'
+                $context['mobile_number'],
+                $context['image'],
                 $handledResponse['transaction_id'],
-                $context['plan_size']
+                $context['plan_size'],
+                $handledResponse['plan_id'],
+                $handledResponse['api_reference']
             );
 
             $this->createWalletTransaction(
-                $user, 
-                $amount, 
-                $handledResponse['transaction_id'], 
-                $balance_before, 
+                $user,
+                $amount,
+                $handledResponse['transaction_id'],
+                $balance_before,
                 $user->wallet_balance
             );
 
@@ -198,12 +230,12 @@ class BaseDataController extends Controller
 
 
         $this->createTransaction(
-            $context['user'] ?? null, 
-            $context['amount'], 
-            $context['network'], 
-            'Failed', 
-            $context['mobile_number'], 
-            $context['image'], 
+            $context['user'] ?? null,
+            $context['amount'],
+            $context['network'],
+            'Failed',
+            $context['mobile_number'],
+            $context['image'],
             $handledResponse['transaction_id'] ?? Str::uuid(),
             $context['plan_size']
         );
@@ -216,7 +248,7 @@ class BaseDataController extends Controller
 
     protected function getHttpStatusCode(int $apiStatusCode): int
     {
-        return match(true) {
+        return match (true) {
             $apiStatusCode >= 400 && $apiStatusCode < 500 => 400,
             $apiStatusCode >= 500 => 503,
             default => 400

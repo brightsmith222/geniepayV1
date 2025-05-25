@@ -53,7 +53,13 @@ class BuyDataController extends BaseDataController
             // 🔁 Adjust the amount for each plan based on the percentage
             $adjustedPlans = collect($allPlans)->map(function ($plan) use ($percentageService) {
                 $networkId = $this->mapNetworkToId($plan['network']); // Map network name to ID
+    
+                // Add the original amount from the response
+                $plan['original_amount'] = $plan['amount'];
+    
+                // Adjust the amount using the percentage service
                 $plan['amount'] = round($percentageService->calculateDataDiscountedAmount($networkId, (float) str_replace(',', '', $plan['amount'])), 2);
+    
                 return $plan;
             });
 
@@ -144,75 +150,84 @@ class BuyDataController extends BaseDataController
 
 
     public function buyData(Request $request, PercentageService $percentageService)
-    {
-        $validator = $this->validateRequest($request);
+{
+    $validator = $this->validateRequest($request);
+    Log::info('Buy Data Request', [
+        'user_id' => $request->user()->id,
+        'network' => $request->input('network'),
+        'mobile_number' => $request->input('mobile_number'),
+        'amount' => $request->input('amount'),
+        'plan' => $request->input('plan'),
+        'plan_size' => $request->input('plan_size')
+    ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => $validator->errors()->first()
-            ], 422);
-        }
-
-        try {
-            $network = $request->input('network');
-            $mobile_number = $request->input('mobile_number');
-            $amount = $request->input('amount');
-            $plan = $request->input('plan');
-            $plan_size = $request->input('plan_size');
-
-            $user = $request->user();
-            $wallet_balance = $user->wallet_balance;
-
-            if ($wallet_balance < $amount) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Insufficient balance ₦' . number_format($wallet_balance)
-                ], 401);
-            }
-
-            $apiService = $this->getActiveApiService();
-
-            if (!$apiService) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Our data service is currently not available'
-                ], 503);
-            }
-
-            $validationResult = $this->validateNetworkAndNumber($apiService, $network, $mobile_number);
-            if ($validationResult != true) {
-                return $validationResult;
-            }
-            // Calculate discounted amount
-            // $amount_charged = $percentageService->calculateDataDiscountedAmount($network, $amount);
-
-            $response = $apiService->processRequest([
-                'network' => $network,
-                'mobile_number' => $mobile_number,
-                'amount' => $amount,
-                'plan' => $plan,
-                'plan_id' => $request->input('plan_id') // Needed for ARTX
-            ]);
-
-            return $this->handleApiResponse($apiService, $response, [
-                'user' => $user,
-                'amount' => $amount,
-                'amount_charged' => $amount,
-                //'amount_charged' => $amount_charged,
-                'mobile_number' => $mobile_number,
-                'image' => $request->image,
-                'network' => $network,
-                'plan_size' => $plan_size
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Buy Data Error', ['error' => $e->getMessage()]);
-            return response()->json([
-                'status' => false,
-                'message' => 'An error occurred while processing your request'
-            ], 500);
-        }
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => false,
+            'message' => $validator->errors()->first()
+        ], 422);
     }
+
+    try {
+        $network = $request->input('network');
+        $mobile_number = $request->input('mobile_number');
+        $amount = $request->input('amount');
+        $original_amount = $request->input('original_amount', $amount); // Use original amount if provided
+        $plan = $request->input('plan');
+        $plan_size = $request->input('plan_size');
+
+        $user = $request->user();
+        $wallet_balance = $user->wallet_balance;
+
+        if ($wallet_balance < $amount) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Insufficient balance ₦' . number_format($wallet_balance)
+            ], 401);
+        }
+
+        $apiService = $this->getActiveApiService();
+
+        if (!$apiService) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Our data service is currently not available'
+            ], 503);
+        }
+
+        // Validate the network and phone number
+        $validationResult = $this->validateNetworkAndNumber($apiService, $network, $mobile_number);
+        if ($validationResult !== true) {
+            // If validation fails, return the error response
+            return $validationResult;
+        }
+
+        $response = $apiService->processRequest([
+            'network' => $network,
+            'mobile_number' => $mobile_number,
+            'amount' => $amount,
+            'plan' => $plan,
+            'original_amount' => $original_amount,
+        ]);
+
+        return $this->handleApiResponse($apiService, $response, [
+            'user' => $user,
+            'amount' => $amount,
+            'amount_charged' => $amount,
+            'mobile_number' => $mobile_number,
+            'image' => $request->image,
+            'network' => $network,
+            'plan_size' => $plan_size,
+            'plan_id' => $plan 
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Buy Datas Error', ['error' => $e->getMessage()]);
+        return response()->json([
+            'status' => false,
+            'message' => 'An error occurred while processing your request'
+        ], 500);
+    }
+}
 
     protected function mapNetworkToId(string $network): int
     {

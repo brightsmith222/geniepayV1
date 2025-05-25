@@ -48,11 +48,13 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
                 'command' => 'execTransaction',
                 'operator' => $this->mapNetwork($requestData['network']),
                 'msisdn' => $this->normalizePhoneNumber($requestData['mobile_number']),
-                'productId' => $requestData['plan_id'],
-                //'amountOperator' => $requestData['amount'],
+                'productId' => $requestData['plan'],
+                'amount' => $requestData['original_amount'],
                 'userReference' => MyFunctions::generateRequestId(),
                 'simulate' => 1,
             ];
+
+            Log::debug('ARTX Payload', ['payload' => $payload]);
 
             $response = Http::timeout(30)
                 ->retry(2, 100)
@@ -89,13 +91,20 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
         
         $statusCode = $response['status_code'];
         $responseData = $response['data'];
+        Log::debug('ARTX Data Response', [
+            'status_code' => $statusCode,
+            'response' => $responseData,
+            'context' => $context
+        ]);
 
         $result = [
             'success' => false,
+            'pending' => false,
             'status_code' => $statusCode,
             'transaction_id' => Str::uuid(),
             'network_name' => $this->mapNetwork($context['network']),
             'message' => '',
+            'api_reference' => null,
             'raw_response' => $responseData
         ];
 
@@ -120,6 +129,8 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
             $result['api_reference'] = $responseData['result']['operator']['reference'] ?? null;
             $result['operator_name'] = $responseData['result']['operator']['name'] ?? null;
             $result['instructions'] = $responseData['result']['instructions'] ?? null;
+            $result['plan_id'] = $responseData['result']['productId'] ?? null; // Add productId here
+
             
             return $result;
         }
@@ -128,7 +139,7 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
             $result['pending'] = true;
             $result['transaction_id'] = $responseData['result']['id'] ?? $result['transaction_id'];
             $result['message'] = $this->getPendingMessage($statusId);
-            $result['plan_ids'] = $responseData['result']['operator']['id'] ?? null;
+            $result['plan_id'] = $responseData['result']['productId'] ?? null; // Default to 'Unknown' if not present
             $result['api_reference'] = $responseData['result']['operator']['reference'] ?? null;
             $result['operator_name'] = $responseData['result']['operator']['name'] ?? null;
             $result['instructions'] = $responseData['result']['instructions'] ?? null;
@@ -176,7 +187,7 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
                 if ($product['productType']['id'] == 4) { // Mobile Data
                     $plans[] = [
                         'plan_id' => $productId,
-                        'plan' => $product['name'],
+                        'plan_name' => $product['name'],
                         'network' => $this->getNetworkName($network),
                         'amount' => number_format($product['price']['user'], 2), // Format the amount
                         'validity' => $this->extractValidity($product['name']),

@@ -103,7 +103,7 @@ class AirtimeController extends Controller
     protected function getActiveApiService(): ?ApiServiceInterface
     {
         // Define the priority order of APIs to check
-        $apiServices = ['glad', 'artx'];
+        $apiServices = ['glad_airtime', 'artx_airtime'];
 
         foreach ($apiServices as $apiName) {
             $service = ApiServiceFactory::create($apiName);

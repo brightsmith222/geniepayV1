@@ -72,9 +72,12 @@ class GladDataService extends BaseApiService implements ApiServiceInterface
         $result = [
             'status_code' => $statusCode,
             'success' => false,
+            'pending' => false,
             'transaction_id' => null,
             'network' => $context['network'],
-            'message' => ''
+            'message' => '',
+            'plan_id' => null,
+            'api_reference' => null
         ];
 
         if ($statusCode >= 200 && $statusCode < 300) {
@@ -83,8 +86,12 @@ class GladDataService extends BaseApiService implements ApiServiceInterface
                 $result['serviceName'] = $this->serviceName;
                 $result['transaction_id'] = $responseData['ident'];
                 $result['network_name'] = $responseData['plan_network'];
-                $result['plan_ids'] = $responseData['plan'];
+                $result['plan_id'] = $responseData['plan'];
+                $result['api_reference'] = $responseData['ident'] ?? null; 
                 $result['message'] = 'Data purchase successful';
+            } elseif (isset($responseData['Status']) && $responseData['Status'] === 'pending') {
+                $result['pending'] = true; // Set "pending" to true for pending transactions
+                $result['message'] = 'Transaction is pending';
             } else {
                 $result['message'] = $responseData['error'] ?? 'Transaction failed';
             }
