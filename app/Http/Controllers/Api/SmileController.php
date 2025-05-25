@@ -191,7 +191,7 @@ class SmileController extends Controller
             $payload = [
                 'request_id'     => $transactionId,
                 'serviceID'      => 'smile-direct',
-                'billersCode'    => "08011111111", //$accountId,
+                'billersCode'    => $accountId,
                 'variation_code' => $request->variation_code,
                 'phone'          => $user->phone_number,
             ];
