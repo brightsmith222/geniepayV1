@@ -64,7 +64,7 @@
                   <!-- Right Column - Image Upload -->
                   <div class="col-lg-4">
                       <div class="slider-card border-0 shadow-sm mb-4">
-                          <div class="card-header bg-white">
+                          <div class="slide-hd">
                               <h6 class="font-weight-bold text-primary mb-0">
                                   <i class="fas fa-image mr-2"></i>Slider Image
                               </h6>

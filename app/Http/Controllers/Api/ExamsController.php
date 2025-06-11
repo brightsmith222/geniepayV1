@@ -60,9 +60,9 @@ class ExamsController extends Controller
             }
 
             $amount_charged = $amount;
-            
-            $url = 'https://www.gladtidingsdata.com/api/epin/';
-            $gladAPIKey = '59d56fab621bcaa57180cd8ce6619b2dc5d99598';
+            $url = config('api.glad.base_url') . "api/epin/";
+
+            $gladAPIKey = config('api.glad.api_key');
 
             // Define the headers, including the token
             $headers = [

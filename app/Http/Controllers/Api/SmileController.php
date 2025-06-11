@@ -14,6 +14,7 @@ use App\Services\VtpassService;
 use App\MyFunctions;
 use Illuminate\Support\Facades\Validator;
 use App\Services\PercentageService;
+use App\Services\BeneficiaryService;
 
 class SmileController extends Controller
 {
@@ -133,8 +134,21 @@ class SmileController extends Controller
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
             'variation_code' => 'required|string',
+            'plan' => 'nullable|string',
             'amount' => 'required|numeric',
+            'image' => 'nullable|string',
+            'beneficiary' => 'required|boolean',
         ]);
+
+        $email = $request->input('email');
+        $variation_code = $request->input('variation_code');
+        $amount = $request->input('amount');
+        $plan = $request->input('plan');
+        $image = $request->input('image');
+        $beneficiary = $request->input('beneficiary', false);
+        $provider = 1;
+        $type = 'smile';
+
 
         if ($validator->fails()) {
             return response()->json([
@@ -144,8 +158,9 @@ class SmileController extends Controller
         }
 
         $user = $request->user();
+        $wallet_balance = $user->wallet_balance;
 
-        if ($user->wallet_balance < $request->amount) {
+        if ($wallet_balance < $amount) {
             return response()->json([
                 'status' => false,
                 'message' => 'Insufficient wallet balance'
@@ -191,8 +206,8 @@ class SmileController extends Controller
             $payload = [
                 'request_id'     => $transactionId,
                 'serviceID'      => 'smile-direct',
-                'billersCode'    => $accountId,
-                'variation_code' => $request->variation_code,
+                'billersCode'    => '08011111111',//$accountId,
+                'variation_code' => $variation_code,
                 'phone'          => $user->phone_number,
             ];
 
@@ -223,32 +238,51 @@ class SmileController extends Controller
             // Deduct wallet for Successful or Processing
             $balance_before = $user->wallet_balance;
             if (in_array($status, ['Successful', 'Pending'])) {
-                $user->wallet_balance -= $request->amount;
+                $wallet_balance = $wallet_balance - $amount;
+                $user->wallet_balance = $wallet_balance;
                 $user->save();
 
                 $walletTrans = new  WalletTransactions();
                 $walletTrans->trans_type = 'debit';
                 $walletTrans->user = $user->username;
-                $walletTrans->amount = $request->amount;
-                $walletTrans->service = 'smile';
+                $walletTrans->amount = $amount;
+                $walletTrans->service = $type;
                 $walletTrans->transaction_id = $transactionId;
                 $walletTrans->balance_before = $balance_before;
-                $walletTrans->balance_after = $user->wallet_balance;
+                $walletTrans->balance_after = $wallet_balance;
                 $walletTrans->status = $status;
                 $walletTrans->save();
+
+                if ($beneficiary ?? false) {
+                    try {
+                        if (!empty($accountId)) {
+                            (new BeneficiaryService())->save([
+                                'type'       => $type,
+                                'identifier' => $email,
+                                'provider'   => $provider,
+                            ], $user);
+    
+                        } else {
+                            Log::error('Beneficiary account ID is missing');
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Failed to save beneficiary', ['error' => $e->getMessage()]);
+                    }
+                }
             }
 
             $transaction = new Transactions();
-            $transaction->amount             = $request->amount;
+            $transaction->amount             = $amount;
             $transaction->user_id            = $user->id;
             $transaction->username           = $user->username;
             $transaction->status             = $status;
             $transaction->service_provider   = 'Smile';
+            $transaction->provider_id        = $variation_code;
             $transaction->service            = 'data';
-            $transaction->plan_id            = $request->variation_code ?? null;
-            $transaction->smart_card_number  = $tx['unique_element'] ?? $request->email;
-            $transaction->service_plan       = $request->plan ?? null;
-            $transaction->image              = $request->image ?? null;
+            $transaction->plan_id            = $variation_code ?? null;
+            $transaction->smart_card_number  = $tx['unique_element'] ?? $email;
+            $transaction->service_plan       = $plan ?? null;
+            $transaction->image              = $image ?? null;
             $transaction->transaction_id     = $transactionId;
             $transaction->quantity           = $tx['quantity'] ?? 1;
             $transaction->commission         = $tx['commission'] ?? '0';

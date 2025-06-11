@@ -10,6 +10,9 @@ use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Validator;
+use App\MyFunctions;
+use App\Services\BeneficiaryService;
 
 
 class BuyDataController extends BaseDataController
@@ -50,16 +53,22 @@ class BuyDataController extends BaseDataController
                 }
             });
 
+            Log::info ('This are all the plans', ['plans' => $allPlans]);
+
+
+            $plansById = collect($allPlans)->keyBy('plan_id');
+
             // 🔁 Adjust the amount for each plan based on the percentage
             $adjustedPlans = collect($allPlans)->map(function ($plan) use ($percentageService) {
                 $networkId = $this->mapNetworkToId($plan['network']); // Map network name to ID
-    
+
                 // Add the original amount from the response
                 $plan['original_amount'] = $plan['amount'];
-    
+
                 // Adjust the amount using the percentage service
                 $plan['amount'] = round($percentageService->calculateDataDiscountedAmount($networkId, (float) str_replace(',', '', $plan['amount'])), 2);
-    
+                
+
                 return $plan;
             });
 
@@ -89,55 +98,71 @@ class BuyDataController extends BaseDataController
 
             // 🔥 Fetch hot deals from transaction history
             $activeApi = $apiService->getServiceName();
+            $whichApi = $this->mapApiServiceToWhichApi($activeApi); // Map activeApi to which_api
 
-            $cacheKey = "hot_deals:{$activeApi}";
 
-            $rawHotDeals = Cache::remember($cacheKey, now()->addMinutes(60), function () use ($activeApi) {
+            $cacheKey = "hot_deals:{$whichApi}";
+
+            $rawHotDeals = Cache::remember($cacheKey, now()->addMinutes(60), function () use ($whichApi) {
                 return \App\Models\Transactions::query()
                     ->where('status', 'Successful')
-                    ->where('which_api', $activeApi)
+                    ->where('which_api', $whichApi)
                     ->where('service', 'data')
                     ->where('created_at', '>=', now()->subDays(30))
-                    ->selectRaw('service_provider, service_plan, plan_id, COUNT(*) as purchases')
-                    ->groupBy('service_provider', 'service_plan', 'plan_id')
+                    ->selectRaw('provider_id, service_plan, plan_id, COUNT(*) as purchases')
+                    ->groupBy('provider_id', 'service_plan', 'plan_id')
                     ->orderByDesc('purchases')
-                    ->limit(10)
                     ->get();
             });
 
             // 🔁 Map plans by ID for matching
-            $plansById = $adjustedPlans->keyBy('plan_id');
+            //$plansById = $adjustedPlans->keyBy('plan_id');
 
-            $hotDeals = $rawHotDeals->map(function ($deal) use ($plansById) {
-                $plan = $plansById[$deal->plan_id] ?? null;
+            // Group hot deals by network
+            $hotDealsByProvider = $rawHotDeals->groupBy('provider_id')->map(function ($deals) use ($plansById, $percentageService) {
+    return $deals->map(function ($deal) use ($plansById, $percentageService) {
+        $plan = $plansById[$deal->plan_id] ?? null;
+        if (!$plan) {
+            return null; // skip if plan not found in API
+        }
+        $networkId = $plan['provider_id'] ?? $deal->provider_id;
+        $originalAmount = $plan['original_amount'] ?? $plan['amount'];
+        // Calculate the discounted amount using the original API price
+        $discountedAmount = round($percentageService->calculateDataDiscountedAmount($networkId, (float) str_replace(',', '', $originalAmount)), 2);
 
-                return [
-                    'service_provider' => $deal->service_provider,
-                    'service_plan'     => $plan['plan'] ?? null,
-                    'plan_id'          => $deal->plan_id,
-                    'purchases'        => $deal->purchases,
-                    'amount'           => $plan['amount'] ?? null,
-                    'network'          => $plan['network'] ?? null,
-                    'validity'         => $plan['validity'] ?? null,
-                    'data_volume'      => $plan['data_volume'] ?? null,
-                ];
-            });
+        return [
+            'provider_id'     => $deal->provider_id,
+            'service_plan'    => $plan['plan_name'] ?? null,
+            'plan_id'         => $deal->plan_id,
+            'purchases'       => $deal->purchases,
+            'amount'          => $discountedAmount,           // Discounted price
+            'original_amount' => $originalAmount,             // API price
+            'network'         => $plan['network'] ?? null,
+            'validity'        => $plan['validity'] ?? null,
+            'data_volume'     => $plan['data_volume'] ?? null,
+        ];
+    })->filter()->sortByDesc('purchases')->take(10)->values(); // filter() removes nulls
+});
 
-            // 🧠 Get special plans (cheapest top 10)
+            // 🧠 Get special plans (cheapest top 10 for each network)
             $specialPlansCacheKey = "special_plans:{$apiService->getServiceName()}";
             $specialPlans = Cache::remember($specialPlansCacheKey, now()->addMinutes(60), function () use ($adjustedPlans) {
-                return $adjustedPlans
-                    ->sortBy('amount')
-                    ->take(10)
-                    ->values();
+                // Group plans by network ID
+                $groupedByNetworkId = $adjustedPlans->groupBy(function ($plan) {
+                    return $this->mapNetworkToId($plan['network']); // Use network ID
+                });
+
+                // Fetch the cheapest 10 plans for each network ID
+                return $groupedByNetworkId->map(function ($plans) {
+                    return $plans->sortBy('amount')->take(9)->values();
+                });
             });
 
             return response()->json([
                 'status'         => true,
-                //'networkPercent' => $networkPercent,
                 'data'           => $groupedPlans,
                 'special_plans'  => $specialPlans,
-                'hot_deals'      => $hotDeals,
+                'hot_deals'      => $hotDealsByProvider,
             ]);
         } catch (\Exception $e) {
             Log::error('Get Data Plans Error', ['error' => $e->getMessage()]);
@@ -150,84 +175,79 @@ class BuyDataController extends BaseDataController
 
 
     public function buyData(Request $request, PercentageService $percentageService)
-{
-    $validator = $this->validateRequest($request);
-    Log::info('Buy Data Request', [
-        'user_id' => $request->user()->id,
-        'network' => $request->input('network'),
-        'mobile_number' => $request->input('mobile_number'),
-        'amount' => $request->input('amount'),
-        'plan' => $request->input('plan'),
-        'plan_size' => $request->input('plan_size')
-    ]);
+    {
+        $validator = $this->validateRequest($request);
 
-    if ($validator->fails()) {
-        return response()->json([
-            'status' => false,
-            'message' => $validator->errors()->first()
-        ], 422);
-    }
-
-    try {
-        $network = $request->input('network');
-        $mobile_number = $request->input('mobile_number');
-        $amount = $request->input('amount');
-        $original_amount = $request->input('original_amount', $amount); // Use original amount if provided
-        $plan = $request->input('plan');
-        $plan_size = $request->input('plan_size');
-
-        $user = $request->user();
-        $wallet_balance = $user->wallet_balance;
-
-        if ($wallet_balance < $amount) {
+        if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'message' => 'Insufficient balance ₦' . number_format($wallet_balance)
-            ], 401);
+                'message' => $validator->errors()->first()
+            ], 422);
         }
 
-        $apiService = $this->getActiveApiService();
+        try {
+            $network = $request->input('network');
+            $mobile_number = $request->input('mobile_number');
+            $amount = $request->input('amount');
+            $original_amount = $request->input('original_amount', $amount); // Use original amount if provided
+            $plan = $request->input('plan');
+            $plan_size = $request->input('plan_size');
+            $beneficiary = $request->input('beneficiary', false);
 
-        if (!$apiService) {
+            $user = $request->user();
+            $wallet_balance = $user->wallet_balance;
+
+            if ($wallet_balance < $amount) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Insufficient balance ₦' . number_format($wallet_balance)
+                ], 401);
+            }
+
+            $apiService = $this->getActiveApiService();
+
+            if (!$apiService) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Our data service is currently not available'
+                ], 503);
+            }
+
+            // Validate the network and phone number
+            $validationResult = $this->validateNetworkAndNumber($apiService, $network, $mobile_number);
+            if ($validationResult !== true) {
+                // If validation fails, return the error response
+                return $validationResult;
+            }
+
+            $response = $apiService->processRequest([
+                'network' => $network,
+                'mobile_number' => $mobile_number,
+                'amount' => $amount,
+                'plan' => $plan,
+                'original_amount' => $original_amount,
+            ]);
+
+            return $this->handleApiResponse($apiService, $response, [
+                'user' => $user,
+                'amount' => $amount,
+                'amount_charged' => $amount,
+                'mobile_number' => $mobile_number,
+                'image' => $request->image,
+                'network' => $network,
+                'plan_size' => $plan_size,
+                'plan_id' => $plan,
+                'beneficiary' => $beneficiary
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Buy Datas Error', ['error' => $e->getMessage()]);
             return response()->json([
                 'status' => false,
-                'message' => 'Our data service is currently not available'
-            ], 503);
+                'message' => 'An error occurred while processing your request'
+            ], 500);
         }
-
-        // Validate the network and phone number
-        $validationResult = $this->validateNetworkAndNumber($apiService, $network, $mobile_number);
-        if ($validationResult !== true) {
-            // If validation fails, return the error response
-            return $validationResult;
-        }
-
-        $response = $apiService->processRequest([
-            'network' => $network,
-            'mobile_number' => $mobile_number,
-            'amount' => $amount,
-            'plan' => $plan,
-            'original_amount' => $original_amount,
-        ]);
-
-        return $this->handleApiResponse($apiService, $response, [
-            'user' => $user,
-            'amount' => $amount,
-            'amount_charged' => $amount,
-            'mobile_number' => $mobile_number,
-            'image' => $request->image,
-            'network' => $network,
-            'plan_size' => $plan_size,
-            'plan_id' => $plan 
-        ]);
-    } catch (\Exception $e) {
-        Log::error('Buy Datas Error', ['error' => $e->getMessage()]);
-        return response()->json([
-            'status' => false,
-            'message' => 'An error occurred while processing your request'
-        ], 500);
     }
-}
+
 
     protected function mapNetworkToId(string $network): int
     {
@@ -237,6 +257,15 @@ class BuyDataController extends BaseDataController
             'airtel' => 3,
             '9mobile' => 6,
             default => 0
+        };
+    }
+
+    protected function mapApiServiceToWhichApi(string $apiServiceName): string
+    {
+        return match ($apiServiceName) {
+            'artx_data' => 'artx',
+            'glad_data' => 'glad',
+            default => 'unknown', // Handle unexpected cases
         };
     }
 }

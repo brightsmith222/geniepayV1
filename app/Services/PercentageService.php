@@ -55,7 +55,7 @@ class PercentageService
 
         if ($record && (bool) $record->status) {
             $percentage = (float) $record->network_percentage;
-            return $originalAmount - $this->calculateDiscount($percentage, $originalAmount);
+            return $originalAmount + $this->calculateDiscount($percentage, $originalAmount);
         }
 
         if (!$record) {
@@ -76,7 +76,7 @@ class PercentageService
 
         if ($record && (bool) $record->status) {
             $percentage = (float) $record->network_percentage;
-            return $originalAmount - $this->calculateDiscount($percentage, $originalAmount);
+            return $originalAmount + $this->calculateDiscount($percentage, $originalAmount);
         }
 
         if (!$record) {
@@ -102,6 +102,33 @@ class PercentageService
         Log::warning("DataTopupPercentage record not found for network name: smile");
     } elseif (!(bool) $record->status) {
         Log::info("DataTopupPercentage is disabled for network name: smile");
+    }
+
+    // Return the original amount if no percentage is found or disabled
+    return $originalAmount;
+}
+
+public function calculateSpectranetDiscountedAmount(float $originalAmount): float
+{
+    // Retrieve the percentage for Spectranet from the DataTopupPercentage table
+    $record = DataTopupPercentage::where('network_name', 'spectranet')->first();
+
+    if ($record && (bool) $record->status) {
+        $percentage = (float) $record->network_percentage;
+
+        // Log the percentage and original amount
+        Log::info("Applying SpectranetPercentage for network name: spectranet", [
+            'percentage' => $percentage,
+            'original_amount' => $originalAmount
+        ]);
+
+        return $originalAmount + $this->calculateDiscount($percentage, $originalAmount);
+    }
+
+    if (!$record) {
+        Log::warning("DataTopupPercentage record not found for network name: spectranet");
+    } elseif (!(bool) $record->status) {
+        Log::info("DataTopupPercentage is disabled for network name: spectranet");
     }
 
     // Return the original amount if no percentage is found or disabled

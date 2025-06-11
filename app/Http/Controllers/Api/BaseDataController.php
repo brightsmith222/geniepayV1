@@ -11,6 +11,7 @@ use App\Services\ApiServiceFactory;
 use Illuminate\Support\Facades\Log;
 use App\Services\ReferralService;
 use Illuminate\Support\Str;
+use App\Services\BeneficiaryService;
 
 
 
@@ -25,6 +26,7 @@ class BaseDataController extends Controller
             'plan' => 'required',
             'plan_size' => 'string|required',
             'image' => 'string|nullable',
+            'beneficiary' => 'boolean|nullable',
             'mobile_number' => ['required', 'string', 'min:11', 'max:11'],
         ]);
     }
@@ -55,72 +57,72 @@ class BaseDataController extends Controller
     }
 
     protected function validateNetworkAndNumber($apiService, $network, $mobile_number)
-{
-    // Normalize the phone number for validation
-    $validationNumber = ($apiService instanceof \App\Services\ArtxDataService)
-        ? '234' . substr($mobile_number, 1)
-        : $mobile_number;
+    {
+        // Normalize the phone number for validation
+        $validationNumber = ($apiService instanceof \App\Services\ArtxDataService)
+            ? '234' . substr($mobile_number, 1)
+            : $mobile_number;
 
-    // Get the network prefixes
-    $networkPrefixes = $apiService->getNetworkPrefixes();
+        // Get the network prefixes
+        $networkPrefixes = $apiService->getNetworkPrefixes();
 
-    // Check if the network is valid and has prefixes
-    if (!isset($networkPrefixes[$network])) {
-        return response()->json([
-            'status' => false,
-            'message' => 'Invalid phone number'
-        ], 400);
-    }
-
-    // Check if the number matches any prefix for the selected network
-    $isValidPrefix = false;
-    foreach ($networkPrefixes[$network] as $prefix) {
-        if (str_starts_with($validationNumber, $prefix)) {
-            $isValidPrefix = true;
-            break;
+        // Check if the network is valid and has prefixes
+        if (!isset($networkPrefixes[$network])) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid phone number'
+            ], 400);
         }
+
+        // Check if the number matches any prefix for the selected network
+        $isValidPrefix = false;
+        foreach ($networkPrefixes[$network] as $prefix) {
+            if (str_starts_with($validationNumber, $prefix)) {
+                $isValidPrefix = true;
+                break;
+            }
+        }
+
+        if (!$isValidPrefix) {
+            $networkNames = [
+                1 => 'MTN',
+                2 => 'GLO',
+                3 => 'Airtel',
+                6 => '9Mobile'
+            ];
+
+            return response()->json([
+                'status' => false,
+                'message' => "This is not a valid {$networkNames[$network]} number"
+            ], 400);
+        }
+
+        // Validate the number using the API service
+        if (!$apiService->validateNumberForNetwork($validationNumber, $network)) {
+            $networkNames = [
+                1 => 'MTN',
+                2 => 'GLO',
+                3 => 'Airtel',
+                6 => '9Mobile'
+            ];
+
+            return response()->json([
+                'status' => false,
+                'message' => "This is not a valid {$networkNames[$network]} number"
+            ], 400);
+        }
+
+        return true;
     }
 
-    if (!$isValidPrefix) {
-        $networkNames = [
-            1 => 'MTN',
-            2 => 'GLO',
-            3 => 'Airtel',
-            6 => '9Mobile'
-        ];
-
-        return response()->json([
-            'status' => false,
-            'message' => "This is not a valid {$networkNames[$network]} number"
-        ], 400);
-    }
-
-    // Validate the number using the API service
-    if (!$apiService->validateNumberForNetwork($validationNumber, $network)) {
-        $networkNames = [
-            1 => 'MTN',
-            2 => 'GLO',
-            3 => 'Airtel',
-            6 => '9Mobile'
-        ];
-
-        return response()->json([
-            'status' => false,
-            'message' => "This is not a valid {$networkNames[$network]} number"
-        ], 400);
-    }
-
-    return true;
-}
-
-    protected function createTransaction($user, $amount, $network, $status, $mobile_number, $image, $transaction_id, $plan_size, $plan_id = null, $userReference = null)
+    protected function createTransaction($user, $amount, $networkName, $status, $mobile_number, $image, $transaction_id, $plan_size, $plan_id = null, $userReference = null, $which_api = null, $provider_id = null)
     {
         $transaction = new Transactions();
 
         $transaction->user_id = $user->id;
         $transaction->username = $user->username;
         $transaction->amount = "{$amount}";
-        $transaction->service_provider = $network;
+        $transaction->service_provider = $networkName;
         $transaction->status = $status;
         $transaction->service = 'data';
         $transaction->image = $image;
@@ -129,6 +131,8 @@ class BaseDataController extends Controller
         $transaction->service_plan = $plan_size;
         $transaction->reference = $userReference;
         $transaction->plan_id = $plan_id;
+        $transaction->which_api = $which_api;
+        $transaction->provider_id = $provider_id;
         $transaction->save();
 
         return $transaction;
@@ -155,6 +159,7 @@ class BaseDataController extends Controller
         $handledResponse = $apiService->handleResponse($response, $context);
 
         $user = $context['user'];
+        $type = "data";
         $amount = $context['amount'];
         $amount_charged = $context['amount_charged'];
 
@@ -165,15 +170,17 @@ class BaseDataController extends Controller
 
             $transaction = $this->createTransaction(
                 $user,
-                $amount,
-                $handledResponse['network_name'],
-                'Successful', // Set status to 'Successful'
+                $amount_charged,
+                $handledResponse['operator_name'],
+                'Successful',
                 $context['mobile_number'],
                 $context['image'],
                 $handledResponse['transaction_id'],
                 $context['plan_size'],
                 $handledResponse['plan_id'],
-                $handledResponse['api_reference']
+                $handledResponse['transaction_id'],
+                $handledResponse['which_api'] ?? null,
+                $context['network'] ?? null,
             );
 
             $this->createWalletTransaction(
@@ -185,6 +192,31 @@ class BaseDataController extends Controller
             );
 
             (new ReferralService())->handleFirstTransactionBonus($user, 'data', $amount);
+
+            if ($context['beneficiary'] ?? false) {
+                try {
+                    if (!empty($context['mobile_number'])) {
+                        $providerNetworkId = $context['network'];
+            
+                        if ($apiService instanceof \App\Services\ArtxDataService) {
+                            $providerNetworkId = $this->mapArtxNetworkToGlad($context['network']);
+                        }
+            
+                        (new BeneficiaryService())->save([
+                            'type'       => $type,
+                            'identifier' => $context['mobile_number'],
+                            'provider'   => $providerNetworkId,
+                        ], $user);
+            
+                        Log::info('Beneficiary saved successfully');
+                    } else {
+                        Log::error('Beneficiary mobile number is missing');
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Failed to save beneficiary', ['error' => $e->getMessage()]);
+                }
+            }
+
 
             return response()->json([
                 'status' => true,
@@ -200,7 +232,7 @@ class BaseDataController extends Controller
 
             $transaction = $this->createTransaction(
                 $user,
-                $amount,
+                $amount_charged,
                 $handledResponse['network_name'],
                 'Pending', // Set status to 'Pending'
                 $context['mobile_number'],
@@ -208,7 +240,9 @@ class BaseDataController extends Controller
                 $handledResponse['transaction_id'],
                 $context['plan_size'],
                 $handledResponse['plan_id'],
-                $handledResponse['api_reference']
+                $handledResponse['api_reference'],
+                $handledResponse['which_api'] ?? null,
+                $context['network'] ?? null,
             );
 
             $this->createWalletTransaction(
@@ -219,7 +253,29 @@ class BaseDataController extends Controller
                 $user->wallet_balance
             );
 
-            (new ReferralService())->handleFirstTransactionBonus($user, 'data', $amount);
+            if ($context['beneficiary'] ?? false) {
+                try {
+                    if (!empty($context['mobile_number'])) {
+                        $providerNetworkId = $context['network'];
+            
+                        if ($apiService instanceof \App\Services\ArtxDataService) {
+                            $providerNetworkId = $this->mapArtxNetworkToGlad($context['network']);
+                        }
+            
+                        (new BeneficiaryService())->save([
+                            'type'       => $type,
+                            'identifier' => $context['mobile_number'],
+                            'provider'   => $providerNetworkId,
+                        ], $user);
+            
+                        Log::info('Beneficiary saved successfully');
+                    } else {
+                        Log::error('Beneficiary mobile number is missing');
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Failed to save beneficiary', ['error' => $e->getMessage()]);
+                }
+            }
 
             return response()->json([
                 'status' => true,
@@ -232,12 +288,14 @@ class BaseDataController extends Controller
         $this->createTransaction(
             $context['user'] ?? null,
             $context['amount'],
-            $context['network'],
+            $this->mapNetworkToName($context['network']),
             'Failed',
             $context['mobile_number'],
             $context['image'],
             $handledResponse['transaction_id'] ?? Str::uuid(),
-            $context['plan_size']
+            $context['plan_size'],
+            $handledResponse['which_api'] ?? $result['which_api'] ?? null,
+            $context['network'],
         );
 
         return response()->json([
@@ -254,4 +312,27 @@ class BaseDataController extends Controller
             default => 400
         };
     }
+
+    protected function mapNetworkToName(int $networkId): string
+    {
+        return match ($networkId) {
+            1 => 'Nigeria MTN',
+            2 => 'Nigeria GLO',
+            3 => 'Nigeria Airtel',
+            6 => 'Nigeria 9Mobile',
+            default => 'Unknown',
+        };
+    }
+
+    protected function mapArtxNetworkToGlad(int $network): int
+{
+    $mappedNetwork = match ($network) {
+        1 => 1,  // MTN
+        6 => 6, // 9Mobile
+        2 => 2, // GLO
+        3 => 3, // Airtel
+        default => 0, // Unknown
+    };
+    return $mappedNetwork;
+}
 }

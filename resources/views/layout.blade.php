@@ -72,7 +72,7 @@
     <!-- ======= Header ======= -->
     <nav class="navbar navbar-light">
       <button class="navbar-toggler" type="button" id="toggleSidebar">
-          <span class="navbar-toggler-icon"></span>
+        <i class="fa-solid fa-bars"></i>
       </button>
       <div class="dropdown ml-auto">
           <img src="{{ URL::to('assets/img/avatar.png') }}" alt="Avatar" class="avatar rounded-circle"

@@ -16,7 +16,7 @@
                         <div class="position-relative" style="max-width: 320px; width: 100%;">
                             <input type="text"
                                 id="userSearchInput"
-                                class="form-control pe-5 py-2 rounded-pill border border-secondary-subtle shadow-sm"
+                                class="form-control pe-5 py-2 rounded-pill border-secondary-subtle shadow-sm"
                                 placeholder="Search users..."
                                 value="{{ $searchTerm ?? '' }}">
                             <span class="position-absolute top-50 end-0 translate-middle-y pe-3 text-muted">

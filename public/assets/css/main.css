@@ -1,22 +1,39 @@
 /* Default Theme Variables */
 :root {
-    --primary-color: #bbd423; /* Primary color */
-    --secondary-color: #8ca216; /* Secondary color */
-    --background-color: #ffffff; /* Light background */
-    --text-color: #ffffff; /* Default text color */
+    --primary-color: #bbd423; 
+    --secondary-color: #8ca216; 
+    --secondary-color-2: #e9ecef;
+    --secondary-color-3: #777777;
+    --background-color: #ffffff; 
+    --text-color: #ffffff; 
     --text-color-black: #121212;
     --text-color-sidebar: #ffffff;
     --text-color-sidebar-hover:#34495e;
-    --navbar-bg-color: #f8f9fa; /* Navbar background */
-    --sidebar-bg-color: #262c05; /* Sidebar background */
-    --card-bg-color: #ffffff; /* Card background */
-    --link-color: #bbd423; /* Link color */
-    --border-color: #e0e0e0; /* Border color */
-    --hover-bg-color: #f0f0f0; /* Hover background */
-    --hover-link-color: #0056b3; /* Hover link color */
+    --navbar-bg-color: #f8f9fa; 
+    --sidebar-bg-color: #262c05; 
+    --card-bg-color: #ffffff; 
+    --primary-border: #dddddd;
+    --link-color: #bbd423; 
+    --border-color: #e0e0e0; 
+    --hover-bg-color: #f0f0f0; 
+    --hover-link-color: #0056b3; 
     --table-th-color: #121212;
     --search-color: #ffffff;
     --table-tabs-color: #ffffff;
+    --custom-tabs-bg: #ffffff; 
+    --custom-tabs-bg-2: #f8f9fa;
+    --custom-tabs-inner-bg: #ffffff;
+    --current-percentage-bg: #f8f9fa;
+    --form-bg: #ffffff; 
+    --form-label: #555555;
+    --dark-bg: #ffffff;
+    --off-dark-bg: #f9f9f9;
+    --bonus-hint: #4b5563;
+    --flasher-bg: #ffffff;
+    --tab-item-active-bg: #3a4306;
+    --tab-item-bg: #828233;
+    --navbar-bg: #3d440a;
+    --slide-hd: #f9f9f9;
 
 
     --total-sales: #e8e8ff;
@@ -73,6 +90,22 @@ body.dark-mode {
     --hover-link-color: #bbd423;
     --search-color: #121212;
     --table-tabs-color: #414141;
+    --custom-tabs-bg: #353030;
+    --custom-tabs-bg-2: #3d4043;
+    --custom-tabs-inner-bg: #433a3a;
+    --current-percentage-bg: #343434;
+    --form-bg: #343434;
+    --secondary-color: #8ca216;
+    --secondary-color-2: #8ca216;
+    --secondary-color-3: #8ca216;
+    --primary-border: #8ca216a6;
+    --form-label: #dddddd;
+    --dark-bg: #000000;
+    --off-dark-bg: #1a2027;
+    --bonus-hint: #dddddd;
+    --flasher-bg: #334805;
+    --navbar-bg: #3d440a;
+    --slide-hd: #484545;
 
     --total-sales: #383840;
     --total-sales: #383840;
@@ -141,19 +174,21 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 h1 {
-    font-size: 2.5rem;
-    color: #8ca216; /* Primary color */
+    font-size: 1.5rem;
+    color: var(--secondary-color); /* Primary color */
     text-transform: uppercase;
-    border-bottom: 3px solid #8ca216; /* Underline effect */
+    border-bottom: 1px solid var(--primary-border); /* Underline effect */
     padding-bottom: 10px;
     margin-bottom: 20px;
 }
+
+
 
 h2 {
     font-size: 2rem;
     color: #8ca216; /* Primary color */
     text-transform: capitalize;
-    border-left: 5px solid #8ca216; /* Left border effect */
+    
     padding-left: 10px;
     margin-bottom: 15px;
 }
@@ -438,9 +473,13 @@ h1:hover, h2:hover, h3:hover, h4:hover, h5:hover, h6:hover {
 @media (max-width: 768px) {
     .navbar-toggler {
         display: block;
+        background-color: var(--navbar-bg);
         /* Show toggle button on mobile */
     }
 
+    .navbar-toggler .fa-solid{
+        color: var(--primary-color);
+    }
     .sidebar {
         left: -250px;
     }
@@ -739,7 +778,7 @@ h1:hover, h2:hover, h3:hover, h4:hover, h5:hover, h6:hover {
 
 /* General Form Styling */
 form {
-    background: #fff;
+    background: var(--form-bg);
     padding: 20px;
     border-radius: 10px;
 }
@@ -758,23 +797,24 @@ form {
 /* Form Labels */
 .form-group label {
     font-weight: 600;
-    color: #555;
+    color: var(--secondary-color);
 }
 
 /* Input Fields */
 .form-control {
     border-radius: 8px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--secondary-color-2);
     padding-top: 10px;
     padding-right: 10px;
     padding-bottom: 5px;
     padding-left: 10px;
     font-size: 16px;
     transition: all 0.3s ease;
+    background-color: var(--search-color);
 }
 
 .form-control:focus {
-    border-color: #007bff;
+    border-color: var(--secondary-color);
     box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
 }
 
@@ -900,14 +940,14 @@ form {
 
 /* Custom Tabs Styling */
 .custom-tabs {
-    background: #fff;
+    background: var(--custom-tabs-bg);
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     padding: 20px;
 }
 
 .custom-tabs .nav-tabs {
-    border-bottom: 2px solid #e9ecef;
+    border-bottom: 1px solid #cccccc44;
     margin-bottom: 20px;
 }
 
@@ -919,7 +959,7 @@ form {
     border: none;
     border-radius: 4px;
     padding: 10px 20px;
-    color: #6c757d;
+    color: var(--text-muted);
     font-weight: 500;
     background: transparent;
     transition: all 0.3s ease;
@@ -927,57 +967,72 @@ form {
 
 .custom-tabs .nav-tabs .nav-link.active {
     color: #fff;
-    /* White text for better contrast */
     border-bottom: 2px solid transparent;
 }
 
 .custom-tabs .nav-tabs .nav-link:hover {
     color: #fff;
-    /* White text on hover */
+    cursor: pointer;
 }
 
 /* MTN Active Tab */
 .custom-tabs .nav-tabs .nav-link#net-mtn-tab.active {
     background-color: #c3c500;
-    /* MTN Yellow */
 }
 
 .custom-tabs .nav-tabs .nav-link#net-mtn-tab:hover {
     background-color: #c3c500;
-    /* Slightly darker yellow on hover */
+    cursor: pointer;
 }
 
 /* Glo Active Tab */
 .custom-tabs .nav-tabs .nav-link#net-glo-tab.active {
     background-color: #00de05;
-    /* Glo Green */
 }
 
 .custom-tabs .nav-tabs .nav-link#net-glo-tab:hover {
     background-color: #00c504;
-    /* Slightly darker green on hover */
+    cursor: pointer;
 }
 
 /* Airtel Active Tab */
 .custom-tabs .nav-tabs .nav-link#net-airtel-tab.active {
     background-color: #fc0909;
-    /* Airtel Red */
 }
 
 .custom-tabs .nav-tabs .nav-link#net-airtel-tab:hover {
     background-color: #e30808;
-    /* Slightly darker red on hover */
+    cursor: pointer;
 }
 
 /* 9mobile Active Tab */
 .custom-tabs .nav-tabs .nav-link#net-9mobile-tab.active {
     background-color: #278900;
-    /* 9mobile Dark Green */
 }
 
 .custom-tabs .nav-tabs .nav-link#net-9mobile-tab:hover {
     background-color: #227800;
-    /* Slightly darker green on hover */
+    cursor: pointer;
+}
+
+/* Smile Active Tab */
+.custom-tabs .nav-tabs .nav-link#net-smile-tab.active {
+    background-color: #9a0290;
+}
+
+.custom-tabs .nav-tabs .nav-link#net-smile-tab:hover {
+    background-color: #ce06c1;
+    cursor: pointer;
+}
+
+/* Smile Active Tab */
+.custom-tabs .nav-tabs .nav-link#net-spectranet-tab.active {
+    background-color: #2486cc;
+}
+
+.custom-tabs .nav-tabs .nav-link#net-spectranet-tab:hover {
+    background-color: #3399e3;
+    cursor: pointer;
 }
 
 /* Esim Active Tab */
@@ -987,11 +1042,10 @@ form {
 
 .custom-tabs .nav-tabs .nav-link#esim-tab:hover {
     background-color: #c50000;
-    /* Slightly darker yellow on hover */
     cursor: pointer;
 }
 
-/* Esim Active Tab */
+/* Giftcard Active Tab */
 .custom-tabs .nav-tabs .nav-link#giftcard-tab.active {
     background-color: #00c507;
     cursor: pointer;
@@ -1003,14 +1057,15 @@ form {
     cursor: pointer;
 }
 
+
 .custom-tabs .tab-content {
     padding: 20px;
-    background: #f8f9fa;
+    background: var(--custom-tabs-bg-2);
     border-radius: 8px;
 }
 
 .custom-tabs .tab-inner-content {
-    background: #fff;
+    background: var(--custom-tabs-inner-bg);
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -1018,12 +1073,12 @@ form {
 
 .custom-tabs .tab-inner-content h5 {
     margin-bottom: 20px;
-    color: #343a40;
+    color: var(--text-color-black);
 }
 
 .custom-tabs .form-group label {
     font-weight: 500;
-    color: #495057;
+    color: var(--text-color-black);
 }
 
 .custom-tabs .form-control {
@@ -1047,24 +1102,24 @@ form {
 
 /* Current Percentage Styling */
 .current-percentage {
-    background: #f8f9fa;
+    background: var(--current-percentage-bg);
     padding: 15px;
     border-radius: 8px;
     margin-bottom: 20px;
     text-align: center;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--secondary-color-2);
 }
 
 .current-percentage span {
     font-size: 16px;
-    color: #6c757d;
+    color: var(--text-muted);
     display: block;
     margin-bottom: 5px;
 }
 
 .current-percentage strong {
     font-size: 24px;
-    color: #007bff;
+    color: var(--secondary-color);
     font-weight: 600;
 }
 
@@ -1991,14 +2046,14 @@ form {
 
 .settings-menu {
     width: 220px;
-    background-color: #f9f9f9;
-    border-right: 1px solid #ddd;
+    background-color: var(--off-dark-bg);
+    border-right: 1px solid var(--secondary-color-2);
     padding: 20px 0;
 }
 
 .menu-category {
     padding: 8px 0;
-    color: #777;
+    color: var(--secondary-color-3);
     font-size: 14px;
     font-weight: 600;
     padding-left: 20px;
@@ -2008,7 +2063,7 @@ form {
 .menu-item {
     padding: 10px 20px;
     cursor: pointer;
-    color: #555;
+    color: var(--form-label);
     transition: all 0.2s;
     border-left: 3px solid transparent;
     display: flex;
@@ -2022,7 +2077,7 @@ form {
 
 .active-tab {
     color: #0066cc;
-    border-left: 3px solid #0066cc;
+    border-left: 3px solid #8ca216;
     background-color: white;
     font-weight: 500;
 }
@@ -2037,7 +2092,7 @@ form {
 .settings-content {
     flex: 1;
     padding: 20px;
-    background-color: #ffffff;
+    background-color: var(--dark-bg);
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -2050,19 +2105,12 @@ form {
     display: block;
 }
 
-h1 {
-    font-size: 24px;
-    margin-top: 0;
-    color: #444;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #eee;
-}
+
 
 h2 {
     font-size: 20px;
     margin-top: 30px;
-    color: #555;
+    color: var(--form-label);
 }
 
 h3 {
@@ -2094,17 +2142,68 @@ input[type="password"],
 #airtimeSort,
 #revenue-sort,
 #user-sort,
-#reportedSort {
+#reportedSort,
+#net-mtn-percentage,
+#net-glo-percentage,
+#net-airtel-percentage,
+#net-9mobile-percentage,
+#net-smile-percentage,
+#net-spectranet-percentage,
+#Esim-percentage,
+#Giftcard-percentage
+ {
     width: 100%;
     max-width: 400px;
     padding: 8px 12px;
-    border: 1px solid #ddd;
+    border: 1px solid var(--secondary-color-2);
     border-radius: 4px;
     font-size: 14px;
     background-color: var(--search-color);
     color: var(--text-color-black);
 }
 
+#userSearchInput{
+    border: 1px solid var(--secondary-color-2);
+}
+
+#notificationMessage,
+#sendTo, 
+#notificationTitle,
+.custom-file,
+input[type="file"]{
+    max-width: 60%;
+    color: var(--text-color-black);
+    background-color: var(--search-color);
+}
+
+#accountBalance,
+#gender
+{
+    color: var(--text-color-black);
+    background-color: var(--search-color) !important;
+}
+
+.input-group .bootstrap-select.form-control .dropdown-toggle {
+    color: var(--text-color-black);
+    background-color: var(--search-color) !important;
+}
+
+.slider_message, .custom-file-input {
+    color: var(--text-color-black);
+    background-color: var(--search-color);
+}
+.suspend-button{
+    color: var(--text-color-black);
+}
+.modal-content  {
+    background-color: var(--form-bg);
+}
+.bg-primarys{
+    background-color: var(--secondary-color-2);
+}
+.text-primary{
+    color: var(--secondary-color) !important;
+}
 input[type="text"]:focus,
 input[type="email"]:focus,
 input[type="password"]:focus {
@@ -2112,8 +2211,8 @@ input[type="password"]:focus {
 }
 
 .danger-zone {
-    background-color: #fff8f8;
-    border: 1px solid #ffdddd;
+    background-color: var(--form-bg);
+    border: 1px solid var(--secondary-color-2);
     border-radius: 6px;
     padding: 20px;
     margin-top: 30px;
@@ -2776,7 +2875,7 @@ select#resolvedSort:focus {
 }
 
 .empty-state {
-    background: #f8f9fa;
+    background: var(--form-bg);
     border-radius: 8px;
 }
 
@@ -2799,12 +2898,25 @@ select#resolvedSort:focus {
 .card-header {
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     border-radius: 10px 10px 0 0 !important;
+    background-color: var(--off-dark-bg);
+}
+
+.slide-hd {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 10px 10px 0 0 !important;
+    background-color: var(--slide-hd);
+    padding: .75rem 1.25rem;
+    margin-bottom: 0;
 }
 
 .input-group-text {
-    background-color: #f8f9fa;
+    background-color: var(--secondary-color-2);
     min-width: 40px;
     justify-content: center;
+}
+
+.input-group-text i {
+    color: var(--text-color-black);
 }
 
 .selectpicker {
@@ -2996,7 +3108,7 @@ select#resolvedSort:focus {
 .bonus-label {
     font-size: 14px;
     font-weight: 600;
-    color: #4b5563;
+    color: var(--bonus-hint);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -3083,7 +3195,7 @@ select#resolvedSort:focus {
 /* Hint text */
 .bonus-hint {
     font-size: 12px;
-    color: #6b7280;
+    color: var(--bonus-hint);
     margin-top: 4px;
     padding-left: 4px;
 }
@@ -3134,10 +3246,11 @@ select#resolvedSort:focus {
 .settings-menu {
     flex: 1 1 250px;
     max-width: 250px;
-    background-color: #f8f9fa;
+    background-color: var(--off-dark-bg);
     padding: 15px;
     border-radius: 8px;
     display: block;
+    height: 100%;
 }
 
 .menu-item {
@@ -3163,7 +3276,7 @@ select#resolvedSort:focus {
     display: none;
     /* Hidden by default */
     width: 100%;
-    background-color: #f8f9fa;
+    background-color: var(--form-bg);
     border-radius: 8px;
     padding: 10px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -3177,10 +3290,12 @@ select#resolvedSort:focus {
     border-radius: 5px;
     margin: 5px 0;
     transition: background-color 0.3s ease;
+    background-color: var(--tab-item-bg);
+    color: #ffffff;
 }
 
 .tab-item.active-tab {
-    background-color: #3a4306;
+    background-color: var(--tab-item-active-bg);
     color: #fff;
 }
 
@@ -3195,6 +3310,13 @@ select#resolvedSort:focus {
         display: none;
     }
 
+    #notificationMessage,
+#sendTo, 
+#notificationTitle,
+.custom-file,
+input[type="file"]{
+    max-width: 100%;
+}
     .settings-tabs {
         display: flex;
         flex-wrap: wrap;
@@ -3211,4 +3333,8 @@ select#resolvedSort:focus {
 
 .text-muted{
     color: var(--text-muted)!important;
+}
+
+.fl-flasher{
+    background-color: var(--flasher-bg) !important;
 }

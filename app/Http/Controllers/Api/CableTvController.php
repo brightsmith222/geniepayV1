@@ -13,18 +13,19 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use App\MyFunctions;
 use App\Services\VtpassService;
+use App\Services\ReferralService;
+use App\Services\BeneficiaryService;
+use App\Services\PercentageService;
+use Illuminate\Support\Facades\Cache;
 
 class CableTvController extends Controller
 {
 
     public function getCablePlan($serviceID)
     {
-
-
         try {
-
             $vtpass = new VtpassService();
-            $url = config('api.vtpass.base_url')."service-variations?serviceID=" . $serviceID;
+            $url = config('api.vtpass.base_url') . "service-variations?serviceID=" . $serviceID;
             if ($vtpass->isVtpassEnabled()) {
                 $headers = $vtpass->getHeaders();
             } else {
@@ -34,38 +35,96 @@ class CableTvController extends Controller
                 ]);
             }
 
-            $response = Http::withHeaders($headers)->get($url);
+            $response = Http::withoutVerifying()->withHeaders($headers)->get($url);
 
+            Log::info('API response: ' . $response->body());
             if ($response->successful()) {
                 $data = $response->json();
 
-                // Log::info('response data: ' . $response->body());
+                $plans = $data['content']['variations'] ?? $data['content']['varations'] ?? [];
+                $plansById = collect($plans)->keyBy('variation_code');
+
+                // Use serviceID from API as provider name
+                $serviceIDFromApi = strtolower($data['content']['serviceID'] ?? $serviceID);
+                $providerName = match ($serviceIDFromApi) {
+                    'dstv' => 'DSTV',
+                    'gotv' => 'GOTV',
+                    'startimes' => 'Startimes',
+                    'showmax' => 'Showmax',
+                    default => ucfirst($serviceIDFromApi),
+                };
+
+                // Group plans by provider and then by plan type
+                $groupedPlans = collect($plans)->groupBy(function ($plan) use ($providerName) {
+                    return $providerName;
+                })->map(function ($providerPlans) {
+                    return collect($providerPlans)->groupBy(function ($plan) {
+                        $name = strtolower($plan['name']);
+                        if (str_contains($name, 'month')) return 'monthly';
+                        if (str_contains($name, 'week')) return 'weekly';
+                        if (str_contains($name, 'day')) return 'daily';
+                        return 'others';
+                    })->map(function ($plans) {
+                        return $plans->map(function ($plan) {
+                            $plan['short_name'] = $this->extractCleanName($plan['name']);
+                            $plan['validity'] = $this->extractValidity($plan['name']);
+                            return $plan;
+                        });
+                    });
+                });
+
+                // Hot deals logic
+                $cacheKey = "cable_hot_deals";
+                $hotDeals = Cache::remember($cacheKey, now()->addMinutes(60), function () {
+                    return Transactions::query()
+                        ->where('status', 'Successful')
+                        ->where('service', 'cable')
+                        ->where('created_at', '>=', now()->subDays(30))
+                        ->selectRaw('service_provider, service_plan, plan_id, COUNT(*) as purchases')
+                        ->groupBy('service_provider', 'service_plan', 'plan_id')
+                        ->orderByDesc('purchases')
+                        ->get();
+                });
+
+                $hotDealsByProvider = $hotDeals->groupBy('service_provider')->map(function ($deals) use ($plansById) {
+                    return $deals->map(function ($deal) use ($plansById) {
+                        $plan = $plansById[$deal->plan_id] ?? null;
+                        $cleanName = $plan ? $this->extractCleanName($plan['name']) : $deal->service_plan;
+                        return [
+                            'service_provider' => $deal->service_provider,
+                            'Plan'             => $plan['name'] ?? $deal->service_plan,
+                            'Plan_name'        => $cleanName,
+                            'plan_id'          => $deal->plan_id,
+                            'purchases'        => $deal->purchases,
+                            'amount'           => $plan['variation_amount'] ?? null,
+                            'fixed_price'      => $plan['fixedPrice'] ?? null,
+                        ];
+                    })->sortByDesc('purchases')->take(10)->values();
+                });
 
                 if ($data['response_description'] == '000') {
                     return response()->json(
                         [
                             'status' => true,
-                            'data' => $data['content'] ?? []
+                            'data' => $groupedPlans,
+                            'hot_deals' => $hotDealsByProvider,
                         ],
                         200
                     );
                 }
             } else {
-                // Log::error("Error Occured: " . $data['message']);
                 return response()->json([
                     'status' => false,
                     'message' => 'Could not fetch data'
                 ], $response->status());
             }
         } catch (RequestException $e) {
-            // Handle exceptions that occur during the HTTP request
             Log::error("Request failed: " . $e->getMessage());
             return response()->json([
                 'status' => false,
                 'message' => $e->getMessage()
             ], 400);
         } catch (\Exception $e) {
-            // Handle any other exceptions
             Log::error("An error occurred: " . $e->getMessage());
             return response()->json([
                 'status' => false,
@@ -81,7 +140,7 @@ class CableTvController extends Controller
         try {
 
 
-            $url = config('api.vtpass.base_url')."services?identifier=tv-subscription";
+            $url = config('api.vtpass.base_url') . "services?identifier=tv-subscription";
             if ($vtpass->isVtpassEnabled()) {
                 $headers = $vtpass->getHeaders();
             } else {
@@ -91,7 +150,7 @@ class CableTvController extends Controller
                 ]);
             }
 
-            $response = Http::withHeaders($headers)->get($url);
+            $response = Http::withoutVerifying()->withHeaders($headers)->get($url);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -157,7 +216,7 @@ class CableTvController extends Controller
                 $serviceId = $request->input('serviceID');
                 $planName = $request->input('planName');
 
-                $url = config('api.vtpass.base_url')."merchant-verify";
+                $url = config('api.vtpass.base_url') . "merchant-verify";
 
                 $headers = $vtpass->getHeaders();
 
@@ -167,8 +226,7 @@ class CableTvController extends Controller
                     'type' => $planName
                 ];
 
-                $response = Http::withHeaders($headers)->post($url, $data);
-                Log::info('API details' . $response);
+                $response = Http::withoutVerifying()->withHeaders($headers)->post($url, $data);
 
                 if ($response->successful()) {
                     $data = $response->json();
@@ -236,7 +294,8 @@ class CableTvController extends Controller
             'cable_plan_Id' => 'required|string',
             'cable_plan' => 'string|required',
             'amount' => 'string|required',
-            'image' => 'string|nullable'
+            'image' => 'string|nullable',
+            'beneficiary' => 'boolean|required',
 
         ]);
 
@@ -254,6 +313,7 @@ class CableTvController extends Controller
             $cablePlanId = $request->input('cable_plan_Id');
             $cablePlan = $request->input('cable_plan');
             $amount = $request->input('amount');
+            $beneficiary = $request->input('beneficiary', false);
 
             $requestId = MyFunctions::generateRequestId();
 
@@ -270,6 +330,7 @@ class CableTvController extends Controller
 
             $serviceType = 'Smart Card/IUC';
             $service = 'cable';
+            $provider = 1;
 
             if (strtolower($cablePlanId) == 'prepaid' || strtolower($cablePlanId) == 'postpaid') {
                 $serviceType = 'Meter';
@@ -287,7 +348,7 @@ class CableTvController extends Controller
 
             ];
 
-            $url = config('api.vtpass.base_url')."pay";
+            $url = config('api.vtpass.base_url') . "pay";
 
             if ($vtpass->isVtpassEnabled()) {
                 $headers = $vtpass->getHeaders();
@@ -298,7 +359,7 @@ class CableTvController extends Controller
                 ]);
             }
 
-            $response = Http::withHeaders($headers)->post($url, $data);
+            $response = Http::withoutVerifying()->withHeaders($headers)->post($url, $data);
 
             Log::info('API  payment details' . $response);
 
@@ -320,11 +381,11 @@ class CableTvController extends Controller
                 if ($data['code'] == '000' || $data['code'] == '099') {
 
                     $baseUrl = config('api.vtpass.base_url');
-                    $url = $baseUrl."requery";
+                    $url = $baseUrl . "requery";
                     $payload = [
                         'request_id' => $data['requestId']
                     ];
-                    $response = Http::withHeaders($headers)->post($url, $payload);
+                    $response = Http::withoutVerifying()->withHeaders($headers)->post($url, $payload);
                     Log::info('API  requery details' . $response);
                     if ($response->successful()) {
                         $data = $response->json();
@@ -340,6 +401,7 @@ class CableTvController extends Controller
                             # if trans_status == 'delivered' or trans_status == 'pending' :
                             $status = $trans_status == 'delivered' ? 'Successful' : 'Processing';
 
+
                             // $user->wallet_balance -=  $amount_charged;
                             $balance_before = $user->wallet_balance;
                             $user->wallet_balance -=  $amount;
@@ -347,10 +409,12 @@ class CableTvController extends Controller
 
                             $transaction = new Transactions();
                             $transaction->amount = $amount;
+                            $transaction->user_id = $user->id;
                             $transaction->username = $user->username;
                             $transaction->status = $status;
                             $transaction->service_provider = strtoupper($cableId);
                             $transaction->service = $service;
+                            $transaction->plan_id = $cablePlanId;
                             $transaction->smart_card_number = $smartCard;
                             $transaction->service_plan = $cablePlan;
                             $transaction->image = $request->image;
@@ -358,6 +422,7 @@ class CableTvController extends Controller
                             // $transaction->epin = $responseData['pins'];
                             $transaction->transaction_id = $data['requestId'];
                             $transaction->electricity_token = $data['token'] ?? $data['purchased_code'] ?? null;
+                            $transaction->which_api = 'vtpass';
                             $transaction->save();
 
                             $walletTrans = new  WalletTransactions();
@@ -370,6 +435,24 @@ class CableTvController extends Controller
                             $walletTrans->balance_after = $user->wallet_balance;
                             $walletTrans->status = $status;
                             $walletTrans->save();
+
+                            (new ReferralService())->handleFirstTransactionBonus($user, $service, $amount);
+
+                            if ($beneficiary ?? false) {
+                                try {
+                                    if (!empty($smartCard) || !empty($cableId)) {
+                                        (new BeneficiaryService())->save([
+                                            'type'       => $service,
+                                            'identifier' => $smartCard ?? $cableId,
+                                            'provider'   => $provider,
+                                        ], $user);
+                                    } else {
+                                        Log::error('Beneficiary mobile number is missing');
+                                    }
+                                } catch (\Exception $e) {
+                                    Log::error('Failed to save beneficiary', ['error' => $e->getMessage()]);
+                                }
+                            }
 
                             return response()->json([
                                 'status' => true,
@@ -406,5 +489,46 @@ class CableTvController extends Controller
                 'message' => $e->getMessage()
             ], 500);
         }
+    }
+    // Helper function to clean the plan name
+    protected function extractCleanName($name)
+    {
+        // Remove price patterns like "N2,565", "N850,000", "N3,500", "N2000", etc.
+        $name = preg_replace('/\s*-?\s*N[\d,\.]+/i', '', $name);
+
+        // Remove "Add-on", "Service", "Bundle", "Subscription", "Access", "Standalone", etc. at the end
+        $name = preg_replace('/\s*(Add-on|Service|Bundle|Subscription|Access|Standalone|Premier|Membership|Amount)\b/i', '', $name);
+
+        // If there's a "+", keep only the first part (e.g., "DStv Premium + French + Extra View" => "DStv Premium")
+        $parts = preg_split('/\s*\+\s*/', $name);
+        $name = $parts[0];
+
+        // If there's a "-", keep only the first part (e.g., "Showmax Standalone - N3,500" => "Showmax Standalone")
+        $parts = preg_split('/\s*-\s*/', $name);
+        $name = $parts[0];
+
+        // Remove trailing/leading whitespace
+        return trim($name);
+    }
+
+    protected function extractValidity($name)
+    {
+        // Look for patterns like "1 Month", "3 Months", "7 Days", "1 Week", etc.
+        if (preg_match('/(\d+)\s*(month|day|week|year)s?/i', $name, $matches)) {
+            $num = (int)$matches[1];
+            $unit = strtolower($matches[2]);
+            // Pluralize if number > 1
+            if ($num > 1) {
+                $unit = match ($unit) {
+                    'month' => 'months',
+                    'day' => 'days',
+                    'week' => 'weeks',
+                    'year' => 'years',
+                    default => $unit
+                };
+            }
+            return "{$num} {$unit}";
+        }
+        return null;
     }
 }

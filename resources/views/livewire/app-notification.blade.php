@@ -18,7 +18,7 @@
 
     <!-- Notification Form Card -->
     <div class="card shadow-sm mb-4">
-        <div class="card-header bg-white py-3">
+        <div class="card-header py-3">
             <h5 class="m-0 font-weight-bold ">
                 <i class="fas fa-paper-plane mr-2"></i>Compose Notification
             </h5>
@@ -30,7 +30,7 @@
                     <label for="notificationTitle" class="font-weight-bold ">
                         <i class="fas fa-heading mr-2"></i>Title
                     </label>
-                    <input type="text" class="form-control border-primary" id="notificationTitle"
+                    <input type="text" class="form-control" id="notificationTitle"
                         wire:model="notification_title" placeholder="Enter notification title" required>
                     @error('notification_title')
                         <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -42,7 +42,7 @@
                     <label for="notificationMessage" class="font-weight-bold ">
                         <i class="fas fa-comment-alt mr-2"></i>Message
                     </label>
-                    <textarea class="form-control border-primary" id="notificationMessage" wire:model="notification_message" rows="4"
+                    <textarea class="form-control" id="notificationMessage" wire:model="notification_message" rows="4"
                         placeholder="Enter your notification message here" required></textarea>
                     @error('notification_message')
                         <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -62,7 +62,7 @@
 
                 <!-- Image Upload (Conditional) -->
                 @if ($showImageUpload)
-                    <div class="form-group mb-4 border-left border-primary pl-3">
+                    <div class="form-group mb-4 border-left pl-3">
                         <label for="notificationImage" class="font-weight-bold ">
                             <i class="fas fa-upload mr-2"></i>Upload Image
                         </label>
@@ -99,7 +99,7 @@
                         <label for="sendTo" class="font-weight-bold  d-block">
                             <i class="fas fa-users mr-2"></i>Send To
                         </label>
-                        <select id="sendTo" class="form-control border-primary" wire:model="sendTo"
+                        <select id="sendTo" class="form-control" wire:model="sendTo"
                             wire:change="updateRecipientFilter">
                             <option value="all">All Users</option>
                             <option value="inactive_7_days">Users inactive for 7 days</option>
@@ -131,7 +131,7 @@
 
     <!-- Notification History Card -->
     <div class="card shadow-sm">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <div class="card-header  py-3 d-flex justify-content-between align-items-center">
             <h5 class="m-0 font-weight-bold ">
                 <i class="fas fa-history mr-2"></i>Notification History
             </h5>

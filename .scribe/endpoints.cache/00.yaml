@@ -270,6 +270,430 @@ endpoints:
   -
     httpMethods:
       - POST
+    uri: api/detect_international_number
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: false
+      custom: []
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      mobile_number:
+        name: mobile_number
+        description: 'Must be at least 5 characters. Must not be greater than 20 characters.'
+        required: true
+        example: bngzmiyvdljnikhw
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanBodyParameters:
+      mobile_number: bngzmiyvdljnikhw
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/get_international_plans/{operatorId}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: false
+      custom: []
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      operatorId:
+        name: operatorId
+        description: ''
+        required: true
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      operatorId: architecto
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - POST
+    uri: api/buy_international_data
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: false
+      custom: []
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      mobile_number:
+        name: mobile_number
+        description: 'Must be at least 5 characters. Must not be greater than 20 characters.'
+        required: true
+        example: bngzmiyvdljnikhw
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      amount:
+        name: amount
+        description: ''
+        required: true
+        example: 4326.41688
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      original_amount:
+        name: original_amount
+        description: ''
+        required: false
+        example: 4326.41688
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      plan:
+        name: plan
+        description: ''
+        required: true
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      plan_size:
+        name: plan_size
+        description: ''
+        required: true
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      image:
+        name: image
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      operator_id:
+        name: operator_id
+        description: ''
+        required: true
+        example: 4326.41688
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      country_code:
+        name: country_code
+        description: 'Must be 2 characters.'
+        required: true
+        example: mi
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanBodyParameters:
+      mobile_number: bngzmiyvdljnikhw
+      amount: 4326.41688
+      original_amount: 4326.41688
+      plan: architecto
+      plan_size: architecto
+      image: architecto
+      operator_id: 4326.41688
+      country_code: mi
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - POST
+    uri: api/parse-msisdn
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: false
+      custom: []
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      msisdn:
+        name: msisdn
+        description: ''
+        required: true
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanBodyParameters:
+      msisdn: architecto
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/operators/{country}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: false
+      custom: []
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      country:
+        name: country
+        description: ''
+        required: true
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      country: architecto
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/products/{operator}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: false
+      custom: []
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      operator:
+        name: operator
+        description: ''
+        required: true
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      operator: architecto
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - POST
+    uri: api/mobile-pin/execute
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: false
+      custom: []
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      operator:
+        name: operator
+        description: ''
+        required: true
+        example: 16
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      productId:
+        name: productId
+        description: ''
+        required: true
+        example: 16
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      amountOperator:
+        name: amountOperator
+        description: ''
+        required: true
+        example: 4326.41688
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      msisdn:
+        name: msisdn
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+    cleanBodyParameters:
+      operator: 16
+      productId: 16
+      amountOperator: 4326.41688
+      msisdn: architecto
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - POST
     uri: api/topup
     metadata:
       groupName: Endpoints
@@ -318,6 +742,16 @@ endpoints:
         exampleWasSpecified: false
         nullable: true
         custom: []
+      beneficiary:
+        name: beneficiary
+        description: ''
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
       mobile_number:
         name: mobile_number
         description: 'Must be at least 11 characters. Must not be greater than 11 characters.'
@@ -332,6 +766,7 @@ endpoints:
       network: 16
       amount: architecto
       image: architecto
+      beneficiary: true
       mobile_number: ngzmiy
     fileParameters: []
     responses: []
@@ -559,6 +994,16 @@ endpoints:
         exampleWasSpecified: false
         nullable: true
         custom: []
+      beneficiary:
+        name: beneficiary
+        description: ''
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
     cleanBodyParameters:
       smart_card: architecto
       cable_Id: architecto
@@ -566,6 +1011,7 @@ endpoints:
       cable_plan: architecto
       amount: architecto
       image: architecto
+      beneficiary: true
     fileParameters: []
     responses: []
     responseFields: []
@@ -1272,7 +1718,7 @@ endpoints:
   -
     httpMethods:
       - GET
-    uri: api/countries
+    uri: api/giftcard/countries
     metadata:
       groupName: Endpoints
       groupDescription: ''
@@ -1311,7 +1757,7 @@ endpoints:
   -
     httpMethods:
       - GET
-    uri: api/giftcards
+    uri: api/giftcard/operators
     metadata:
       groupName: Endpoints
       groupDescription: ''
@@ -1361,7 +1807,7 @@ endpoints:
   -
     httpMethods:
       - GET
-    uri: api/denominations
+    uri: api/giftcard/denominations
     metadata:
       groupName: Endpoints
       groupDescription: ''
@@ -1389,8 +1835,19 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         custom: []
+      brand_id:
+        name: brand_id
+        description: ''
+        required: true
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
     cleanBodyParameters:
       operator_id: architecto
+      brand_id: architecto
     fileParameters: []
     responses:
       -
@@ -1411,7 +1868,7 @@ endpoints:
   -
     httpMethods:
       - POST
-    uri: api/purchase-giftcard
+    uri: api/purchase/giftcard
     metadata:
       groupName: Endpoints
       groupDescription: ''
@@ -1461,9 +1918,9 @@ endpoints:
         custom: []
       quantity:
         name: quantity
-        description: 'Must be at least 1.'
+        description: 'Must be at least 1. Must not be greater than 10.'
         required: true
-        example: 27
+        example: 7
         type: integer
         enumValues: []
         exampleWasSpecified: false
@@ -1473,7 +1930,7 @@ endpoints:
       operator: architecto
       product_id: architecto
       amount: 4326.41688
-      quantity: 27
+      quantity: 7
     fileParameters: []
     responses: []
     responseFields: []
@@ -1485,7 +1942,7 @@ endpoints:
   -
     httpMethods:
       - GET
-    uri: api/esim-countries
+    uri: api/esim/operators
     metadata:
       groupName: Endpoints
       groupDescription: ''
@@ -1524,7 +1981,7 @@ endpoints:
   -
     httpMethods:
       - GET
-    uri: api/esim-plans
+    uri: api/esim/denominations
     metadata:
       groupName: Endpoints
       groupDescription: ''
@@ -1542,8 +1999,18 @@ endpoints:
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
-      country:
-        name: country
+      operator_id:
+        name: operator_id
+        description: ''
+        required: true
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      brand_id:
+        name: brand_id
         description: ''
         required: true
         example: architecto
@@ -1553,7 +2020,8 @@ endpoints:
         nullable: false
         custom: []
     cleanBodyParameters:
-      country: architecto
+      operator_id: architecto
+      brand_id: architecto
     fileParameters: []
     responses:
       -
@@ -1574,7 +2042,7 @@ endpoints:
   -
     httpMethods:
       - POST
-    uri: api/esim-purchase
+    uri: api/esim/purchase
     metadata:
       groupName: Endpoints
       groupDescription: ''
@@ -1622,12 +2090,22 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         custom: []
-      quantity:
-        name: quantity
-        description: 'Must be at least 1.'
+      brand_id:
+        name: brand_id
+        description: ''
         required: true
-        example: 27
-        type: integer
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      plan_name:
+        name: plan_name
+        description: ''
+        required: true
+        example: architecto
+        type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
@@ -1636,7 +2114,8 @@ endpoints:
       operator: architecto
       product_id: architecto
       amount: 4326.41688
-      quantity: 27
+      brand_id: architecto
+      plan_name: architecto
     fileParameters: []
     responses: []
     responseFields: []
@@ -1766,6 +2245,16 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         custom: []
+      plan:
+        name: plan
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
       amount:
         name: amount
         description: ''
@@ -1776,12 +2265,215 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         custom: []
+      image:
+        name: image
+        description: ''
+        required: false
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      beneficiary:
+        name: beneficiary
+        description: ''
+        required: true
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
     cleanBodyParameters:
       email: gbailey@example.net
       variation_code: architecto
+      plan: architecto
       amount: 4326.41688
+      image: architecto
+      beneficiary: false
     fileParameters: []
     responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/spectranet/plans
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: false
+      custom: []
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - POST
+    uri: api/spectranet/purchase
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: false
+      custom: []
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      customer_id:
+        name: customer_id
+        description: ''
+        required: true
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      variation_code:
+        name: variation_code
+        description: ''
+        required: true
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      amount:
+        name: amount
+        description: ''
+        required: true
+        example: 4326.41688
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      beneficiary:
+        name: beneficiary
+        description: ''
+        required: true
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanBodyParameters:
+      customer_id: architecto
+      variation_code: architecto
+      amount: 4326.41688
+      beneficiary: true
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/beneficiaries
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: false
+      custom: []
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      type:
+        name: type
+        description: ''
+        required: true
+        example: giftcard
+        type: string
+        enumValues:
+          - airtime
+          - data
+          - electricity
+          - cable
+          - giftcard
+          - smile
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      provider:
+        name: provider
+        description: ''
+        required: true
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanBodyParameters:
+      type: giftcard
+      provider: architecto
+    fileParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
     responseFields: []
     auth: []
     controller: null

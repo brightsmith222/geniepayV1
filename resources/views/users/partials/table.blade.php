@@ -33,7 +33,7 @@
                         </a>
                         
                         @if ($user->status === 'active')
-                            <button class="dropdown-item action-btn" 
+                            <button class="dropdown-item action-btn suspend-button" 
                                     data-id="{{ $user->id }}" 
                                     data-action="suspend">
                                 <i class="fas fa-pause mr-2"></i> Suspend
@@ -44,7 +44,7 @@
                                 <i class="fas fa-ban mr-2"></i> Block
                             </button>
                         @elseif ($user->status === 'suspended')
-                            <button class="dropdown-item action-btn" 
+                            <button class="dropdown-item action-btn suspend-button" 
                                     data-id="{{ $user->id }}" 
                                     data-action="unsuspend">
                                 <i class="fas fa-play mr-2"></i> Unsuspend

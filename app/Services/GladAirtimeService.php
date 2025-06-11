@@ -30,7 +30,7 @@ public function checkTransactionStatus(string $transactionId): array
 
 public function processRequest(array $requestData): array
 {
-    $url = 'https://www.gladtidingsdata.com/api/topup/';
+    $url = config('api.glad.base_url').'topup/';
     
     $data = [
         'network' => $requestData['network'],
@@ -85,17 +85,25 @@ public function handleResponse(array $response, array $context): array
             'success' => false,
             'transaction_id' => null,
             'network' => $context['network'],
-            'message' => ''
+            'message' => '',
+            'which_api' => 'glad',
         ];
 
         if ($statusCode >= 200 && $statusCode < 300) {
             if (isset($responseData['Status'])) {
                 if ($responseData['Status'] === 'successful') {
                     $result['success'] = true;
+                    $result['which_api'] = 'glad';
                     $result['transaction_id'] = $responseData['ident'];
                     $result['network_name'] = $responseData['plan_network'];
                     $result['message'] = 'Top-up successful';
-                } else {
+                }elseif ($responseData['Status'] === 'pending') {
+                    $result['pending'] = true; 
+                    $result['which_api'] = 'glad';
+                    $result['transaction_id'] = $responseData['ident'];
+                    $result['network_name'] = $responseData['plan_network'];
+                    $result['message'] = 'Top-up processing';
+                 } else {
                     $result['message'] = $responseData['error'] ?? 'Transaction failed';
                 }
             } else {

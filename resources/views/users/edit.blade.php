@@ -22,7 +22,7 @@
                 
                 <!-- Personal Info Section -->
                 <div class="user-card mb-4 border-0 shadow-sm">
-                    <div class="card-header bg-white py-3">
+                    <div class="card-header slide-hd py-3">
                         <h5 class="mb-0">
                             <i class="fas fa-id-card text-primary mr-2"></i>Personal Information
                         </h5>
@@ -77,7 +77,7 @@
             
                 <!-- Account Details Section -->
                 <div class="user-card mb-4 border-0 shadow-sm">
-                    <div class="card-header bg-white py-3">
+                    <div class="card-header slide-hd py-3">
                         <h5 class="mb-0">
                             <i class="fas fa-cog text-primary mr-2"></i>Account Details
                         </h5>
@@ -154,7 +154,7 @@
         <!-- Right Column: Last 5 Transactions -->
         <div class="col-lg-4">
             <div class="user-card border-0 shadow-sm h-100">
-                <div class="card-header bg-white">
+                <div class="card-header slide-hd">
                     
                 </div>
                 <div class="card-body p-0">

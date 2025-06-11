@@ -16,6 +16,8 @@ use Illuminate\Support\Str;
 use App\Services\ApiServiceInterface;
 use App\Jobs\CheckArtxTransactionStatus;
 use App\Services\ArtxAirtimeService;
+use App\MyFunctions;
+use App\Services\BeneficiaryService;
 
 class AirtimeController extends Controller
 {
@@ -25,8 +27,10 @@ class AirtimeController extends Controller
             'network' => 'required|integer',
             'amount' => 'required',
             'image' => 'string|nullable',
+            'beneficiary' => 'boolean|nullable',
             'mobile_number' => ['required', 'string', 'min:11', 'max:11'],
             'regex:/^0[7-9][0-1]\d{8}$/',
+            
         ]);
 
         if ($validator->fails()) {
@@ -40,6 +44,7 @@ class AirtimeController extends Controller
             $network = $request->input('network');
             $mobile_number = $request->input('mobile_number');
             $amount = $request->input('amount');
+            $beneficiary = $request->input('beneficiary', false);
             $user = $request->user();
             $wallet_balance = $user->wallet_balance;
 
@@ -91,6 +96,7 @@ class AirtimeController extends Controller
                 'mobile_number' => $mobile_number,
                 'image' => $request->image,
                 'network' => $network,
+                'beneficiary' => $beneficiary,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -151,16 +157,8 @@ class AirtimeController extends Controller
         $amount = $context['amount'];
         $amount_charged = $context['amount_charged'];
         $userReference = $context['userReference'] ?? $handledResponse['userReference'] ?? null;
+        $type = "airtime";
 
-
-        // Add this block for pending transactions
-        /* if (isset($handledResponse['pending']) && $handledResponse['pending']) {
-        CheckArtxTransactionStatus::dispatch(
-            $handledResponse['transaction_id'],
-            $context
-        )->delay(now()->addMinutes(2));
-    }
-*/
 
         if (isset($handledResponse['pending']) && $handledResponse['pending']) {
 
@@ -177,7 +175,9 @@ class AirtimeController extends Controller
             $context['mobile_number'],
             $context['image'],
             $handledResponse['transaction_id'],
-            $userReference
+            $userReference,
+            $handledResponse['which_api'] ?? null,
+            $context['network'] ?? null,
             );
 
             $this->createWalletTransaction(
@@ -187,6 +187,24 @@ class AirtimeController extends Controller
                 $balance_before,
                 $user->wallet_balance
             );
+
+            if ($context['beneficiary'] ?? false) {
+                try {
+                    if (!empty($context['mobile_number'])) {
+
+                        (new BeneficiaryService())->save([
+                            'type'       => $type,
+                            'identifier' => $context['mobile_number'],
+                            'provider'   => $context['network'],
+                        ], $user);
+
+                    } else {
+                        Log::error('Beneficiary mobile number is missing');
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Failed to save beneficiary', ['error' => $e->getMessage()]);
+                }
+            }
 
 
             return response()->json([
@@ -211,7 +229,9 @@ class AirtimeController extends Controller
                 $context['mobile_number'],
                 $context['image'],
                 $handledResponse['transaction_id'],
-                $userReference
+                $userReference,
+                $handledResponse['which_api'] ?? null,
+                $context['network'] ?? null,
             );
 
 
@@ -225,6 +245,22 @@ class AirtimeController extends Controller
 
             (new ReferralService())->handleFirstTransactionBonus($user, 'airtime', $amount);
 
+            if ($context['beneficiary'] ?? false) {
+                try {
+                    if (!empty($context['mobile_number'])) {
+                        (new BeneficiaryService())->save([
+                            'type'       => $type,
+                            'identifier' => $context['mobile_number'],
+                            'provider'   => $context['network'],
+                        ], $user);
+                    } else {
+                        Log::error('Beneficiary mobile number is missing');
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Failed to save beneficiary', ['error' => $e->getMessage()]);
+                }
+            }
+
             return response()->json([
                 'status' => true,
                 'message' => $handledResponse['message'],
@@ -236,12 +272,16 @@ class AirtimeController extends Controller
         $this->createTransaction(
             $context['user'] ?? null,
             $context['amount'],
-            $context['network'],
+            $this->mapNetworkToName($context['network']),
             'Failed',
             $context['mobile_number'],
             $context['image'],
-            $handledResponse['transaction_id'] ?? Str::uuid()
-        );
+            $handledResponse['transaction_id'] ?? MyFunctions::generateRequestId(),
+            $context['which_api'] ?? null,
+            $context['network'] ?? null
+
+            
+                );
 
         return response()->json([
             'status' => false,
@@ -259,7 +299,7 @@ class AirtimeController extends Controller
     }
 
 
-    protected function createTransaction($user, $amount, $network, $status, $mobile_number, $image, $transaction_id, $userReference = null)
+    protected function createTransaction($user, $amount, $network, $status, $mobile_number, $image, $transaction_id, $userReference = null, $which_api = null, $provider_id = null)
     {
         $transaction = new Transactions();
 
@@ -273,6 +313,8 @@ class AirtimeController extends Controller
         $transaction->phone_number = $mobile_number;
         $transaction->transaction_id = $transaction_id;
         $transaction->reference = $userReference;
+        $transaction->which_api = $which_api;
+        $transaction->provider_id = $provider_id;
         $transaction->save();
 
         return $transaction;
@@ -293,4 +335,15 @@ class AirtimeController extends Controller
 
         return $walletTrans;
     }
+
+    protected function mapNetworkToName(int $networkId): string
+{
+    return match ($networkId) {
+        1 => 'Nigeria MTN',
+        2 => 'Nigeria GLO',
+        3 => 'Nigeria Airtel',
+        6 => 'Nigeria 9Mobile',
+        default => 'Unknown',
+    };
+}
 }

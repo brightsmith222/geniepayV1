@@ -91,21 +91,17 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
         
         $statusCode = $response['status_code'];
         $responseData = $response['data'];
-        Log::debug('ARTX Data Response', [
-            'status_code' => $statusCode,
-            'response' => $responseData,
-            'context' => $context
-        ]);
-
         $result = [
             'success' => false,
             'pending' => false,
             'status_code' => $statusCode,
-            'transaction_id' => Str::uuid(),
+            'transaction_id' => MyFunctions::generateRequestId(),
             'network_name' => $this->mapNetwork($context['network']),
             'message' => '',
             'api_reference' => null,
-            'raw_response' => $responseData
+            'raw_response' => $responseData,
+            'which_api' => 'artx',
+            'operator_id' => $context['network'],
         ];
 
         if ($statusCode != 200) {
@@ -123,6 +119,7 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
 
         if ($statusType == 0) {
             $result['success'] = true;
+            $result['which_api'] = 'artx';
             $result['serviceName'] = $this->serviceName;
             $result['transaction_id'] = $responseData['result']['id'] ?? $result['transaction_id'];
             $result['message'] = $responseData['status']['name'] ?? 'Data purchase successful';
@@ -130,6 +127,7 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
             $result['operator_name'] = $responseData['result']['operator']['name'] ?? null;
             $result['instructions'] = $responseData['result']['instructions'] ?? null;
             $result['plan_id'] = $responseData['result']['productId'] ?? null; // Add productId here
+            $result['operator_id'] = $responseData['result']['operator']['id'] ?? $context['network'];
 
             
             return $result;
@@ -137,13 +135,14 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
 
         if ($statusType == 1) {
             $result['pending'] = true;
-            $result['transaction_id'] = $responseData['result']['id'] ?? $result['transaction_id'];
+            $result['which_api'] = 'artx';
+            $result['transaction_id'] = $responseData['result']['userReference'] ?? $result['transaction_id'];
             $result['message'] = $this->getPendingMessage($statusId);
             $result['plan_id'] = $responseData['result']['productId'] ?? null; // Default to 'Unknown' if not present
             $result['api_reference'] = $responseData['result']['operator']['reference'] ?? null;
             $result['operator_name'] = $responseData['result']['operator']['name'] ?? null;
             $result['instructions'] = $responseData['result']['instructions'] ?? null;
-            
+            $result['operator_id'] = $responseData['result']['operator']['id'] ?? $context['network'];
             
             return $result;
         }
@@ -167,16 +166,18 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
                 'version' => 5,
                 'command' => 'getOperatorProducts',
                 'operator' => $this->mapNetwork($network),
-                'productCategory' => 4 // Mobile Data category
+                'productCategory' => '4.0' // Mobile Data category
             ];
 
             $response = Http::timeout(30)
                 ->retry(2, 100)
                 ->withoutVerifying()
                 ->post($this->baseUrl, $payload);
+            
+            Log::debug('ARTX Get Data Plans Request', ['payload' => $payload]);
 
             $responseData = $response->json();
-            Log::debug('ARTX Data Plans Response', ['response' => $responseData]);
+            Log::debug('ARTX Get Datas Plans Response', ['response' => $responseData],  );
 
             if (!isset($responseData['result']['products'])) {
                 return [];
@@ -191,7 +192,8 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
                         'network' => $this->getNetworkName($network),
                         'amount' => number_format($product['price']['user'], 2), // Format the amount
                         'validity' => $this->extractValidity($product['name']),
-                        'data_volume' => $this->extractDataVolume($product['name'])
+                        'data_volume' => $this->extractDataVolume($product['name']),
+                        'bonus' => $this->extractBonus($product['name']),
                     ];
                 }
             }
@@ -202,6 +204,11 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
             Log::error('Server Data Plans Error', ['error' => $e->getMessage()]);
             return [];
         }
+    }
+
+    protected function getOperatorLogoUrl($brandId): string
+    {
+        return "https://media.sochitel.com/img/operators/{$brandId}.png";
     }
 
     protected function generatePasswordHash(string $salt): string
@@ -257,6 +264,49 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
         }
         return 'N/A';
     }
+
+    protected function extractBonus(string $planName): ?string
+{
+    // Look for patterns like "10GB + 5GB Night", "1.5Mins", etc.
+    // 1. Extract anything after a "+" sign
+    if (preg_match('/\+\s*([^)]+)/', $planName, $matches)) {
+        return trim($matches[1]);
+    }
+    // 2. Extract anything that looks like a bonus in parentheses, e.g. "1.5Mins" in "(1 Day)"
+    if (preg_match('/\+\s*([^\)]+)/', $planName, $matches)) {
+        return trim($matches[1]);
+    }
+    // 3. Extract anything that looks like a bonus outside parentheses, e.g. "1.5Mins"
+    if (preg_match('/\+\s*([^\s]+)/', $planName, $matches)) {
+        return trim($matches[1]);
+    }
+    // 4. Extract anything that looks like a bonus before a parenthesis, e.g. "1.5Mins" in "1GB Daily Data + 1.5Mins  (1 Day)"
+    if (preg_match('/\+\s*([^\(]+)/', $planName, $matches)) {
+        return trim($matches[1]);
+    }
+    // 5. Extract anything that looks like a bonus after a dash, e.g. "YouTube" in "1GB + 1GB YouTube Night Weekly Plan"
+    if (preg_match('/\+\s*([^\-]+)/', $planName, $matches)) {
+        return trim($matches[1]);
+    }
+    // 6. Extract anything that looks like a bonus after "plus", e.g. "YouTube" in "2GB Binge Plan + Youtube & Social Plan Data"
+    if (preg_match('/\+\s*([^\&]+)/', $planName, $matches)) {
+        return trim($matches[1]);
+    }
+    // 7. Extract anything that looks like a bonus after "plus", e.g. "YouTube" in "2GB Binge Plan + Youtube & Social Plan Data"
+    if (preg_match('/plus\s*([^\&]+)/i', $planName, $matches)) {
+        return trim($matches[1]);
+    }
+    // 8. Extract anything that looks like a bonus after "with", e.g. "YouTube" in "2GB Binge Plan with Youtube & Social Plan Data"
+    if (preg_match('/with\s*([^\&]+)/i', $planName, $matches)) {
+        return trim($matches[1]);
+    }
+    // 9. Extract anything that looks like a bonus after "and", e.g. "YouTube" in "2GB Binge Plan and Youtube & Social Plan Data"
+    if (preg_match('/and\s*([^\&]+)/i', $planName, $matches)) {
+        return trim($matches[1]);
+    }
+    return null;
+}
+
 
     protected function getHttpErrorMessage(int $statusCode): string
     {

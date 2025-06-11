@@ -115,7 +115,9 @@ class ArtxAirtimeService extends BaseApiService implements ApiServiceInterface
             'transaction_id' => Str::uuid(),
             'network_name' => $this->mapNetwork($context['network']),
             'message' => '',
-            'raw_response' => $responseData
+            'raw_response' => $responseData,
+            'which_api' => 'artx',
+            'operator_id' => $context['network'],
         ];
 
         // Handle HTTP errors
@@ -136,12 +138,14 @@ class ArtxAirtimeService extends BaseApiService implements ApiServiceInterface
         // Successful transaction
         if ($statusType == 0) {
             $result['success'] = true;
+            $result['which_api'] = 'artx';
             $result['transaction_id'] = $responseData['result']['id'] ?? $result['transaction_id'];
             $result['message'] = $responseData['status']['name'] ?? 'Transaction successful';
             
             // Additional success data
             $result['api_reference'] = $responseData['result']['operator']['reference'] ?? null;
             $result['network_name'] = $responseData['result']['operator']['name'] ?? null;
+            $result['operator_id'] = $responseData['result']['operator']['id'] ?? $context['network'];
             
             return $result;
         }
@@ -149,11 +153,12 @@ class ArtxAirtimeService extends BaseApiService implements ApiServiceInterface
         // Pending transaction (type 1)
         if ($statusType == 1) {
             $result['pending'] = true;
+            $result['which_api'] = 'artx';
             $result['transaction_id'] = $responseData['result']['id'] ?? $result['transaction_id'];
-            $result['message'] = $this->getPendingMessage($statusId);
-            
-            // Store pending transaction for follow-up
-            Cache::put('artx_pending_'.$result['transaction_id'], $context, now()->addHours(1));
+            $result['message'] = $responseData['status']['name'] ?? 'Transaction precessing';
+            $result['api_reference'] = $responseData['result']['operator']['reference'] ?? null;
+            $result['network_name'] = $responseData['result']['operator']['name'] ?? null;
+            $result['operator_id'] = $responseData['result']['operator']['id'] ?? $context['network'];
             
             return $result;
         }

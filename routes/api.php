@@ -14,6 +14,9 @@ use App\Http\Controllers\Api\TransactionReportController;
 use App\Http\Controllers\Api\GiftCardController;
 use App\Http\Controllers\Api\EsimController;
 use App\Http\Controllers\Api\SmileController;
+use App\Http\Controllers\Api\SpectranetController;
+use App\Http\Controllers\Api\BeneficiaryController;
+use App\Http\Controllers\Api\MobilePinController;
 
 
 // Route::get('/user', function (Request $request) {
@@ -32,6 +35,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
     
 Route::get('/get_data_plan', [BuyDataController::class, 'getDataPlan']);
 Route::post('/buy_data', [BuyDataController::class, 'buyData']);
+Route::post('/detect_international_number', [BuyDataController::class, 'detectInternationalNumber']);
+Route::get('/get_international_plans/{operatorId}', [BuyDataController::class, 'getInternationalPlans']);
+Route::post('/buy_international_data', [BuyDataController::class, 'buyInternationalData']);
+
+// Mobile Pins
+Route::post('/parse-msisdn', [MobilePinController::class, 'parseMsisdn']);
+Route::get('/operators/{country}', [MobilePinController::class, 'getOperators']);
+Route::get('/products/{operator}', [MobilePinController::class, 'getOperatorProducts']);
+Route::post('/mobile-pin/execute', [MobilePinController::class, 'execTransaction']);
+
 Route::post('/topup', [AirtimeController::class, 'buyAirtime']);
 Route::post('/result_checker', [ExamsController::class,'buyResultChecker']);
 Route::post('/verify-smart-card', [CableTvController::class, 'verifySmartCard']);
@@ -62,20 +75,28 @@ Route::get('/slider/{id}', [SliderController::class, 'show']);
 Route::post('/transaction-report', [TransactionReportController::class, 'transactionReport']);
 
 // Gift Cards
-Route::get('/countries', [GiftCardController::class, 'getCountries']);
-Route::get('/giftcards', [GiftCardController::class, 'getGiftCards']);
-Route::get('/denominations', [GiftCardController::class, 'getDenominations']);
-Route::post('/purchase-giftcard', [GiftCardController::class, 'purchase']);
+
+Route::get('/giftcard/countries', [GiftCardController::class, 'getCountries']);
+Route::get('/giftcard/operators', [GiftCardController::class, 'getGiftCards']);
+Route::get('/giftcard/denominations', [GiftCardController::class, 'getDenominations']);
+Route::post('/purchase/giftcard', [GiftCardController::class, 'purchase']);
 
 // eSIM
-Route::get('/esim-countries', [EsimController::class, 'getCountries']);
-Route::get('/esim-plans', [EsimController::class, 'getPlans']);
-Route::post('/esim-purchase', [EsimController::class, 'purchase']);
+Route::get('/esim/operators', [EsimController::class, 'getEsims']);
+Route::get('/esim/denominations', [EsimController::class, 'getDenominations']);
+Route::post('/esim/purchase', [EsimController::class, 'purchase']);
 
 //Smile Data
 Route::post('/smile/verify', [SmileController::class, 'verifySmileAccount']);
 Route::get('/smile/plans', [SmileController::class, 'getSmilePlans']);
 Route::post('/smile/purchase', [SmileController::class, 'purchaseSmileData']);
+
+//Spectranet Data
+Route::get('/spectranet/plans', [SpectranetController::class, 'getSpectranetPlans']);
+Route::post('/spectranet/purchase', [SpectranetController::class, 'purchaseSpectranetData']);
+
+// Beneficiaries
+Route::get('/beneficiaries', [BeneficiaryController::class, 'index']);
 
 
 });

@@ -72,13 +72,13 @@
             
                     <form wire:submit.prevent="updateProfile">
                         <div class="form-group">
-                            <h3>Name</h3>
+                            <label>Name</label>
                             <input type="text" wire:model="name" required>
                             @error('name') <span class="error">{{ $message }}</span> @enderror
                         </div>
             
                         <div class="form-group">
-                            <h3>Email Address</h3>
+                            <label>Email Address</label>
                             <input type="email" wire:model="email" required>
                             @error('email') <span class="error">{{ $message }}</span> @enderror
                         </div>

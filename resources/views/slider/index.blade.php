@@ -36,7 +36,7 @@
     <div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
+                <div class="modal-header bg-primarys">
                     <h5 class="modal-title" id="uploadModalLabel">
                         <i class="fas fa-cloud-upload-alt mr-2"></i>Upload New Slider
                     </h5>
@@ -79,7 +79,7 @@
 
     <!-- Sliders Table -->
     <div class="slider-card shadow mb-4">
-        <div class="card-header py-3 bg-white">
+        <div class="card-header slide-hd py-3">
             <h6 class="m-0 font-weight-bold ">
                 <i class="fas fa-list mr-2"></i>Current Sliders
             </h6>
