@@ -10,6 +10,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use App\Services\VtpassService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class AdminDashboardController extends Controller
 {
@@ -48,6 +49,7 @@ class AdminDashboardController extends Controller
         }
     }
 
+    // Get wallet balance from Vtpass API
     public function getWalletBalance(VtpassService $vtpass)
     {
         if ($vtpass->isVtpassEnabled()) {
@@ -90,6 +92,93 @@ class AdminDashboardController extends Controller
     }
 
 
+    // Get GladTidings wallet balance
+    public function getGladWalletBalance()
+    {
+        try {
+            $url = config('api.glad.base_url') . 'user/';
+            $headers = [
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Token ' . config('api.glad.api_key'),
+            ];
+
+            $response = Http::withHeaders($headers)->withoutVerifying()->post($url);
+            $responseData = $response->json();
+
+            // Check for the wallet_balance key in the response
+            if (isset($responseData['user']['wallet_balance'])) {
+                return response()->json([
+                    'success' => true,
+                    'balance' => number_format($responseData['user']['wallet_balance'], 2),
+                    'raw_response' => $responseData
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid GladTidings balance response structure',
+                    'response' => $responseData
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            Log::error("GladTidings Wallet Balance Error: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch GladTidings balance',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Get Airtime balance from Artx API
+    public function getArtxWalletBalance()
+    {
+        try {
+            $salt = Str::random(40);
+            $password = sha1(config('api.artx.password'));
+            $passwordHash = hash('sha512', $salt . $password);
+
+            $payload = [
+                'auth' => [
+                    'username' => config('api.artx.username'),
+                    'salt' => $salt,
+                    'password' => $passwordHash,
+                ],
+                'version' => 5,
+                'command' => 'getBalance'
+            ];
+
+            $response = Http::withoutVerifying()
+                ->post(config('api.artx.base_url'), $payload);
+
+            $data = $response->json();
+            Log::info('ARTX Wallet Balance Response:', [
+                'status_code' => $response->status(),
+                'body' => $data
+            ]);
+
+            if (($data['status']['type'] ?? 2) === 0 && isset($data['result']['value'])) {
+                return response()->json([
+                    'success' => true,
+                    'balance' => number_format($data['result']['value'], 2),
+                    'currency' => $data['result']['currency'] ?? 'NGN',
+                    'raw_response' => $data
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => $data['status']['name'] ?? 'Failed to retrieve ARTX balance',
+                'response' => $data
+            ], 500);
+        } catch (\Exception $e) {
+            Log::error("ARTX Wallet Balance Error: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving ARTX wallet balance',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
     public function filterData(Request $request)
     {

@@ -34,6 +34,7 @@
     --tab-item-bg: #828233;
     --navbar-bg: #3d440a;
     --slide-hd: #f9f9f9;
+    --input-focus: #000000;
 
 
     --total-sales: #e8e8ff;
@@ -106,6 +107,7 @@ body.dark-mode {
     --flasher-bg: #334805;
     --navbar-bg: #3d440a;
     --slide-hd: #484545;
+    --input-focus: #ffffff;
 
     --total-sales: #383840;
     --total-sales: #383840;
@@ -803,7 +805,7 @@ form {
 /* Input Fields */
 .form-control {
     border-radius: 8px;
-    border: 1px solid var(--secondary-color-2);
+    border: 1px solid var(--secondary-color-2) !important;
     padding-top: 10px;
     padding-right: 10px;
     padding-bottom: 5px;
@@ -880,7 +882,9 @@ form {
 .modal-footer .btn {
     min-width: 100px;
 }
-
+.modal-footer{
+    border-top: 1px solid var(--primary-border);
+}
 .form-group {
     margin-bottom: 15px;
 }
@@ -1858,7 +1862,7 @@ form {
     /* Dark transparent glass */
     backdrop-filter: blur(12px);
     border-radius: 12px;
-    padding: 15px 20px;
+    padding: 7px 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1886,8 +1890,8 @@ form {
 }
 
 /* Wallet Balance */
-.wallet-balance {
-    font-size: 18px;
+.wallet-balance, .wallet-balance-artx, .wallet-balance-glad {
+    font-size: 15px;
     font-weight: bold;
     color: #00ff88;
     /* Neon green */
@@ -1897,8 +1901,8 @@ form {
 }
 
 /* Wallet Icon */
-.wallet-balance .material-icons-outlined {
-    font-size: 28px;
+.wallet-balance .material-icons-outlined, .wallet-balance-artx .material-icons-outlined, .wallet-balance-glad .material-icons-outlined {
+    font-size: 18px;
     color: #00ff88;
     text-shadow: 0 0 5px rgba(0, 255, 136, 0.6);
     animation: pulseIcon 2s infinite alternate;
@@ -1916,11 +1920,11 @@ form {
 }
 
 /* Wallet Amount */
-#wallet-balance {
-    font-size: 20px;
+#wallet-balance, #wallet-balance-artx, #wallet-balance-glad {
+    font-size: 17px;
     font-weight: bold;
     background: rgba(0, 255, 136, 0.2);
-    padding: 6px 12px;
+    padding: 2px 10px;
     border-radius: 8px;
     box-shadow: 0 0 5px rgba(0, 255, 136, 0.5);
 }
@@ -1930,10 +1934,12 @@ form {
     background: rgba(0, 255, 136, 0.15);
     border: 1px solid rgba(0, 255, 136, 0.5);
     color: #00ff88;
-    padding: 6px 10px;
+    padding: 3px 10px;
     border-radius: 8px;
     font-weight: bold;
     transition: all 0.3s ease-in-out;
+    margin-top: 0px;
+    font-size: 0.7rem;
 }
 
 /* Hover & Active Effects */
@@ -2155,11 +2161,15 @@ input[type="password"],
     width: 100%;
     max-width: 400px;
     padding: 8px 12px;
-    border: 1px solid var(--secondary-color-2);
+    border: 1px solid var(--secondary-color-2) !important;
     border-radius: 4px;
     font-size: 14px;
     background-color: var(--search-color);
     color: var(--text-color-black);
+}
+
+.textarea.form-control{
+    border: 1px solid var(--secondary-color-2) !important;
 }
 
 #userSearchInput{
@@ -2177,10 +2187,12 @@ input[type="file"]{
 }
 
 #accountBalance,
-#gender
+#gender,
+.custom-file-label
 {
     color: var(--text-color-black);
     background-color: var(--search-color) !important;
+    border: 1px solid var(--secondary-color-2) !important;
 }
 
 .input-group .bootstrap-select.form-control .dropdown-toggle {
@@ -2206,8 +2218,11 @@ input[type="file"]{
 }
 input[type="text"]:focus,
 input[type="email"]:focus,
-input[type="password"]:focus {
+input[type="password"]:focus,
+.form-control:focus,
+.custom-file-input:focus {
     background-color: var(--search-color);
+    color: var(--input-focus);
 }
 
 .danger-zone {
@@ -3012,10 +3027,16 @@ select#resolvedSort:focus {
 
 .custom-file-label::after {
     content: "Browse";
-    background-color: #e9ecef;
-    border-left: 1px solid #ced4da;
+    background-color: var(--secondary-color-2);
+    color: var(--text-color-black);
+    border-left: 1px solid var(--secondary-color-2);
+    cursor: pointer;
 }
 
+.dropdown-item.active {
+    background-color: var(--secondary-color-2);
+    color: var(--text-color-black);
+}
 .form-control.border-primary:focus {
     border-color: #9900CE;
     box-shadow: 0 0 0 0.2rem rgba(153, 0, 206, 0.25);

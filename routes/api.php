@@ -26,10 +26,12 @@ use App\Http\Controllers\Api\MobilePinController;
 // Route::get('/get_data_plan', [BuyDataController::class, 'getDataPlan']);
 Route::middleware(['auth:sanctum'])->group(function () {
 
-    Route::get('/user', [UserController::class, 'user']);
-    Route::post('/change-password', [UserController::class, 'changePassword']);
-    Route::post('/set-transaction-pin', [UserController::class, 'setTransactionPin']);
-    Route::post('/update-user', [UserController::class, 'updateUser']);
+Route::get('/user', [UserController::class, 'user']);
+Route::post('/change-password', [UserController::class, 'changePassword']);
+Route::post('/set-transaction-pin', [UserController::class, 'setTransactionPin']);
+Route::post('/update-user', [UserController::class, 'updateUser']);
+Route::get('/user-referred', [UserController::class, 'getReferredUsers']);
+Route::get('/referral-bonus', [UserController::class, 'getReferralBonus']);
 
 
     
@@ -47,6 +49,7 @@ Route::post('/mobile-pin/execute', [MobilePinController::class, 'execTransaction
 
 Route::post('/topup', [AirtimeController::class, 'buyAirtime']);
 Route::post('/result_checker', [ExamsController::class,'buyResultChecker']);
+
 Route::post('/verify-smart-card', [CableTvController::class, 'verifySmartCard']);
 Route::post('/cable-subscription', [CableTvController::class, 'cableSubscription']);
 Route::get('/cable-providers', [CableTvController::class, 'getCableProviders']);
@@ -96,7 +99,7 @@ Route::get('/spectranet/plans', [SpectranetController::class, 'getSpectranetPlan
 Route::post('/spectranet/purchase', [SpectranetController::class, 'purchaseSpectranetData']);
 
 // Beneficiaries
-Route::get('/beneficiaries', [BeneficiaryController::class, 'index']);
+Route::post('/beneficiaries', [BeneficiaryController::class, 'index']);
 
 
 });

@@ -120,6 +120,10 @@ class GladDataService extends BaseApiService implements ApiServiceInterface
                 ->post($url);
 
             $responseData = $response->json();
+            Log::info('Glad Data Plans Response', [
+                'status_code' => $response->status(),
+                'data' => $responseData
+            ]);
 
             // Check if Dataplans key exists
             if (!isset($responseData['Dataplans'])) {

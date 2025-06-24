@@ -11,7 +11,7 @@ use App\Models\User;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SliderController;
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Middleware\AdminMiddleWare;
+use App\Http\Middleware\AdminMiddleware;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\WalletTransactionsController;
 use App\Http\Controllers\DataSettingsController;
@@ -59,6 +59,8 @@ Route::get('dashboard', [AdminDashboardController::class, 'myAdmin'])->name('das
 Route::get('/filter-data', [AdminDashboardController::class, 'filterData']);
 Route::get('/get-wallet-balance', [AdminDashboardController::class, 'getWalletBalance'])->name('get.wallet.balance');
 Route::get('/dash-reported', [AdminDashboardController::class, 'getReportedTransactions']);
+Route::get('/get-glad-wallet-balance', [AdminDashboardController::class, 'getGladWalletBalance']);
+Route::get('/get-artx-wallet-balance', [AdminDashboardController::class, 'getArtxWalletBalance']);
 
 // Users Routes
 Route::get('users', [UsersController::class, 'index'])->name('users.index');

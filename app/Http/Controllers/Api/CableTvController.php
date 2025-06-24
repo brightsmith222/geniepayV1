@@ -22,116 +22,82 @@ class CableTvController extends Controller
 {
 
     public function getCablePlan($serviceID)
-    {
-        try {
-            $vtpass = new VtpassService();
-            $url = config('api.vtpass.base_url') . "service-variations?serviceID=" . $serviceID;
-            if ($vtpass->isVtpassEnabled()) {
-                $headers = $vtpass->getHeaders();
-            } else {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Server call service is currently disabled.',
-                ]);
-            }
-
-            $response = Http::withoutVerifying()->withHeaders($headers)->get($url);
-
-            Log::info('API response: ' . $response->body());
-            if ($response->successful()) {
-                $data = $response->json();
-
-                $plans = $data['content']['variations'] ?? $data['content']['varations'] ?? [];
-                $plansById = collect($plans)->keyBy('variation_code');
-
-                // Use serviceID from API as provider name
-                $serviceIDFromApi = strtolower($data['content']['serviceID'] ?? $serviceID);
-                $providerName = match ($serviceIDFromApi) {
-                    'dstv' => 'DSTV',
-                    'gotv' => 'GOTV',
-                    'startimes' => 'Startimes',
-                    'showmax' => 'Showmax',
-                    default => ucfirst($serviceIDFromApi),
-                };
-
-                // Group plans by provider and then by plan type
-                $groupedPlans = collect($plans)->groupBy(function ($plan) use ($providerName) {
-                    return $providerName;
-                })->map(function ($providerPlans) {
-                    return collect($providerPlans)->groupBy(function ($plan) {
-                        $name = strtolower($plan['name']);
-                        if (str_contains($name, 'month')) return 'monthly';
-                        if (str_contains($name, 'week')) return 'weekly';
-                        if (str_contains($name, 'day')) return 'daily';
-                        return 'others';
-                    })->map(function ($plans) {
-                        return $plans->map(function ($plan) {
-                            $plan['short_name'] = $this->extractCleanName($plan['name']);
-                            $plan['validity'] = $this->extractValidity($plan['name']);
-                            return $plan;
-                        });
-                    });
-                });
-
-                // Hot deals logic
-                $cacheKey = "cable_hot_deals";
-                $hotDeals = Cache::remember($cacheKey, now()->addMinutes(60), function () {
-                    return Transactions::query()
-                        ->where('status', 'Successful')
-                        ->where('service', 'cable')
-                        ->where('created_at', '>=', now()->subDays(30))
-                        ->selectRaw('service_provider, service_plan, plan_id, COUNT(*) as purchases')
-                        ->groupBy('service_provider', 'service_plan', 'plan_id')
-                        ->orderByDesc('purchases')
-                        ->get();
-                });
-
-                $hotDealsByProvider = $hotDeals->groupBy('service_provider')->map(function ($deals) use ($plansById) {
-                    return $deals->map(function ($deal) use ($plansById) {
-                        $plan = $plansById[$deal->plan_id] ?? null;
-                        $cleanName = $plan ? $this->extractCleanName($plan['name']) : $deal->service_plan;
-                        return [
-                            'service_provider' => $deal->service_provider,
-                            'Plan'             => $plan['name'] ?? $deal->service_plan,
-                            'Plan_name'        => $cleanName,
-                            'plan_id'          => $deal->plan_id,
-                            'purchases'        => $deal->purchases,
-                            'amount'           => $plan['variation_amount'] ?? null,
-                            'fixed_price'      => $plan['fixedPrice'] ?? null,
-                        ];
-                    })->sortByDesc('purchases')->take(10)->values();
-                });
-
-                if ($data['response_description'] == '000') {
-                    return response()->json(
-                        [
-                            'status' => true,
-                            'data' => $groupedPlans,
-                            'hot_deals' => $hotDealsByProvider,
-                        ],
-                        200
-                    );
-                }
-            } else {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'Could not fetch data'
-                ], $response->status());
-            }
-        } catch (RequestException $e) {
-            Log::error("Request failed: " . $e->getMessage());
+{
+    try {
+        $vtpass = new VtpassService();
+        $url = config('api.vtpass.base_url') . "service-variations?serviceID=" . $serviceID;
+        
+        if ($vtpass->isVtpassEnabled()) {
+            $headers = $vtpass->getHeaders();
+        } else {
             return response()->json([
                 'status' => false,
-                'message' => $e->getMessage()
-            ], 400);
-        } catch (\Exception $e) {
-            Log::error("An error occurred: " . $e->getMessage());
-            return response()->json([
-                'status' => false,
-                'message' => $e->getMessage()
-            ], 500);
+                'message' => 'Server call service is currently disabled.',
+            ]);
         }
+
+        $response = Http::withoutVerifying()->withHeaders($headers)->get($url);
+
+        Log::info('API response: ' . $response->body());
+        
+        if ($response->successful()) {
+            $data = $response->json();
+
+            // Check if the response has the expected structure
+            if ($data['response_description'] == '000') {
+                $responseData = [
+                    'response_description' => '000',
+                    'content' => [
+                        'ServiceName' => $data['content']['ServiceName'] ?? $data['content']['service_name'] ?? ucfirst($serviceID) . ' Subscription',
+                        'serviceID' => $serviceID,
+                        'convinience_fee' => $data['content']['convinience_fee'] ?? 'N0',
+                        'variations' => $data['content']['variations'] ?? $data['content']['varations'] ?? [],
+                    ]
+                ];
+
+                // Clean up the variations array (optional)
+                $responseData['content']['variations'] = array_map(function($variation) {
+                    return [
+                        'variation_code' => $variation['variation_code'],
+                        'name' => $variation['name'],
+                        'variation_amount' => $variation['variation_amount'],
+                        'fixedPrice' => $variation['fixedPrice'] ?? 'Yes' // Default to 'Yes' if not provided
+                    ];
+                }, $responseData['content']['variations']);
+
+                return response()->json(
+                    [
+                        'status' => true,
+                        'data' => $responseData
+                    ],
+                    200
+                );
+            } else {
+                return response()->json([
+                    'status' => false,
+                    'message' => $data['response_description'] ?? 'Could not fetch data'
+                ], 400);
+            }
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => 'Could not fetch data'
+            ], $response->status());
+        }
+    } catch (RequestException $e) {
+        Log::error("Request failed: " . $e->getMessage());
+        return response()->json([
+            'status' => false,
+            'message' => $e->getMessage()
+        ], 400);
+    } catch (\Exception $e) {
+        Log::error("An error occurred: " . $e->getMessage());
+        return response()->json([
+            'status' => false,
+            'message' => $e->getMessage()
+        ], 500);
     }
+}
 
 
     public function getCableProviders(VtpassService $vtpass)

@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Mail;
 class UserController extends Controller
 {
 
+
     public function user(Request $request)
     {
         $user = $request->user()->only('email', 'full_name', 'wallet_balance', 'phone_number', 'image', 'account_reference', 'username');
@@ -35,38 +36,38 @@ class UserController extends Controller
 
         try {
 
-            $accessToken = MyFunctions::monnifyAuth();
+            // $accessToken = MyFunctions::monnifyAuth();
 
-            $monnifyHeaders = [
+            // $monnifyHeaders = [
 
-                "Content-Type" => "application/json",
-                "Authorization" => "Bearer " . $accessToken
+            //     "Content-Type" => "application/json",
+            //     "Authorization" => "Bearer " . $accessToken
 
-            ];
+            // ];
 
-            $accountReference = $request->user()->account_reference;
+            //$accountReference = $request->user()->account_reference;
 
-            $url = "https://sandbox.monnify.com/api/v2/bank-transfer/reserved-accounts/" . $accountReference;
+            //$url = "https://sandbox.monnify.com/api/v2/bank-transfer/reserved-accounts/" . $accountReference;
 
             // Send POST request to Monnify API for authentication
-            $response = Http::withHeaders($monnifyHeaders)->get($url);
+            // $response = Http::withouVerifying()->withHeaders($monnifyHeaders)->get($url);
 
-            // Check if the response status is 200
-            Log::info("Monnify V Accounts response: " . $response);
-            $bank_accounts = [];
-            if ($response->successful()) {
-                // Get the access token from the response
-                $data = $response->json();
-                $bank_accounts = $data['responseBody']['accounts'];
-            } else {
-                Log::error("Request for monnify V Accounts failed");
-            }
+            // // Check if the response status is 200
+            // Log::info("Monnify V Accounts response: " . $response);
+            // $bank_accounts = [];
+            // if ($response->successful()) {
+            //     // Get the access token from the response
+            //     $data = $response->json();
+            //     $bank_accounts = $data['responseBody']['accounts'];
+            // } else {
+            //     Log::error("Request for monnify V Accounts failed");
+            // }
 
             return response()->json(
                 [
                     'status' => true,
                     'data' => $user,
-                    'bank_accounts' => $bank_accounts
+                    //'bank_accounts' => $bank_accounts
 
                 ],
                 200
@@ -86,7 +87,7 @@ class UserController extends Controller
     public function registerUser(Request $request)
     {
         $isReferralEnabled = GeneralSettings::where('name', 'referral')->value('is_enabled');
-        
+
         $validator = Validator::make($request->all(), [
             'email' => 'required|string|email|max:255|unique:users',
             'full_name' => 'string|required',
@@ -144,7 +145,9 @@ class UserController extends Controller
             // $user->country  = $country;
 
             $accountReference = MyFunctions::reserveAccount(
-               $email,  $fullName, $username
+                $email,
+                $fullName,
+                $username
             );
 
             $user->account_reference = $accountReference == false ? null : $accountReference;
@@ -174,18 +177,15 @@ class UserController extends Controller
                     200
 
                 );
-            }else{
+            } else {
                 return response()->json(
                     [
                         'status' => false,
                         'message' => 'Something went wrong, user could not be saved'
                     ],
                     422
-                ); 
+                );
             }
-
-
-            
         } catch (\Throwable $th) {
             log::error('check error: ' . $th->getMessage());
             return response()->json([
@@ -252,7 +252,7 @@ class UserController extends Controller
             $user->full_name = $fullName;
             $user->username = $userName;
 
-           
+
 
             if ($user->save()) {
                 // return GeneralResource::collection($user);
@@ -273,8 +273,6 @@ class UserController extends Controller
                     422
                 );
             }
-
-
         } catch (\Throwable $th) {
             return response()->json([
                 'status' => false,
@@ -330,10 +328,10 @@ class UserController extends Controller
                     return response()->json([
                         'status' => true,
                         'verified' => $user->first_verification,
-                        'epin' =>$epin,
+                        'epin' => $epin,
                         'token' => $token
                     ]);
-                }else{
+                } else {
                     return response()->json(
                         [
                             'status' => false,
@@ -342,7 +340,6 @@ class UserController extends Controller
                         422
                     );
                 }
-                
             } else {
                 return response()->json(
                     [
@@ -404,7 +401,8 @@ class UserController extends Controller
             Log::error('Error sending verification code: ' . $th->getMessage());
             return response()->json([
                 'status' => false,
-                'message' => 'An error occurred. Please try again later. ' . $th->getMessage()], 500);
+                'message' => 'An error occurred. Please try again later. ' . $th->getMessage()
+            ], 500);
         }
     }
 
@@ -455,7 +453,8 @@ class UserController extends Controller
             Log::error('Error sending verification code: ' . $th->getMessage());
             return response()->json([
                 'status' => false,
-                'message' => 'An error occurred. Please try again later. ' . $th->getMessage()], 500);
+                'message' => 'An error occurred. Please try again later. ' . $th->getMessage()
+            ], 500);
         }
     }
 
@@ -808,7 +807,7 @@ class UserController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'pin' => 'required|string',
-          
+
         ]);
 
         if ($validator->fails()) {
@@ -898,18 +897,20 @@ class UserController extends Controller
             Log::error('Error sending verification code: ' . $th->getMessage());
             return response()->json([
                 'status' => false,
-                'message' => 'An error occurred. Please try again later. ' . $th->getMessage()], 500);
+                'message' => 'An error occurred. Please try again later. ' . $th->getMessage()
+            ], 500);
         }
     }
 
 
 
 
-    public function testMail(){
+    public function testMail()
+    {
 
         try {
             Mail::to('jafars4ab@gmail.com')->send(new EmailVerification('1234567'));
-        }catch (RequestException $e) {
+        } catch (RequestException $e) {
 
             // Handle exceptions that occur during the HTTP request
             Log::error("Request for email  failed" . $e->getMessage());
@@ -931,7 +932,6 @@ class UserController extends Controller
                 422
             );
         }
-        
     }
 
 
@@ -1002,5 +1002,49 @@ class UserController extends Controller
         }
     }
 
+    public function getReferredUsers(Request $request)
+    {
+        $user = $request->user();
 
+        // Get all users where referred_by matches the current user's id
+        $referredUsers = User::where('referred_by', $user->id)
+            ->select('id', 'username', 'full_name', 'email', 'phone_number', 'created_at', 'referral_bonus_given')
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'username' => $user->username,
+                    'full_name' => $user->full_name,
+                    'email' => $user->email,
+                    'phone_number' => $user->phone_number,
+                    'joined_at' => $user->created_at->format('F j, Y'),
+                    'status' => $user->referral_bonus_given ? 'Rewarded' : 'Pending',
+                ];
+            });
+
+        return response()->json([
+            'status' => true,
+            'count' => $referredUsers->count(),
+            'referred_users' => $referredUsers
+        ]);
+    }
+
+    public function getReferralBonus()
+    {
+        $setting = GeneralSettings::where('name', 'referral')->first();
+
+        if ($setting && $setting->is_enabled) {
+            return response()->json([
+                'status' => true,
+                'referral_bonus' => $setting->referral_bonus,
+                'message' => 'Referral bonus retrieved successfully.'
+            ]);
+        } else {
+            return response()->json([
+                'status' => false,
+                'referral_bonus' => 0,
+                'message' => 'Referral bonus is not enabled.'
+            ]);
+        }
+    }
 }

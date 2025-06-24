@@ -5,29 +5,27 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Slider;
+use Illuminate\Support\Facades\Cache;
 
 class SliderController extends Controller
 {
-    
+
     public function index()
     {
         try {
-            $sliders = Slider::all();
-            return response()->json(
+            $sliders = Cache::remember('sliders_all', now()->addHours(24), function () {
+                return Slider::all();
+            });
 
-                [
-                    'success' => true,
-                    'data' => $sliders
-                ], 200
-            );
+            return response()->json([
+                'success' => true,
+                'data' => $sliders
+            ], 200);
         } catch (\Throwable $th) {
-            return response()->json(
-                [
-                    'success' => false,
-                    'message' => throw $th
-                ], 500
-            );
+            return response()->json([
+                'success' => false,
+                'message' => $th->getMessage()
+            ], 500);
         }
     }
-
 }

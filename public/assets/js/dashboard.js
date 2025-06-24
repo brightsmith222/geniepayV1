@@ -4,7 +4,6 @@ let reportedTransactions = [];
 let tickerInterval;
 
 function updateReportedCount(count) {
-    // Update both the ticker badge and card count
     $("#reportedCountBadge, #reported-transactions").text(count);
 }
 
@@ -23,16 +22,12 @@ function updateTickerDisplay() {
     });
 }
 
-
-
 function fetchReportedTransactions() {
-
     $.getJSON("dash-reported", function(response) {
         if (response.success) {
             reportedTransactions = response.reports;
             updateReportedCount(response.count);
             updateTickerDisplay();
-            
             if (reportedTransactions.length > 1) {
                 startTicker();
             }
@@ -49,7 +44,6 @@ function startTicker() {
         $("#reportTicker").css('transform', `translateY(-${currentTickerIndex * 100}%)`);
     }, 5000);
 }
-
 
 function applyCustomFilter(type) {
     let startDate, endDate;
@@ -68,10 +62,8 @@ function applyCustomFilter(type) {
     }
 }
 
-// Start Dashboard filter 
 function handleFilterChange(filter, type) {
-    // Save the selected filter and the current date to localStorage
-    const currentDate = new Date().toDateString(); // Get today's date as a string
+    const currentDate = new Date().toDateString();
     localStorage.setItem(`${type}_filter`, filter);
     localStorage.setItem(`${type}_last_selected_date`, currentDate);
 
@@ -87,7 +79,7 @@ function handleFilterChange(filter, type) {
         } else if (type === 'users') {
             document.getElementById('custom-date-range-users').style.display = 'none';
         }
-        filterData(filter, type); // Apply the selected filter
+        filterData(filter, type);
     }
 }
 
@@ -105,7 +97,6 @@ function filterData(filter, type, startDate = null, endDate = null) {
     .then(response => response.json())
     .then(data => {
         if (type === 'sales') {
-            // Update sales statistics
             document.getElementById('total-sales').textContent = `₦${data.totalSales.toLocaleString()}`;
             document.getElementById('total-data-sales').textContent = `₦${data.totalDataSales.toLocaleString()}`;
             document.getElementById('total-airtime-sales').textContent = `₦${data.totalAirtimeSales.toLocaleString()}`;
@@ -113,7 +104,6 @@ function filterData(filter, type, startDate = null, endDate = null) {
             document.getElementById('total-cable-sales').textContent = `₦${data.totalCableSales.toLocaleString()}`;
             document.getElementById('total-exam-sales').textContent = `₦${data.totalExamSales.toLocaleString()}`;
         } else if (type === 'users') {
-            // Update user statistics
             document.getElementById('total-users').textContent = data.totalUsers;
             document.getElementById('active-users').textContent = data.activeUsers;
             document.getElementById('suspended-users').textContent = data.suspendedUsers;
@@ -125,164 +115,233 @@ function filterData(filter, type, startDate = null, endDate = null) {
 }
 
 $(document).ready(function () {
-// *********** START OF DASHBOARD TIMER ********
+    // *********** START OF DASHBOARD TIMER ********
 
-// Start revenue filter
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentDate = new Date().toDateString();
 
-document.addEventListener('DOMContentLoaded', function() {
-    const currentDate = new Date().toDateString(); // Get today's date as a string
-
-    // Check and reset sales filter if the date has changed
-    const savedSalesFilter = localStorage.getItem('sales_filter') || 'all_time';
-    const savedSalesDate = localStorage.getItem('sales_last_selected_date');
-    if (savedSalesDate !== currentDate) {
-        localStorage.removeItem('sales_filter');
-        localStorage.removeItem('sales_last_selected_date');
-        document.getElementById('revenue-sort').value = 'all_time';
-        filterData('all_time', 'sales');
-    } else {
-        document.getElementById('revenue-sort').value = savedSalesFilter;
-        filterData(savedSalesFilter, 'sales');
-    }
-
-    // Check and reset users filter if the date has changed
-    const savedUsersFilter = localStorage.getItem('users_filter') || 'all_time';
-    const savedUsersDate = localStorage.getItem('users_last_selected_date');
-    if (savedUsersDate !== currentDate) {
-        localStorage.removeItem('users_filter');
-        localStorage.removeItem('users_last_selected_date');
-        document.getElementById('user-sort').value = 'all_time';
-        filterData('all_time', 'users');
-    } else {
-        document.getElementById('user-sort').value = savedUsersFilter;
-        filterData(savedUsersFilter, 'users');
-    }
-});
-
-// Initialize Flatpickr for Sales date range
-flatpickr("#date-range-sales", {
-    mode: "range", // Enable range selection
-    dateFormat: "d-m-Y", // Date format
-    onClose: function(selectedDates, dateStr, instance) {
-        if (selectedDates.length === 2) {
-            const startDate = selectedDates[0].toISOString().split('T')[0]; // Format as YYYY-MM-DD
-            const endDate = selectedDates[1].toISOString().split('T')[0]; // Format as YYYY-MM-DD
-            document.getElementById('date-range-sales').dataset.startDate = startDate;
-            document.getElementById('date-range-sales').dataset.endDate = endDate;
+        const savedSalesFilter = localStorage.getItem('sales_filter') || 'all_time';
+        const savedSalesDate = localStorage.getItem('sales_last_selected_date');
+        if (savedSalesDate !== currentDate) {
+            localStorage.removeItem('sales_filter');
+            localStorage.removeItem('sales_last_selected_date');
+            document.getElementById('revenue-sort').value = 'all_time';
+            filterData('all_time', 'sales');
+        } else {
+            document.getElementById('revenue-sort').value = savedSalesFilter;
+            filterData(savedSalesFilter, 'sales');
         }
-    },
-});
 
-// Initialize Flatpickr for Users date range
-flatpickr("#date-range-users", {
-    mode: "range", // Enable range selection
-    dateFormat: "d-m-Y", // Date format
-    onClose: function(selectedDates, dateStr, instance) {
-        if (selectedDates.length === 2) {
-            const startDate = selectedDates[0].toISOString().split('T')[0]; // Format as YYYY-MM-DD
-            const endDate = selectedDates[1].toISOString().split('T')[0]; // Format as YYYY-MM-DD
-            document.getElementById('date-range-users').dataset.startDate = startDate;
-            document.getElementById('date-range-users').dataset.endDate = endDate;
-        }
-    },
-});
-
-
-function updateTime() {
-    const now = new Date();
-    let hours = now.getHours();
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-
-    // Convert to 12-hour format
-    hours = hours % 12;
-    hours = hours ? hours : 12; // the hour '0' should be '12'
-
-    // Update the time display
-    updateNumber('hours', `${hours}`);
-    updateNumber('minutes', `${minutes}`);
-    updateNumber('ampm', ampm);
-
-    // Update the date
-    const dayOfWeek = now.toLocaleDateString(undefined, { weekday: 'short' });
-    const day = now.getDate();
-    const month = now.toLocaleDateString(undefined, { month: 'short' });
-    const year = now.getFullYear();
-    document.getElementById('current-date').textContent = `${dayOfWeek}, ${day} ${month}, ${year}`;
-  }
-
-  function updateNumber(id, newValue) {
-    const element = document.getElementById(id);
-    if (element.textContent !== newValue) {
-      // Add slide-up animation
-      element.style.animation = 'slide-up 0.5s ease-in-out';
-      // Update the value after the animation ends
-      element.addEventListener('animationend', () => {
-        element.textContent = newValue;
-        element.style.animation = ''; // Reset animation
-      }, { once: true });
-    }
-  }
-
-  
-  // Update the time every second
-  setInterval(updateTime, 1000);
-
-  // Initialize the time immediately on page load
-  updateTime();
-
-  
-  // ******** START OF FETCH WALLET BALANCE *******
-    function fetchWalletBalance() {
-    $.ajax({
-        url: "/get-wallet-balance",
-        type: "GET",
-        dataType: "json",
-        success: function(response) {
-            console.log("API Response:", response); // For debugging
-            
-            if (response.success && response.balance !== undefined) {
-                $("#wallet-balance").text("₦" + response.balance);
-            } else {
-                $("#wallet-balance").text("Error: " + (response.message || "Unknown error"));
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error("AJAX Error:", status, error);
-            let errorMessage = "Error loading balance";
-            
-            try {
-                const response = JSON.parse(xhr.responseText);
-                if (response.message) {
-                    errorMessage += ": " + response.message;
-                }
-            } catch (e) {
-                errorMessage += " (Network error)";
-            }
-            
-            $("#wallet-balance").text(errorMessage);
+        const savedUsersFilter = localStorage.getItem('users_filter') || 'all_time';
+        const savedUsersDate = localStorage.getItem('users_last_selected_date');
+        if (savedUsersDate !== currentDate) {
+            localStorage.removeItem('users_filter');
+            localStorage.removeItem('users_last_selected_date');
+            document.getElementById('user-sort').value = 'all_time';
+            filterData('all_time', 'users');
+        } else {
+            document.getElementById('user-sort').value = savedUsersFilter;
+            filterData(savedUsersFilter, 'users');
         }
     });
-}
 
-// Fetch balance every 10 seconds
-setInterval(fetchWalletBalance, 3000000);
-    
-// Fetch balance on page load
+    flatpickr("#date-range-sales", {
+        mode: "range",
+        dateFormat: "d-m-Y",
+        onClose: function(selectedDates, dateStr, instance) {
+            if (selectedDates.length === 2) {
+                const startDate = selectedDates[0].toISOString().split('T')[0];
+                const endDate = selectedDates[1].toISOString().split('T')[0];
+                document.getElementById('date-range-sales').dataset.startDate = startDate;
+                document.getElementById('date-range-sales').dataset.endDate = endDate;
+            }
+        },
+    });
+
+    flatpickr("#date-range-users", {
+        mode: "range",
+        dateFormat: "d-m-Y",
+        onClose: function(selectedDates, dateStr, instance) {
+            if (selectedDates.length === 2) {
+                const startDate = selectedDates[0].toISOString().split('T')[0];
+                const endDate = selectedDates[1].toISOString().split('T')[0];
+                document.getElementById('date-range-users').dataset.startDate = startDate;
+                document.getElementById('date-range-users').dataset.endDate = endDate;
+            }
+        },
+    });
+
+    function updateTime() {
+        const now = new Date();
+        let hours = now.getHours();
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+
+        updateNumber('hours', `${hours}`);
+        updateNumber('minutes', `${minutes}`);
+        updateNumber('ampm', ampm);
+
+        const dayOfWeek = now.toLocaleDateString(undefined, { weekday: 'short' });
+        const day = now.getDate();
+        const month = now.toLocaleDateString(undefined, { month: 'short' });
+        const year = now.getFullYear();
+        document.getElementById('current-date').textContent = `${dayOfWeek}, ${day} ${month}, ${year}`;
+    }
+
+    function updateNumber(id, newValue) {
+        const element = document.getElementById(id);
+        if (element.textContent !== newValue) {
+            element.style.animation = 'slide-up 0.5s ease-in-out';
+            element.addEventListener('animationend', () => {
+                element.textContent = newValue;
+                element.style.animation = '';
+            }, { once: true });
+        }
+    }
+
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // ******** START OF FETCH WALLET BALANCE *******
+
+    // Helper to show/hide balance and reset icon
+    function showBalance(target, value) {
+        const $balance = $(target);
+        $balance.text(value);
+        $balance.data("real-value", value);
+        $balance.data("visible", true);
+        $(`.toggle-balance[data-target='${target}'] i`).removeClass("fa-eye-slash").addClass("fa-eye");
+    }
+
+    function fetchWalletBalance() {
+        $.ajax({
+            url: "/get-wallet-balance",
+            type: "GET",
+            dataType: "json",
+            success: function(response) {
+                if (response.success && response.balance !== undefined) {
+                    showBalance("#wallet-balance", "₦" + response.balance);
+                } else {
+                    showBalance("#wallet-balance", "Error: " + (response.message || "Unknown error"));
+                }
+            },
+            error: function(xhr, status, error) {
+                let errorMessage = "Error loading balance";
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.message) {
+                        errorMessage += ": " + response.message;
+                    }
+                } catch (e) {
+                    errorMessage += " (Network error)";
+                }
+                showBalance("#wallet-balance", errorMessage);
+            }
+        });
+    }
+
+    function fetchGladWalletBalance() {
+        $.ajax({
+            url: "/get-glad-wallet-balance",
+            type: "GET",
+            dataType: "json",
+            success: function(response) {
+                if (response.success && response.balance !== undefined) {
+                    showBalance("#wallet-balance-glad", "₦" + response.balance);
+                } else {
+                    showBalance("#wallet-balance-glad", "Error: " + (response.message || "Unknown error"));
+                }
+            },
+            error: function(xhr, status, error) {
+                let errorMessage = "Error loading GladTidings balance";
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.message) {
+                        errorMessage += ": " + response.message;
+                    }
+                } catch (e) {
+                    errorMessage += " (Network error)";
+                }
+                showBalance("#wallet-balance-glad", errorMessage);
+            }
+        });
+    }
+
+    function fetchArtxWalletBalance() {
+        $.ajax({
+            url: "/get-artx-wallet-balance",
+            type: "GET",
+            dataType: "json",
+            success: function(response) {
+                if (response.success && response.balance !== undefined) {
+                    showBalance("#wallet-balance-artx", "₦" + response.balance);
+                } else {
+                    showBalance("#wallet-balance-artx", "Error: " + (response.message || "Unknown error"));
+                }
+            },
+            error: function(xhr, status, error) {
+                let errorMessage = "Error loading ARTX balance";
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.message) {
+                        errorMessage += ": " + response.message;
+                    }
+                } catch (e) {
+                    errorMessage += " (Network error)";
+                }
+                showBalance("#wallet-balance-artx", errorMessage);
+            }
+        });
+    }
+
+    // Toggle wallet balance visibility
+    $(".toggle-balance").click(function() {
+        const $icon = $(this).find("i");
+        const target = $(this).data("target");
+        const $balance = $(target);
+
+        if ($balance.data("visible") === false) {
+            // Show balance
+            $balance.text($balance.data("real-value") || $balance.text());
+            $balance.data("visible", true);
+            $icon.removeClass("fa-eye-slash").addClass("fa-eye");
+        } else {
+            // Hide balance
+            $balance.data("real-value", $balance.text());
+            $balance.text("••••••••");
+            $balance.data("visible", false);
+            $icon.removeClass("fa-eye").addClass("fa-eye-slash");
+        }
+    });
+
+    // Refresh artx balance every 10 minutes
+    setInterval(fetchArtxWalletBalance, 3000000);
+    fetchArtxWalletBalance();
+
+    // Fetch vtpass balance every 10 minutes
+    setInterval(fetchWalletBalance, 3000000);
     fetchWalletBalance();
 
-      //Refresh balance
-  $("#refreshBalance").click(function() {
-    fetchWalletBalance();
-    $(this).html('<i class="fa fa-spinner fa-spin"></i>');
-    setTimeout(() => $(this).text("⟳ Refresh"), 1000);
-});
+    // Fetch GladTidings balance every 10 minutes
+    setInterval(fetchGladWalletBalance, 3000000);
+    fetchGladWalletBalance();
 
-//Initiate report ticker
+    // Refresh balance button
+    $(".refresh-balance").click(function() {
+        const $btn = $(this);
+        const originalText = $btn.text();
+        fetchWalletBalance();
+        fetchGladWalletBalance();
+        fetchArtxWalletBalance();
+        $btn.html('<i class="fa fa-spinner fa-spin"></i>');
+        setTimeout(() => $btn.text(originalText), 1000);
+    });
+
+    // Initiate report ticker
     fetchReportedTransactions();
-    setInterval(fetchReportedTransactions, 30000); // Refresh every 30 seconds
-
-    
-
+    setInterval(fetchReportedTransactions, 30000);
 });

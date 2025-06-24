@@ -3,12 +3,31 @@
 @section('dashboard-content')
 <div>
 
-
+<div class="card mb-4">
+  <div class="card-body">
+  <!-- Reported transaction area -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <!-- Report Stats -->
+    <div class="report-stat flex-grow-1">
+      <span class="material-icons-outlined me-2">report_problem</span>
+      <div class="ticker-container flex-grow-1 overflow-hidden" style="height: 24px;">
+        <div class="ticker-track" id="reportTicker">
+          <div class="ticker-item text-truncate">
+            ⚠️ Loading reported transactions...
+          </div>
+        </div>
+      </div>
+      <span class="badge reported-badge ms-2 px-3 py-1" id="reportedCountBadge">
+        ??
+    </span>
+    </div> 
+  </div>
+  
     <!-- Header -->
     <div class="header mb-4 d-flex">
       <div>
         <h4>{{ $greeting }}</h4>
-        <p>Here is what's happening with your projects today:</p>
+        <span>Here is what's happening with your projects today:</span>
       </div>
       <div>
         <div class="time-display">
@@ -26,34 +45,53 @@
       </div>
     </div>
 
-  <!-- Available Balance -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <!-- Report Stats -->
-    <div class="report-stat flex-grow-1 mx-3">
-      <span class="material-icons-outlined me-2">report_problem</span>
-      <div class="ticker-container flex-grow-1 overflow-hidden" style="height: 24px;">
-        <div class="ticker-track" id="reportTicker">
-          <div class="ticker-item text-truncate">
-            ⚠️ Loading reported transactions...
-          </div>
-        </div>
-      </div>
-      <span class="badge reported-badge ms-2 px-3 py-1" id="reportedCountBadge">
-        ??
-    </span>
-    </div>
-    
-    <!-- Wallet Balance -->
-    <div class="wallet-wrapper">
-      <div class="wallet-balance">
-        <span class="material-icons-outlined">account_balance_wallet</span>
-        <span id="wallet-balance">Loading...</span>
-      </div>
-      <button id="refreshBalance" class="btn btn-sm btn-light">⟳ Refresh</button>
-    </div>
-    
-  </div>
+  
 
+   <!-- Available Balance for vtpass, artx and glad -->
+  <div class="row">
+    <!-- Wallet Balance -->
+        <div class="col-sm-12 col-md-6 col-lg-4">
+    <div class="wallet-wrapper">
+  <div class="wallet-balance">
+    <span class="material-icons-outlined">account_balance_wallet</span>
+    <span id="wallet-balance" class="wallet-balance-value">Loading...</span>
+    <span class="toggle-balance" data-target="#wallet-balance" style="cursor:pointer;">
+      <i class="fa fa-eye"></i>
+    </span>
+  </div>
+  <button id="refreshBalance" class="btn btn-sm btn-light refresh-balance">⟳ Vtpass</button>
+</div>
+    </div>
+    <!-- Wallet Balance for artx -->
+
+      <div class="col-sm-12 col-md-6 col-lg-4">
+    <div class="wallet-wrapper">
+  <div class="wallet-balance">
+    <span class="material-icons-outlined">account_balance_wallet</span>
+    <span id="wallet-balance-artx" class="wallet-balance-value">Loading...</span>
+    <span class="toggle-balance" data-target="#wallet-balance-artx" style="cursor:pointer;">
+      <i class="fa fa-eye"></i>
+    </span>
+  </div>
+  <button id="refreshBalance" class="btn btn-sm btn-light refresh-balance">⟳ Artx</button>
+</div>
+  </div>
+    <!-- Wallet Balance for glad -->
+    <div class="col-sm-12 col-md-6 col-lg-4">
+    <div class="wallet-wrapper">
+  <div class="wallet-balance">
+    <span class="material-icons-outlined">account_balance_wallet</span>
+    <span id="wallet-balance-glad" class="wallet-balance-value">Loading...</span>
+    <span class="toggle-balance" data-target="#wallet-balance-glad" style="cursor:pointer;">
+      <i class="fa fa-eye"></i>
+    </span>
+  </div>
+  <button id="refreshBalance" class="btn btn-sm btn-light refresh-balance">⟳ Glad</button>
+</div>
+    </div>
+  </div>
+</div>
+</div>
   <!-- Sales Statistics -->
   <div class="card mb-4">
     <div class="card-body">
