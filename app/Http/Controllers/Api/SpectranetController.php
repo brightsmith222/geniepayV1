@@ -14,6 +14,7 @@ use App\MyFunctions;
 use Illuminate\Support\Facades\Validator;
 use App\Services\PercentageService;
 use App\Services\BeneficiaryService;
+use App\Services\PinService;
 
 class SpectranetController extends Controller
 {
@@ -54,7 +55,7 @@ class SpectranetController extends Controller
         ]);
     }
 
-    public function purchaseSpectranetData(Request $request)
+    public function purchaseSpectranetData(Request $request, PinService $pinService)
     {
         $validator = Validator::make($request->all(), [
             'customer_id' => 'required|string',
@@ -68,7 +69,7 @@ class SpectranetController extends Controller
         $amount = $request->input('amount');
         $beneficiary = $request->input('beneficiary', false);
         $type = 'spectranet';
-        $provider = 1;
+        $provider = $request->input('provider', 2);
 
         if ($validator->fails()) {
             return response()->json([
@@ -77,13 +78,23 @@ class SpectranetController extends Controller
             ], 422);
         }
 
+        $pin = $request->input('pin');
         $user = $request->user();
+
+
+        if (!$pinService->checkPin($user, $pin)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid transaction pin.'
+            ], 403);
+        }
+
         $wallet_balance = $user->wallet_balance;
 
         if ($wallet_balance < $amount) {
             return response()->json([
                 'status' => false,
-                'message' => 'Insufficient wallet balance'
+                'message' => 'Insufficient balance ₦' . number_format($wallet_balance)
             ], 401);
         }
 
@@ -157,7 +168,6 @@ class SpectranetController extends Controller
                                 'identifier' => $customer_id,
                                 'provider'   => $provider,
                             ], $user);
-    
                         } else {
                             Log::error('Beneficiary customer ID is missing');
                         }

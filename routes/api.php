@@ -48,7 +48,15 @@ Route::get('/products/{operator}', [MobilePinController::class, 'getOperatorProd
 Route::post('/mobile-pin/execute', [MobilePinController::class, 'execTransaction']);
 
 Route::post('/topup', [AirtimeController::class, 'buyAirtime']);
+
 Route::post('/result_checker', [ExamsController::class,'buyResultChecker']);
+Route::post('/jamb/verify', [ExamsController::class, 'verifyJambProfile']);
+Route::post('/jamb/purchase', [ExamsController::class, 'purchaseJambPin']);
+Route::get('/jamb/variations', [ExamsController::class, 'fetchJambVariations']);
+Route::get('/waec/variations', [ExamsController::class, 'getAllWaecVariations']);
+Route::post('/waec/purchase', [ExamsController::class, 'purchaseWaecPin']);
+
+
 
 Route::post('/verify-smart-card', [CableTvController::class, 'verifySmartCard']);
 Route::post('/cable-subscription', [CableTvController::class, 'cableSubscription']);

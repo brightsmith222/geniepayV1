@@ -284,9 +284,6 @@ class UserController extends Controller
 
     public function userLogin(Request $request)
     {
-
-
-
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|exists:users,email',
             'password' => [
@@ -294,8 +291,7 @@ class UserController extends Controller
                 'string',
             ],
             'fcm_token' => 'string|nullable'
-
-        ],  [
+        ], [
             'email.exists' => 'Email does not exist, please create an account.'
         ]);
 
@@ -303,24 +299,40 @@ class UserController extends Controller
             return response()->json([
                 'status' => false,
                 'message' => $validator->errors()->first()
-            ], 422); // 422 Unprocessable Entity
+            ], 422);
         }
 
         try {
-
             $email = $request->input('email');
             $password = $request->input('password');
 
             $user = User::where('email', '=', $email)->first();
 
             if ($user) {
+                // Check account status
+                if ($user->status === 'suspended') {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Your account has been suspended. Please contact support.'
+                    ], 403);
+                }
+                if ($user->status === 'blocked') {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Your account has been blocked. Please contact support.'
+                    ], 403);
+                }
+                if ($user->status !== 'active') {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Your account is not active. Please contact support.'
+                    ], 403);
+                }
+
                 $userPassword = $user->password;
                 $epin = $user->pin;
 
                 if (Hash::check($password, $userPassword)) {
-
-                    // $credentials = $request->only('email', 'password');
-
                     $token = $user->createToken($email)->plainTextToken;
                     $user->last_login_at = now();
                     $user->fcm_token = $request->fcm_token;
@@ -332,32 +344,23 @@ class UserController extends Controller
                         'token' => $token
                     ]);
                 } else {
-                    return response()->json(
-                        [
-                            'status' => false,
-                            'message' => 'Wrong password'
-                        ],
-                        422
-                    );
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Wrong password'
+                    ], 422);
                 }
             } else {
-                return response()->json(
-                    [
-                        'status' => false,
-                        'message' => 'No acount found for this email, please create an account'
-                    ],
-                    422
-                );
+                return response()->json([
+                    'status' => false,
+                    'message' => 'No account found for this email, please create an account'
+                ], 422);
             }
         } catch (\Throwable $th) {
             Log::error('Error response: ' . $th->getMessage());
-            return response()->json(
-                [
-                    'status' => false,
-                    'message' => 'Error response: ' . $th->getMessage()
-                ],
-                422
-            );
+            return response()->json([
+                'status' => false,
+                'message' => 'Error response: ' . $th->getMessage()
+            ], 422);
         }
     }
 

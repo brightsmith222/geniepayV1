@@ -14,12 +14,13 @@ use App\Services\CurrencyHelper;
 use App\MyFunctions;
 use App\Services\ReferralService;
 use App\Services\PercentageService;
+use App\Services\PinService;
 
 
 
 class GiftCardController extends Controller
 {
-    protected $baseUrl, $username, $password, $network='13';
+    protected $baseUrl, $username, $password, $network = '13';
 
     public function __construct()
     {
@@ -104,7 +105,7 @@ class GiftCardController extends Controller
                         'id' => $item['id'],
                         'name' => $item['name'],
                         'currency' => $item['currency'],
-                        'brandId' => $item['brandId'], 
+                        'brandId' => $item['brandId'],
                         'logo' => "https://media.sochitel.com/img/operators/{$item['brandId']}.png",
                         'flag' => "https://media.sochitel.com/img/flags/{$item['country']['id']}.png"
                     ];
@@ -132,24 +133,24 @@ class GiftCardController extends Controller
     {
         $request->validate([
             'operator_id' => 'required|string',
-            'brand_id' => 'required|string' 
+            'brand_id' => 'required|string'
         ]);
-    
+
         $operatorId = $request->operator_id;
-        $brandId = $request->brand_id; 
-    
+        $brandId = $request->brand_id;
+
         $payload = [
             'auth' => $this->authPayload(),
             'version' => 5,
             'command' => 'getOperatorProducts',
             'operator' => $operatorId
         ];
-    
+
         $response = Http::withoutVerifying()->post($this->baseUrl, $payload)->json();
         $products = $response['result']['products'] ?? [];
-    
+
         Log::info('Raw API response for getGiftCards', ['response' => $response]);
-    
+
         // Check if no products are found
         if (empty($products)) {
             return response()->json([
@@ -157,67 +158,67 @@ class GiftCardController extends Controller
                 'message' => 'No items found for the selected operator.'
             ], 404);
         }
-    
+
         $operatorCurrency = $response['result']['currency']['operator'] ?? 'USD';
         $currencySymbol = CurrencyHelper::getSymbol($operatorCurrency);
-    
+
         $denoms = collect($products)->flatMap(function ($product, $id) use ($currencySymbol, $operatorId, $brandId, $percentageService) {
             $name = $product['name'] ?? 'Unknown';
             $priceType = $product['priceType'] ?? 'unknown';
             $priceMinOperator = $product['price']['min']['operator'] ?? null;
             $priceMinUser = $product['price']['min']['user'] ?? null;
             $priceMaxOperator = $product['price']['max']['operator'] ?? null;
-    
+
             // Handle range pricing
             if ($priceType === 'range' && $priceMinOperator && $priceMinUser && $priceMaxOperator) {
                 $conversionRate = $priceMinUser / $priceMinOperator;
                 $predefinedPrices = [];
-    
+
                 for ($operatorPrice = $priceMinOperator; $operatorPrice <= $priceMaxOperator;) {
                     $userPrice = $operatorPrice * $conversionRate;
-    
+
                     // Apply percentage to the user price using the network property
                     $adjustedUserPrice = $percentageService->calculateGiftCardDiscountedAmount($this->network, $userPrice);
-    
+
                     $predefinedPrices[] = [
                         'operator_id' => $operatorId,
                         'product_id' => $id,
                         'name' => $name,
-                        'brand_id' => $brandId, 
+                        'brand_id' => $brandId,
                         'price_operator' => $currencySymbol . number_format($operatorPrice, 2),
                         'price_user' => '₦' . number_format($adjustedUserPrice, 2),
                         'operator_price_symbol' => $currencySymbol,
                         'user_price_symbol' => '₦'
                     ];
-    
+
                     // Adjust increment logic
                     if ($operatorPrice < 100) {
-                        $operatorPrice += 5; 
+                        $operatorPrice += 5;
                     } elseif ($operatorPrice < 200) {
-                        $operatorPrice += 100; 
+                        $operatorPrice += 100;
                     } elseif ($operatorPrice < 500) {
-                        $operatorPrice += 300; 
+                        $operatorPrice += 300;
                     } else {
-                        $operatorPrice += 500; 
+                        $operatorPrice += 500;
                     }
                 }
-    
+
                 return $predefinedPrices;
             }
-    
+
             // Handle fixed price
             $priceOperator = $product['price']['operator'] ?? null;
             $priceUser = $product['price']['user'] ?? null;
-    
+
             // Apply percentage to the user price
             $adjustedUserPrice = $priceUser ? $percentageService->calculateGiftCardDiscountedAmount($this->network, $priceUser) : null;
-    
+
             return [
                 [
                     'operator_id' => $operatorId,
                     'product_id' => $id,
                     'name' => $name,
-                    'brand_id' => $brandId, 
+                    'brand_id' => $brandId,
                     'price_operator' => $priceOperator ? $currencySymbol . number_format($priceOperator, 2) : 'N/A',
                     'price_user' => $adjustedUserPrice ? '₦' . number_format($adjustedUserPrice, 2) : 'N/A',
                     'operator_price_symbol' => $currencySymbol,
@@ -225,7 +226,7 @@ class GiftCardController extends Controller
                 ]
             ];
         });
-    
+
         return response()->json([
             'status' => true,
             'data' => $denoms->values()
@@ -233,7 +234,7 @@ class GiftCardController extends Controller
     }
 
 
-    public function purchase(Request $request)
+    public function purchase(Request $request, PinService $pinService)
     {
         $request->validate([
             'operator' => 'required|string',
@@ -246,11 +247,28 @@ class GiftCardController extends Controller
         $quantity = $request->quantity;
         $image = $request->image ?? null;
 
+        $pin = $request->input('pin');
         $user = $request->user();
-        $totalAmount = $request->amount * $request->quantity;
 
-        if ($user->wallet_balance < $totalAmount) {
-            return response()->json(['status' => false, 'message' => 'Insufficient balance'], 400);
+
+        if (!$pinService->checkPin($user, $pin)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid transaction pin.'
+            ], 403);
+        }
+
+        $totalAmount = $request->amount * $request->quantity;
+        $wallet_balance = $user->wallet_balance;
+
+        if ($wallet_balance < $totalAmount) {
+            return response()->json(
+                [
+                    'status' => false,
+                    'message' => 'Insufficient balance ₦' . number_format($wallet_balance)
+                ],
+                400
+            );
         }
 
         $reference = MyFunctions::generateRequestId();

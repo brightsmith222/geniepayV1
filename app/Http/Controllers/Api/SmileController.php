@@ -15,6 +15,7 @@ use App\MyFunctions;
 use Illuminate\Support\Facades\Validator;
 use App\Services\PercentageService;
 use App\Services\BeneficiaryService;
+use App\Services\PinService;
 
 class SmileController extends Controller
 {
@@ -70,66 +71,66 @@ class SmileController extends Controller
 
 
     public function getSmilePlans(PercentageService $percentageService)
-{
-    $vtpass = new VtpassService();
-    $url = config('api.vtpass.base_url') . "service-variations?serviceID=smile-direct";
+    {
+        $vtpass = new VtpassService();
+        $url = config('api.vtpass.base_url') . "service-variations?serviceID=smile-direct";
 
-    if ($vtpass->isVtpassEnabled()) {
-        $headers = $vtpass->getHeaders();
-    } else {
+        if ($vtpass->isVtpassEnabled()) {
+            $headers = $vtpass->getHeaders();
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => 'Server call service is currently disabled.',
+            ]);
+        }
+
+        $response = Http::withHeaders($headers)
+            ->withoutVerifying()
+            ->get($url);
+
+        $data = $response->json();
+        Log::info('Smile Plans Response', ['response' => $data]);
+
+        // Adjust the amount for each plan and extract validity
+        $plans = collect($data['content']['varations'] ?? [])->map(function ($plan) use ($percentageService) {
+            $plan['amount'] = $percentageService->calculateSmileDiscountedAmount((float) $plan['variation_amount']);
+
+            // Extract validity from the name field
+            preg_match('/(\d+)\s?(day|days|week|weeks|month|months|year|years)/i', $plan['name'], $matches);
+            if (isset($matches[1], $matches[2])) {
+                $number = (int) $matches[1];
+                $unit = strtolower($matches[2]);
+
+                // Ensure the unit is pluralized if the number is greater than 1
+                if ($number > 1) {
+                    $unit = Str::plural($unit);
+                }
+
+                $plan['validity'] = "{$number} {$unit}";
+            } else {
+                $plan['validity'] = 'Unknown';
+            }
+
+            // Return only the required fields
+            return [
+                'variation_code' => $plan['variation_code'],
+                'plan' => $plan['name'],
+                'fixedPrice' => $plan['fixedPrice'],
+                'amount' => $plan['amount'],
+                'validity' => $plan['validity'],
+            ];
+        });
+
+        // Sort the plans by validity_days in ascending order
+        $sortedPlans = $plans->sortBy('validity')->values();
+
         return response()->json([
-            'status' => false,
-            'message' => 'Server call service is currently disabled.',
+            'status' => true,
+            'data' => $sortedPlans
         ]);
     }
 
-    $response = Http::withHeaders($headers)
-        ->withoutVerifying()
-        ->get($url);
-
-    $data = $response->json();
-    Log::info('Smile Plans Response', ['response' => $data]);
-
-    // Adjust the amount for each plan and extract validity
-    $plans = collect($data['content']['varations'] ?? [])->map(function ($plan) use ($percentageService) {
-        $plan['amount'] = $percentageService->calculateSmileDiscountedAmount((float) $plan['variation_amount']);
-
-        // Extract validity from the name field
-        preg_match('/(\d+)\s?(day|days|week|weeks|month|months|year|years)/i', $plan['name'], $matches);
-        if (isset($matches[1], $matches[2])) {
-            $number = (int) $matches[1];
-            $unit = strtolower($matches[2]);
-
-            // Ensure the unit is pluralized if the number is greater than 1
-            if ($number > 1) {
-                $unit = Str::plural($unit);
-            }
-
-            $plan['validity'] = "{$number} {$unit}";
-        } else {
-            $plan['validity'] = 'Unknown';
-        }
-
-        // Return only the required fields
-        return [
-            'variation_code' => $plan['variation_code'],
-            'plan' => $plan['name'],
-            'fixedPrice' => $plan['fixedPrice'],
-            'amount' => $plan['amount'],
-            'validity' => $plan['validity'],
-        ];
-    });
-
-    // Sort the plans by validity_days in ascending order
-    $sortedPlans = $plans->sortBy('validity')->values();
-
-    return response()->json([
-        'status' => true,
-        'data' => $sortedPlans
-    ]);
-}
-
-    public function purchaseSmileData(Request $request)
+    public function purchaseSmileData(Request $request, PinService $pinService)
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
@@ -146,7 +147,7 @@ class SmileController extends Controller
         $plan = $request->input('plan');
         $image = $request->input('image');
         $beneficiary = $request->input('beneficiary', false);
-        $provider = 1;
+        $provider = $request->input('provider', 1);
         $type = 'smile';
 
 
@@ -157,13 +158,23 @@ class SmileController extends Controller
             ], 422);
         }
 
+        $pin = $request->input('pin');
         $user = $request->user();
+
+
+        if (!$pinService->checkPin($user, $pin)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid transaction pin.'
+            ], 403);
+        }
+
         $wallet_balance = $user->wallet_balance;
 
         if ($wallet_balance < $amount) {
             return response()->json([
                 'status' => false,
-                'message' => 'Insufficient wallet balance'
+                'message' => 'Insufficient balance ₦' . number_format($wallet_balance)
             ], 401);
         }
 
@@ -206,7 +217,7 @@ class SmileController extends Controller
             $payload = [
                 'request_id'     => $transactionId,
                 'serviceID'      => 'smile-direct',
-                'billersCode'    => '08011111111',//$accountId,
+                'billersCode'    => '08011111111', //$accountId,
                 'variation_code' => $variation_code,
                 'phone'          => $user->phone_number,
             ];
@@ -261,7 +272,6 @@ class SmileController extends Controller
                                 'identifier' => $email,
                                 'provider'   => $provider,
                             ], $user);
-    
                         } else {
                             Log::error('Beneficiary account ID is missing');
                         }

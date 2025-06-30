@@ -14,6 +14,7 @@ use App\Services\CurrencyHelper;
 use App\MyFunctions;
 use App\Services\ReferralService;
 use App\Services\PercentageService;
+use App\Services\PinService;
 
 class EsimController extends Controller
 {
@@ -36,44 +37,47 @@ class EsimController extends Controller
         ];
     }
 
-public function getEsims()
-{
-    // Define a unique cache key
-    $cacheKey = 'esims_list';
+    public function getEsims()
+    {
+        // Define a unique cache key
+        $cacheKey = 'esims_list';
 
-    // Check if the data is already cached
-    return Cache::remember($cacheKey, now()->addHours(24), function () {
-        $payload = [
-            'auth' => $this->authPayload(),
-            'version' => 5,
-            'command' => 'getOperators',
-            "productCategory" => "14.0"
-        ];
+        // Check if the data is already cached
+        return Cache::remember($cacheKey, now()->addHours(24), function () {
+            $payload = [
+                'auth' => $this->authPayload(),
+                'version' => 5,
+                'command' => 'getOperators',
+                "productCategory" => "14.0"
+            ];
 
-        $response = Http::withoutVerifying()->post($this->baseUrl, $payload)->json();
-        Log::info('ARTX eSIMs request', ['payload' => $payload, 'response' => $response]);
-        $result = $response['result'] ?? [];
-        Log::info('ARTX eSIMs response', ['response result' => $result]);
+            $response = Http::withoutVerifying()->post($this->baseUrl, $payload)->json();
+            Log::info('ARTX eSIMs request', ['payload' => $payload, 'response' => $response]);
+            $result = $response['result'] ?? [];
+            Log::info('ARTX eSIMs response', ['response result' => $result]);
 
-        return collect($result)
-            ->filter(function ($item) {
-                return isset($item['productCategories']) &&
-                    collect($item['productCategories'])->contains('14.0');
-            })
-            ->map(function ($item) {
-                return [
-                    'id' => $item['id'],
-                    'name' => $item['name'],
-                    'country' => $item['country']['name'] ?? 'Unknown',
-                    'currency' => $item['currency'],
-                    'brandId' => $item['brandId'],
-                    'flag' => "https://media.sochitel.com/img/flags/{$item['country']['id']}.png"
-                ];
-            })
-            ->values()
-            ->toArray();
-    });
-}
+            return collect($result)
+                ->filter(function ($item) {
+                    return isset($item['productCategories']) &&
+                        collect($item['productCategories'])->contains('14.0');
+                })
+                ->map(function ($item) {
+                    return [
+                        'status' => true,
+                        'data' => [
+                            'id' => $item['id'],
+                            'name' => $item['name'],
+                            'country' => $item['country']['name'] ?? 'Unknown',
+                            'currency' => $item['currency'],
+                            'brandId' => $item['brandId'],
+                            'flag' => "https://media.sochitel.com/img/flags/{$item['country']['id']}.png"
+                        ],
+                    ];
+                })
+                ->values()
+                ->toArray();
+        });
+    }
 
     public function getDenominations(Request $request, PercentageService $percentageService)
     {
@@ -117,8 +121,8 @@ public function getEsims()
                     'product_id' => $id,
                     'plan_name' => 'eSim - ' . $name,
                     'brand_id' => $brandId,
-                    'price_operator' => $currencySymbol . number_format($priceOperator, 2),
-                    'price_user' => '₦' . number_format($adjustedUserPrice, 2),
+                    'price_operator' => number_format($priceOperator, 2),
+                    'price_user' => number_format($adjustedUserPrice, 2),
                     'operator_price_symbol' => $currencySymbol,
                     'user_price_symbol' => '₦'
                 ]
@@ -131,21 +135,40 @@ public function getEsims()
         ]);
     }
 
-    public function purchase(Request $request)
+    public function purchase(Request $request, PinService $pinService)
     {
         $request->validate([
             'operator' => 'required|string',
             'product_id' => 'required|string',
             'amount' => 'required|numeric',
+            'operator_amount' => 'required|numeric',
             'brand_id' => 'required|string',
             'plan_name' => 'required|string',
+            'quantity' => 'required|integer',
         ]);
 
+       // $pin = $request->input('pin');
         $user = $request->user();
-        $totalAmount = $request->amount * $request->quantity;
 
-        if ($user->wallet_balance < $totalAmount) {
-            return response()->json(['status' => false, 'message' => 'Insufficient balance'], 400);
+
+        // if (!$pinService->checkPin($user, $pin)) {
+        //     return response()->json([
+        //         'status' => false,
+        //         'message' => 'Invalid transaction pin.'
+        //     ], 403);
+        // }
+
+        $totalAmount = $request->amount * $request->quantity;
+        $wallet_balance = $user->wallet_balance;
+
+        if ($wallet_balance < $totalAmount) {
+            return response()->json(
+                [
+                    'status' => false,
+                    'message' => 'Insufficient balance ₦' . number_format($wallet_balance)
+                ],
+                400
+            );
         }
 
         $reference = MyFunctions::generateRequestId();
@@ -155,7 +178,7 @@ public function getEsims()
             'command' => 'execTransaction',
             'operator' => $request->operator,
             'productId' => $request->product_id,
-            'amountOperator' => $request->amount,
+            'amountOperator' => $request->operator_amount,
             'quantity' => $request->quantity,
             'userReference' => $reference,
             'simulate' => 1
@@ -177,8 +200,9 @@ public function getEsims()
 
         if (in_array($txStatus, ['Successful', 'Pending'])) {
             $balanceBefore = $user->wallet_balance;
-            $user->wallet_balance -= $totalAmount;
-            $user->save();   
+            $balanceAfter = $wallet_balance - $totalAmount;
+            $user->wallet_balance = $balanceAfter;
+            $user->save();
 
             $walletTrans = new WalletTransactions();
             $walletTrans->trans_type = 'debit';
@@ -188,7 +212,7 @@ public function getEsims()
             $walletTrans->status = 'Successful';
             $walletTrans->transaction_id = $reference;
             $walletTrans->balance_before = $balanceBefore;
-            $walletTrans->balance_after = $user->wallet_balance;
+            $walletTrans->balance_after = $balanceAfter;
             $walletTrans->save();
         }
 

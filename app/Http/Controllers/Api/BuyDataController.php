@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 use App\MyFunctions;
 use App\Services\BeneficiaryService;
+use App\Services\PinService;
 
 
 class BuyDataController extends BaseDataController
@@ -174,7 +175,7 @@ class BuyDataController extends BaseDataController
     }
 
 
-    public function buyData(Request $request, PercentageService $percentageService)
+    public function buyData(Request $request, PinService $pinService)
     {
         $validator = $this->validateRequest($request);
 
@@ -194,7 +195,17 @@ class BuyDataController extends BaseDataController
             $plan_size = $request->input('plan_size');
             $beneficiary = $request->input('beneficiary', false);
 
+            $pin = $request->input('pin');
             $user = $request->user();
+            
+
+            if (!$pinService->checkPin($user, $pin)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Invalid transaction pin.'
+                ], 403);
+            }
+
             $wallet_balance = $user->wallet_balance;
 
             if ($wallet_balance < $amount) {

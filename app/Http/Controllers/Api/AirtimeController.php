@@ -18,10 +18,12 @@ use App\Jobs\CheckArtxTransactionStatus;
 use App\Services\ArtxAirtimeService;
 use App\MyFunctions;
 use App\Services\BeneficiaryService;
+use App\Services\PinService;
+
 
 class AirtimeController extends Controller
 {
-    public function buyAirtime(Request $request, PercentageService $airtimePercentageService)
+    public function buyAirtime(Request $request, PercentageService $airtimePercentageService , PinService $pinService)
     {
         $validator = Validator::make($request->all(), [
             'network' => 'required|integer',
@@ -30,7 +32,7 @@ class AirtimeController extends Controller
             'beneficiary' => 'boolean|nullable',
             'mobile_number' => ['required', 'string', 'min:11', 'max:11'],
             'regex:/^0[7-9][0-1]\d{8}$/',
-            
+
         ]);
 
         if ($validator->fails()) {
@@ -45,14 +47,23 @@ class AirtimeController extends Controller
             $mobile_number = $request->input('mobile_number');
             $amount = $request->input('amount');
             $beneficiary = $request->input('beneficiary', false);
+            $pin = $request->input('pin');
             $user = $request->user();
-            $wallet_balance = $user->wallet_balance;
+            
 
+            if (!$pinService->checkPin($user, $pin)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Invalid transaction pin.'
+                ], 403);
+            }
+
+            $wallet_balance = $user->wallet_balance;
             // Validate wallet balance and amount
             if ($wallet_balance < $amount) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'You can\'t topup due to insufficient balance N' . $wallet_balance
+                    'message' => 'Insufficient balance ₦' . number_format($wallet_balance)
                 ], 401);
             }
 
@@ -168,16 +179,16 @@ class AirtimeController extends Controller
             $user->save();
 
             $transaction = $this->createTransaction(
-            $user,
-            $amount,
-            $handledResponse['network_name'],
-            'Pending',
-            $context['mobile_number'],
-            $context['image'],
-            $handledResponse['transaction_id'],
-            $userReference,
-            $handledResponse['which_api'] ?? null,
-            $context['network'] ?? null,
+                $user,
+                $amount,
+                $handledResponse['network_name'],
+                'Pending',
+                $context['mobile_number'],
+                $context['image'],
+                $handledResponse['transaction_id'],
+                $userReference,
+                $handledResponse['which_api'] ?? null,
+                $context['network'] ?? null,
             );
 
             $this->createWalletTransaction(
@@ -197,7 +208,6 @@ class AirtimeController extends Controller
                             'identifier' => $context['mobile_number'],
                             'provider'   => $context['network'],
                         ], $user);
-
                     } else {
                         Log::error('Beneficiary mobile number is missing');
                     }
@@ -280,8 +290,8 @@ class AirtimeController extends Controller
             $context['which_api'] ?? null,
             $context['network'] ?? null
 
-            
-                );
+
+        );
 
         return response()->json([
             'status' => false,
@@ -337,13 +347,13 @@ class AirtimeController extends Controller
     }
 
     protected function mapNetworkToName(int $networkId): string
-{
-    return match ($networkId) {
-        1 => 'Nigeria MTN',
-        2 => 'Nigeria GLO',
-        3 => 'Nigeria Airtel',
-        6 => 'Nigeria 9Mobile',
-        default => 'Unknown',
-    };
-}
+    {
+        return match ($networkId) {
+            1 => 'Nigeria MTN',
+            2 => 'Nigeria GLO',
+            3 => 'Nigeria Airtel',
+            6 => 'Nigeria 9Mobile',
+            default => 'Unknown',
+        };
+    }
 }

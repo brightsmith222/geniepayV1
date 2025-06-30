@@ -31,7 +31,7 @@ class ElectricityController extends Controller
                 'Content-Type' => 'application/json',
             ];
 
-            $response = Http::withHeaders($headers)->get($url);
+            $response = Http::withoutVerifying()->withHeaders($headers)->get($url);
 
             if ($response->successful()) {
                 $data = $response->json();

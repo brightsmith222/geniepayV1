@@ -15,89 +15,86 @@ use App\MyFunctions;
 use App\Services\VtpassService;
 use App\Services\ReferralService;
 use App\Services\BeneficiaryService;
-use App\Services\PercentageService;
 use Illuminate\Support\Facades\Cache;
+use App\Services\PinService;
 
 class CableTvController extends Controller
 {
 
     public function getCablePlan($serviceID)
-{
-    try {
-        $vtpass = new VtpassService();
-        $url = config('api.vtpass.base_url') . "service-variations?serviceID=" . $serviceID;
-        
-        if ($vtpass->isVtpassEnabled()) {
-            $headers = $vtpass->getHeaders();
-        } else {
-            return response()->json([
-                'status' => false,
-                'message' => 'Server call service is currently disabled.',
-            ]);
-        }
+    {
+        try {
+            $cacheKey = "cable_plan_{$serviceID}";
+            $cacheMinutes = 60 * 24; // 24 hours
 
-        $response = Http::withoutVerifying()->withHeaders($headers)->get($url);
+            $responseData = Cache::remember($cacheKey, $cacheMinutes * 60, function () use ($serviceID) {
+                $vtpass = new VtpassService();
+                $url = config('api.vtpass.base_url') . "service-variations?serviceID=" . $serviceID;
 
-        Log::info('API response: ' . $response->body());
-        
-        if ($response->successful()) {
-            $data = $response->json();
-
-            // Check if the response has the expected structure
-            if ($data['response_description'] == '000') {
-                $responseData = [
-                    'response_description' => '000',
-                    'content' => [
-                        'ServiceName' => $data['content']['ServiceName'] ?? $data['content']['service_name'] ?? ucfirst($serviceID) . ' Subscription',
-                        'serviceID' => $serviceID,
-                        'convinience_fee' => $data['content']['convinience_fee'] ?? 'N0',
-                        'variations' => $data['content']['variations'] ?? $data['content']['varations'] ?? [],
-                    ]
-                ];
-
-                // Clean up the variations array (optional)
-                $responseData['content']['variations'] = array_map(function($variation) {
+                if (!$vtpass->isVtpassEnabled()) {
                     return [
-                        'variation_code' => $variation['variation_code'],
-                        'name' => $variation['name'],
-                        'variation_amount' => $variation['variation_amount'],
-                        'fixedPrice' => $variation['fixedPrice'] ?? 'Yes' // Default to 'Yes' if not provided
+                        'status' => false,
+                        'message' => 'Server call service is currently disabled.',
                     ];
-                }, $responseData['content']['variations']);
+                }
 
-                return response()->json(
-                    [
-                        'status' => true,
-                        'data' => $responseData
-                    ],
-                    200
-                );
+                $headers = $vtpass->getHeaders();
+                $response = Http::withoutVerifying()->withHeaders($headers)->get($url);
+
+                if ($response->successful()) {
+                    $data = $response->json();
+                    if ($data['response_description'] == '000') {
+                        $content = [
+                            'ServiceName' => $data['content']['ServiceName'] ?? $data['content']['service_name'] ?? ucfirst($serviceID) . ' Subscription',
+                            'serviceID' => $serviceID,
+                            'convinience_fee' => $data['content']['convinience_fee'] ?? 'N0',
+                            'variations' => $data['content']['variations'] ?? $data['content']['varations'] ?? [],
+                        ];
+
+                        // Clean up the variations array
+                        $content['variations'] = array_map(function ($variation) {
+                            return [
+                                'variation_code' => $variation['variation_code'],
+                                'name' => $variation['name'],
+                                'variation_amount' => $variation['variation_amount'],
+                                'fixedPrice' => $variation['fixedPrice'] ?? 'Yes'
+                            ];
+                        }, $content['variations']);
+
+                        return [
+                            'status' => true,
+                            'data' => [
+                                'response_description' => '000',
+                                'content' => $content
+                            ]
+                        ];
+                    } else {
+                        return [
+                            'status' => false,
+                            'message' => $data['response_description'] ?? 'Could not fetch data'
+                        ];
+                    }
+                } else {
+                    return [
+                        'status' => false,
+                        'message' => 'Could not fetch data'
+                    ];
+                }
+            });
+
+            if ($responseData['status']) {
+                return response()->json($responseData, 200);
             } else {
-                return response()->json([
-                    'status' => false,
-                    'message' => $data['response_description'] ?? 'Could not fetch data'
-                ], 400);
+                return response()->json($responseData, 400);
             }
-        } else {
+        } catch (\Exception $e) {
+            Log::error("An error occurred: " . $e->getMessage());
             return response()->json([
                 'status' => false,
-                'message' => 'Could not fetch data'
-            ], $response->status());
+                'message' => $e->getMessage()
+            ], 500);
         }
-    } catch (RequestException $e) {
-        Log::error("Request failed: " . $e->getMessage());
-        return response()->json([
-            'status' => false,
-            'message' => $e->getMessage()
-        ], 400);
-    } catch (\Exception $e) {
-        Log::error("An error occurred: " . $e->getMessage());
-        return response()->json([
-            'status' => false,
-            'message' => $e->getMessage()
-        ], 500);
     }
-}
 
 
     public function getCableProviders(VtpassService $vtpass)
@@ -250,7 +247,7 @@ class CableTvController extends Controller
         return response()->json(['message' => 'Invalid request method'], 405);
     }
 
-    public function cableSubscription(Request $request, VtpassService $vtpass)
+    public function cableSubscription(Request $request, VtpassService $vtpass, PinService $pinService)
     {
 
 
@@ -283,14 +280,23 @@ class CableTvController extends Controller
 
             $requestId = MyFunctions::generateRequestId();
 
+            $pin = $request->input('pin');
             $user = $request->user();
+            
+
+            if (!$pinService->checkPin($user, $pin)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Invalid transaction pin.'
+                ], 403);
+            }
 
             $wallet_balance = $user->wallet_balance;
 
             if ($wallet_balance < $amount) {
                 return response()->json([
                     'status' => false,
-                    'message' => 'You can\'t make transaction due to insufficient balance N ' . $wallet_balance
+                    'message' => 'Insufficient balance ₦' . number_format($wallet_balance)
                 ], 401);
             }
 
