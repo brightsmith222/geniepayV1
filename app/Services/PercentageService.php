@@ -5,11 +5,13 @@ namespace App\Services;
 use App\Models\AirtimeTopupPercentage;
 use App\Models\DataTopupPercentage;
 use App\Models\VoucherPercentage;
+use App\Models\GeneralSettings;
 
 use Illuminate\Support\Facades\Log;
 
 class PercentageService
 {
+    // Calculate discounted amount for airtime topup.
     public function calculateDiscountedAmount(int $networkId, float $originalAmount): float
     {
         $record = AirtimeTopupPercentage::where('network_id', $networkId)->first();
@@ -28,6 +30,7 @@ class PercentageService
         return $originalAmount;
     }
 
+    // Calculate discounted amount for data topup.
     public function calculateDataDiscountedAmount(int $networkId, float $originalAmount): float
     {
         $record = DataTopupPercentage::where('network_id', $networkId)->first();
@@ -88,9 +91,9 @@ class PercentageService
         return $originalAmount;
     }
 
+    // Calculate discounted amount for Smile data topup.
     public function calculateSmileDiscountedAmount(float $originalAmount): float
 {
-    // Retrieve the percentage for Smile from the DataTopupPercentage table
     $record = DataTopupPercentage::where('network_name', 'smile')->first();
 
     if ($record && (bool) $record->status) {
@@ -108,9 +111,9 @@ class PercentageService
     return $originalAmount;
 }
 
+// Calculate discounted amount for Spectranet data topup.
 public function calculateSpectranetDiscountedAmount(float $originalAmount): float
 {
-    // Retrieve the percentage for Spectranet from the DataTopupPercentage table
     $record = DataTopupPercentage::where('network_name', 'spectranet')->first();
 
     if ($record && (bool) $record->status) {
@@ -135,6 +138,24 @@ public function calculateSpectranetDiscountedAmount(float $originalAmount): floa
     return $originalAmount;
 }
 
+// Calculate virtual charge.
+public function virtualCharge(float $originalAmount): float
+{
+    $record = GeneralSettings::where('name', 'virtual_charge')->first();
+
+    if ($record && (bool) $record->is_enabled) {
+        $percentage = (float) $record->referral_bonus;
+        return $originalAmount - $this->calculateDiscount($percentage, $originalAmount);
+    }
+
+    if (!$record) {
+        Log::warning("Virtual charge not found");
+    } elseif (!(bool) $record->is_enabled) {
+        Log::info("Virtual charge is disabled");
+    }
+
+    return $originalAmount;
+}
     /**
      * Calculate discount based on percentage.
      */

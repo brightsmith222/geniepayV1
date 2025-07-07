@@ -294,6 +294,53 @@
                     <div class="bonus-hint">Set the amount rewarded for each successful referral</div>
                 </div>
             </div>
+
+            <div class="card shadow-sm">
+                    <div class="card-body p-3">
+                        <p>Enable/Disable Virtual Account Charges</p>
+                    <label class="toggle-switch">
+                        <span class="toggle-label">Enable Charges</span>
+                        <input type="checkbox"class="toggle-input" @change="$wire.toggleSetting('virtual_charge')" {{ $virtualEnabled ? 'checked' : '' }}>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">
+                            <span class="{{ $virtualEnabled ? 'state-on' : 'state-off' }}">
+                                {{ $virtualEnabled ? 'On' : 'Off' }}
+                            </span>
+                        </span>
+                    </label>
+                    <div class="bonus-header">
+                        <label for="virtual_charge" class="bonus-label">
+                            <i class="fas fa-gift bonus-icon"></i>
+                            Charge Amount
+                        </label>
+                        <span class="bonus-currency">NGN</span>
+                    </div>
+                    
+                    <div class="bonus-input-group">
+                        <input type="number" 
+                               id="virtual_charge" 
+                               step="0.01" 
+                               min="0"
+                               wire:model.defer="virtualCharge"
+                               class="bonus-input"
+                               placeholder="0.00">
+                        
+                               <button wire:click="saveVirtualCharge" 
+                               class="bonus-save-btn"
+                               wire:loading.attr="disabled"
+                               wire:target="saveVirtualCharge">
+                           <span wire:loading.remove wire:target="saveVirtualCharge">
+                               <i class="fas fa-check"></i> Update
+                           </span>
+                           <span wire:loading wire:target="saveVirtualCharge">
+                               <i class="fas fa-spinner fa-spin"></i> Saving
+                           </span>
+                       </button>
+                    </div>
+                    
+                    <div class="bonus-hint">Set the amount rewarded for each successful referral</div>
+                </div>
+            </div>
                 
                 
             </div>

@@ -17,6 +17,9 @@ use App\Http\Controllers\Api\SmileController;
 use App\Http\Controllers\Api\SpectranetController;
 use App\Http\Controllers\Api\BeneficiaryController;
 use App\Http\Controllers\Api\MobilePinController;
+use App\Http\Controllers\Api\NinePsbWebhookController;
+use App\Http\Controllers\Api\HashTestController;
+
 
 
 // Route::get('/user', function (Request $request) {
@@ -32,7 +35,7 @@ Route::post('/set-transaction-pin', [UserController::class, 'setTransactionPin']
 Route::post('/update-user', [UserController::class, 'updateUser']);
 Route::get('/user-referred', [UserController::class, 'getReferredUsers']);
 Route::get('/referral-bonus', [UserController::class, 'getReferralBonus']);
-
+Route::get('/virtual-charge', [UserController::class, 'getVirtualCharge']);
 
     
 Route::get('/get_data_plan', [BuyDataController::class, 'getDataPlan']);
@@ -110,6 +113,10 @@ Route::post('/spectranet/purchase', [SpectranetController::class, 'purchaseSpect
 Route::post('/beneficiaries', [BeneficiaryController::class, 'index']);
 
 
+
+
+
+
 });
 
 Route::post('/login', [UserController::class, 'userLogin']);
@@ -120,6 +127,11 @@ Route::post('/recover-password', [UserController::class, 'recoverPassword']);
 
 Route::post('/v1/monnify-webhook', [PaymentController::class, 'monnifyWebhook']);
 Route::post('/v1/paystack-webhook', [PaymentController::class, 'paystackWebhook']);
+
+// webhook for 9PSB
+Route::post('/webhook/9psb-notify', [NinePsbWebhookController::class, 'handle']);
+
+Route::post('/generate-hash', [HashTestController::class, 'generate']);
 
 Route::post('/test-mail', [UserController::class, 'testMail']);
 

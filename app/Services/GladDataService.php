@@ -163,7 +163,7 @@ class GladDataService extends BaseApiService implements ApiServiceInterface
             foreach ($networkPlans as $plan) {
                 $formattedPlans[] = [
                     'plan_id'    => $plan['dataplan_id'] ?? null,
-                    'plan'       => $plan['month_validate'] ?? null,
+                    'plan_name'       => $plan['month_validate'] ?? null,
                     'plan_type'       => $plan['plan_type'] ?? null,
                     'network'    => $networkName,
                     'amount'     => $plan['plan_amount'] ?? null,

@@ -18,5 +18,13 @@ return [
     'username' => env('ARTX_USERNAME'),
     'password' => env('ARTX_PASSWORD'),
 ],
+'9psb' => [
+    'public_key' => env('NINE_PSB_PUBLIC_KEY'),
+    'private_key' => env('NINE_PSB_PRIVATE_KEY'),
+    'base_url' => env('NINE_PSB_BASE_URL'),
+    'webhook_username' => env('NINE_PSB_WEBHOOK_USERNAME'),
+    'webhook_password' => env('NINE_PSB_WEBHOOK_PASSWORD'),
+],
+
 ];
 

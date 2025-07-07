@@ -18,6 +18,8 @@ class SettingController extends Component
     public $new_password_confirmation;
     public $activeTab = 'profile';
     public $referralEnabled;
+    public $virtualEnabled;
+    public $virtualCharge;
     public $vtpassEnabled;
     public $gladDataEnabled;
     public $artxDataEnabled;
@@ -45,6 +47,7 @@ class SettingController extends Component
 
     // Initialize toggle values from database
     $this->referralEnabled = (bool) GeneralSettings::where('name', 'referral')->value('is_enabled');
+    $this->virtualEnabled = (bool) GeneralSettings::where('name', 'virtual_charge')->value('is_enabled');
     $this->vtpassEnabled = (bool) GeneralSettings::where('name', 'vtpass')->value('is_enabled');
     $this->gladDataEnabled = (bool) GeneralSettings::where('name', 'glad_data')->value('is_enabled');
     $this->artxDataEnabled = (bool) GeneralSettings::where('name', 'artx_data')->value('is_enabled');
@@ -52,6 +55,7 @@ class SettingController extends Component
     $this->artxAirtimeEnabled = (bool) GeneralSettings::where('name', 'artx_airtime')->value('is_enabled');
     $this->artxgiftcardEnabled = (bool) GeneralSettings::where('name', 'artx_giftcard')->value('is_enabled');
     $this->referralBonus = GeneralSettings::where('name', 'referral')->value('referral_bonus') ?? 0;
+    $this->virtualCharge = GeneralSettings::where('name', 'virtual_charge')->value('referral_bonus') ?? 0;
 
 }
 
@@ -65,6 +69,10 @@ public function toggleSetting($name)
 
     if ($name === 'referral') {
         $this->referralEnabled = $setting->is_enabled;
+    }
+
+    if ($name === 'virtual_charge') {
+        $this->virtualEnabled = $setting->is_enabled;
     }
 
     if ($name === 'vtpass') {
@@ -107,6 +115,19 @@ public function saveReferralBonus()
     );
 
     flash()->success('Referral bonus updated successfully!');
+
+}
+
+public function saveVirtualCharge()
+{
+    Log::info('Saving referral bonus: ' . $this->virtualCharge);
+
+    GeneralSettings::updateOrCreate(
+        ['name' => 'virtual_charge'],
+        ['referral_bonus' => $this->virtualCharge]
+    );
+
+    flash()->success('Virtual charge updated successfully!');
 
 }
 

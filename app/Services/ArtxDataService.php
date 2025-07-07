@@ -187,7 +187,7 @@ class ArtxDataService extends BaseApiService implements ApiServiceInterface
             foreach ($responseData['result']['products'] as $productId => $product) {
                 if ($product['productType']['id'] == 4) { // Mobile Data
                     $plans[] = [
-                        'plan_id' => $productId,
+                        'plan_id' => (string) $productId,
                         'plan_name' => $product['name'],
                         'network' => $this->getNetworkName($network),
                         'amount' => number_format($product['price']['user'], 2), // Format the amount

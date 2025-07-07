@@ -2149,6 +2149,16 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         custom: []
+      operator_amount:
+        name: operator_amount
+        description: ''
+        required: true
+        example: 4326.41688
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
       brand_id:
         name: brand_id
         description: ''
@@ -2169,12 +2179,24 @@ endpoints:
         exampleWasSpecified: false
         nullable: false
         custom: []
+      quantity:
+        name: quantity
+        description: ''
+        required: true
+        example: 16
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
     cleanBodyParameters:
       operator: architecto
       product_id: architecto
       amount: 4326.41688
+      operator_amount: 4326.41688
       brand_id: architecto
       plan_name: architecto
+      quantity: 16
     fileParameters: []
     responses: []
     responseFields: []
@@ -2338,7 +2360,7 @@ endpoints:
         name: beneficiary
         description: ''
         required: true
-        example: false
+        example: true
         type: boolean
         enumValues: []
         exampleWasSpecified: false
@@ -2350,7 +2372,7 @@ endpoints:
       plan: architecto
       amount: 4326.41688
       image: architecto
-      beneficiary: false
+      beneficiary: true
     fileParameters: []
     responses: []
     responseFields: []
@@ -2608,7 +2630,7 @@ endpoints:
         custom: []
       username:
         name: username
-        description: "'last_name' => 'string|required',. Must not be greater than 255 characters."
+        description: 'Must not be greater than 255 characters.'
         required: true
         example: 'n'
         type: string
@@ -2628,7 +2650,7 @@ endpoints:
         custom: []
       ref_code:
         name: ref_code
-        description: "'country' => 'required|string',."
+        description: ''
         required: false
         example: architecto
         type: string
@@ -2851,6 +2873,36 @@ endpoints:
     httpMethods:
       - POST
     uri: api/v1/paystack-webhook
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: false
+      custom: []
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - POST
+    uri: api/webhook/9psb-notify
     metadata:
       groupName: Endpoints
       groupDescription: ''

@@ -216,7 +216,13 @@ class CableTvController extends Controller
                     $message = "You are about to purchase " . $serviceId . ", " . $planName . " for " . "( Customer Name: " . $customerName . ", Customer " . $serviceType . " Number: " . $billersCode . ")";
                     return response()->json([
                         'status' => true,
-                        'message' => $message
+                        'message' => $message,
+                        'data' => [
+                            "Customer_Name"=> $data['content']['Customer_Name'],
+                            "Address"=> $data['content']['Address'],
+                            "Card_Number"=> $data['content']['Meter_Number'] ?? $data['content']['Customer_Number'],
+                            "Meter_Type"=> $data['content']['Meter_Type'],
+                        ]
 
                     ]);
                 } else {

@@ -18,161 +18,153 @@ use App\Services\PinService;
 
 class BuyDataController extends BaseDataController
 {
-    public function getDataPlan(Request $request, PercentageService $percentageService)
-    {
-        try {
-            $apiService = $this->getActiveApiService();
+    public function getDataPlan(Request $request, PercentageService $percentageService, BeneficiaryService $beneficiaryService)
+{
+    try {
+        $networkId = $request->input('network');
+        $user = $request->user();
+        $beneficiaries = $beneficiaryService->getByTypeAndProvider($user, 'data', $networkId);
 
-            if (!$apiService) {
-                return response()->json([
-                    'status' => false,
-                    'message' => 'No active data service available'
-                ], 503);
+        if (!$networkId) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Please provide a valid network ID.'
+            ], 400);
+        }
+
+        $apiService = $this->getActiveApiService();
+
+        if (!$apiService) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No active data service available'
+            ], 503);
+        }
+
+        $cacheKey = "data_plans:{$apiService->getServiceName()}:network:{$networkId}";
+
+        $networkPlans = Cache::remember($cacheKey, now()->addMinutes(60), function () use ($apiService, $networkId) {
+            return $apiService->getDataPlans($networkId);
+        });
+
+        Log::info('Fetched plans for network', ['network_id' => $networkId, 'plans' => $networkPlans]);
+
+        $plansById = collect($networkPlans)->keyBy('plan_id');
+
+        $adjustedPlans = collect($networkPlans)->map(function ($plan) use ($percentageService) {
+            $networkId = $this->mapNetworkToId($plan['network']);
+            $plan['original_amount'] = $plan['amount'];
+            $plan['amount'] = round($percentageService->calculateDataDiscountedAmount($networkId, (float) str_replace(',', '', $plan['amount'])), 2);
+
+            // Determine type from validity
+            $validity = strtolower($plan['validity'] ?? '');
+            preg_match('/\d+/', $validity, $matches);
+            $days = isset($matches[0]) ? (int) $matches[0] : 0;
+
+            if ($days > 0) {
+                if ($days < 7) {
+                    $plan['type'] = 'daily';
+                } elseif ($days >= 7 && $days < 30) {
+                    $plan['type'] = 'weekly';
+                } elseif ($days >= 30) {
+                    $plan['type'] = 'monthly';
+                } else {
+                    $plan['type'] = 'others';
+                }
+            } else {
+                $plan['type'] = 'others';
             }
 
-            // Define a unique cache key based on the active API service
-            $cacheKey = "data_plans:{$apiService->getServiceName()}";
+            return $plan;
+        });
 
-            // Check if data plans are cached
-            $allPlans = Cache::remember($cacheKey, now()->addMinutes(60), function () use ($apiService) {
-                // Fetch plans by API
-                if ($apiService instanceof \App\Services\ArtxDataService) {
-                    $mtnPlans     = $apiService->getDataPlans(1);
-                    $gloPlans     = $apiService->getDataPlans(2);
-                    $airtelPlans  = $apiService->getDataPlans(3);
-                    $mobile9Plans = $apiService->getDataPlans(6);
-                    return array_merge($mtnPlans, $gloPlans, $airtelPlans, $mobile9Plans);
+        $activeApi = $apiService->getServiceName();
+        $whichApi = $this->mapApiServiceToWhichApi($activeApi);
+
+        // Hot Deals
+        $hotDealsKey = "hot_deals:{$whichApi}:{$networkId}";
+        $rawHotDeals = Cache::remember($hotDealsKey, now()->addMinutes(60), function () use ($whichApi, $networkId) {
+            return \App\Models\Transactions::query()
+                ->where('status', 'Successful')
+                ->where('which_api', $whichApi)
+                ->where('service', 'data')
+                ->where('provider_id', $networkId)
+                ->where('created_at', '>=', now()->subDays(30))
+                ->selectRaw('provider_id, service_plan, plan_id, COUNT(*) as purchases')
+                ->groupBy('provider_id', 'service_plan', 'plan_id')
+                ->orderByDesc('purchases')
+                ->get();
+        });
+
+        $hotDeals = $rawHotDeals->map(function ($deal) use ($plansById, $percentageService) {
+            $plan = $plansById[$deal->plan_id] ?? null;
+            if (!$plan) return null;
+
+            $networkId = $plan['provider_id'] ?? $deal->provider_id;
+            $originalAmount = $plan['amount'];
+            $discountedAmount = round($percentageService->calculateDataDiscountedAmount($networkId, (float) str_replace(',', '', $originalAmount)), 2);
+
+            $validity = strtolower($plan['validity'] ?? '');
+            preg_match('/\d+/', $validity, $matches);
+            $days = isset($matches[0]) ? (int) $matches[0] : 0;
+
+            if ($days > 0) {
+                if ($days < 7) {
+                    $type = 'daily';
+                } elseif ($days >= 7 && $days < 30) {
+                    $type = 'weekly';
+                } elseif ($days >= 30) {
+                    $type = 'monthly';
+                } else {
+                    $type = 'others';
                 }
+            } else {
+                $type = 'others';
+            }
 
-                if ($apiService instanceof \App\Services\GladDataService) {
-                    // Fetch plans for each network
-                    $mtnPlans     = $apiService->getDataPlans(1); // MTN
-                    $gloPlans     = $apiService->getDataPlans(2); // GLO
-                    $airtelPlans  = $apiService->getDataPlans(3); // Airtel
-                    $mobile9Plans = $apiService->getDataPlans(6); // 9Mobile
-                    return array_merge($mtnPlans, $gloPlans, $airtelPlans, $mobile9Plans);
-                }
-            });
+            return [
+                'provider_id'     => $deal->provider_id,
+                'service_plan'    => $plan['plan_name'] ?? null,
+                'plan_id'         => $deal->plan_id,
+                'purchases'       => $deal->purchases,
+                'amount'          => $discountedAmount,
+                'original_amount' => $originalAmount,
+                'network'         => $plan['network'] ?? null,
+                'validity'        => $plan['validity'] ?? null,
+                'data_volume'     => $plan['data_volume'] ?? null,
+                'type'            => 'hot_deal',
+            ];
+        })->filter()->sortByDesc('purchases')->take(10)->values();
 
-            Log::info ('This are all the plans', ['plans' => $allPlans]);
+        // Special Plans
+        $specialKey = "special_plans:{$apiService->getServiceName()}:network:{$networkId}";
+        $specialPlans = Cache::remember($specialKey, now()->addMinutes(60), function () use ($adjustedPlans) {
+            return $adjustedPlans->sortBy('amount')->take(10)->values();
+        })->map(function ($plan) {
+            $plan['type'] = 'special_deal';
+            return $plan;
+        });
 
+        // Merge all plans into one data response
+        $mergedPlans = $adjustedPlans
+            ->merge($hotDeals)
+            ->merge($specialPlans)
+            ->values();
 
-            $plansById = collect($allPlans)->keyBy('plan_id');
-
-            // 🔁 Adjust the amount for each plan based on the percentage
-            $adjustedPlans = collect($allPlans)->map(function ($plan) use ($percentageService) {
-                $networkId = $this->mapNetworkToId($plan['network']); // Map network name to ID
-
-                // Add the original amount from the response
-                $plan['original_amount'] = $plan['amount'];
-
-                // Adjust the amount using the percentage service
-                $plan['amount'] = round($percentageService->calculateDataDiscountedAmount($networkId, (float) str_replace(',', '', $plan['amount'])), 2);
-                
-
-                return $plan;
-            });
-
-
-            // 🔁 Group plans by network and then by validity
-            $groupedPlans = collect($adjustedPlans)->groupBy('network')->map(function ($plans) {
-                return $plans->groupBy(function ($plan) {
-                    $validity = strtolower($plan['validity'] ?? '');
-
-                    // Extract the numeric value from the validity string
-                    preg_match('/\d+/', $validity, $matches);
-                    $days = isset($matches[0]) ? (int) $matches[0] : 0;
-
-                    if ($days > 0) {
-                        if ($days < 7) {
-                            return 'daily';
-                        } elseif ($days >= 7 && $days < 30) {
-                            return 'weekly';
-                        } elseif ($days >= 30) {
-                            return 'monthly';
-                        }
-                    }
-
-                    return 'others'; // For plans that don't fit into the above categories
-                });
-            });
-
-            // 🔥 Fetch hot deals from transaction history
-            $activeApi = $apiService->getServiceName();
-            $whichApi = $this->mapApiServiceToWhichApi($activeApi); // Map activeApi to which_api
-
-
-            $cacheKey = "hot_deals:{$whichApi}";
-
-            $rawHotDeals = Cache::remember($cacheKey, now()->addMinutes(60), function () use ($whichApi) {
-                return \App\Models\Transactions::query()
-                    ->where('status', 'Successful')
-                    ->where('which_api', $whichApi)
-                    ->where('service', 'data')
-                    ->where('created_at', '>=', now()->subDays(30))
-                    ->selectRaw('provider_id, service_plan, plan_id, COUNT(*) as purchases')
-                    ->groupBy('provider_id', 'service_plan', 'plan_id')
-                    ->orderByDesc('purchases')
-                    ->get();
-            });
-
-            // 🔁 Map plans by ID for matching
-            //$plansById = $adjustedPlans->keyBy('plan_id');
-
-            // Group hot deals by network
-            $hotDealsByProvider = $rawHotDeals->groupBy('provider_id')->map(function ($deals) use ($plansById, $percentageService) {
-    return $deals->map(function ($deal) use ($plansById, $percentageService) {
-        $plan = $plansById[$deal->plan_id] ?? null;
-        if (!$plan) {
-            return null; // skip if plan not found in API
-        }
-        $networkId = $plan['provider_id'] ?? $deal->provider_id;
-        $originalAmount = $plan['original_amount'] ?? $plan['amount'];
-        // Calculate the discounted amount using the original API price
-        $discountedAmount = round($percentageService->calculateDataDiscountedAmount($networkId, (float) str_replace(',', '', $originalAmount)), 2);
-
-        return [
-            'provider_id'     => $deal->provider_id,
-            'service_plan'    => $plan['plan_name'] ?? null,
-            'plan_id'         => $deal->plan_id,
-            'purchases'       => $deal->purchases,
-            'amount'          => $discountedAmount,           // Discounted price
-            'original_amount' => $originalAmount,             // API price
-            'network'         => $plan['network'] ?? null,
-            'validity'        => $plan['validity'] ?? null,
-            'data_volume'     => $plan['data_volume'] ?? null,
-        ];
-    })->filter()->sortByDesc('purchases')->take(10)->values(); // filter() removes nulls
-});
-
-            // 🧠 Get special plans (cheapest top 10 for each network)
-            $specialPlansCacheKey = "special_plans:{$apiService->getServiceName()}";
-            $specialPlans = Cache::remember($specialPlansCacheKey, now()->addMinutes(60), function () use ($adjustedPlans) {
-                // Group plans by network ID
-                $groupedByNetworkId = $adjustedPlans->groupBy(function ($plan) {
-                    return $this->mapNetworkToId($plan['network']); // Use network ID
-                });
-
-                // Fetch the cheapest 10 plans for each network ID
-                return $groupedByNetworkId->map(function ($plans) {
-                    return $plans->sortBy('amount')->take(9)->values();
-                });
-            });
-
-            return response()->json([
-                'status'         => true,
-                'data'           => $groupedPlans,
-                'special_plans'  => $specialPlans,
-                'hot_deals'      => $hotDealsByProvider,
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Get Data Plans Error', ['error' => $e->getMessage()]);
-            return response()->json([
-                'status'  => false,
-                'message' => 'Failed to retrieve data plans'
-            ], 500);
-        }
+        return response()->json([
+            'status'        => true,
+            'data'          => $mergedPlans,
+            'beneficiaries' => $beneficiaries,
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Get Data Plans Error', ['error' => $e->getMessage()]);
+        return response()->json([
+            'status'  => false,
+            'message' => 'Failed to retrieve data plans'
+        ], 500);
     }
+}
+
 
 
     public function buyData(Request $request, PinService $pinService)

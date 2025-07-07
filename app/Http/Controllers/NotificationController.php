@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Client\RequestException;
 use App\Services\FCMService;
 use Illuminate\Support\Facades\Validator;
+use App\Jobs\SendNotificationJob;
+use Illuminate\Support\Facades\Storage;
 
 class NotificationController extends Controller
 {
@@ -106,74 +108,50 @@ class NotificationController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'notification_title' => 'string|required',
-            'notification_message' => 'string|required',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+{
+    $validator = Validator::make($request->all(), [
+        'notification_title' => 'string|required',
+        'notification_message' => 'string|required',
+        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+    ]);
 
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()->with('failed', $validator->errors()->first());
-            
-        }
-
-        try {
-
-            $notification_title = $request->input('notification_title');
-            $notification_message = $request->input('notification_message');
-            $image = $request->file('image');
-
-            $model = new Notification();
-            $model->notification_title = $notification_title;
-            // $model->notification_message = $notification_message;
-
-            $strippedMessage = html_entity_decode($notification_message);
-            $strippedMessage = strip_tags($strippedMessage);
-            $model->notification_message = $strippedMessage;
-
-            if (
-                $image != null
-            ) {
-
-                $ext = $image->getClientOriginalExtension();
-                $fileName = rand(10000, 50000) . '.' . $ext;
-                if ($ext == 'jpg' || $ext == 'png') {
-                    if ($image->move(public_path(), $fileName)) {
-
-                        $model->image = url('/') . '/' . $fileName;
-                    } else {
-                        return redirect()->back()->with('failed', 'failed to upload, please check your internet');
-                    }
-                } else {
-                    return redirect()->back()->with('failed', 'Please upload png or jpg/jpeg');
-                }
-
-            }
-
-            if ($model->save()) {
-                User::where('has_read', 1)->update(['has_read' => 0]);
-                $users = User::whereNotNull('fcm_token')->get();
-
-                foreach ($users as $user) {
-                    $this->fcmService->sendNotification(
-                        $user->fcm_token,
-                        $notification_title,
-                        $strippedMessage,
-                    );
-                }
-                return redirect()->back()->with('success', 'Notification  saved successfully!');
-            }
-            return redirect()->back()->with('failed', 'Notification could not be saved!');
-        } catch (RequestException $e) {
-            // Handle exceptions that occur during the HTTP request
-            Log::error("Request failed: " . $e->getMessage());
-        } catch (\Exception $e) {
-            // Handle any other exceptions
-            Log::error("An error occurred: " . $e->getMessage());
-        }
+    if ($validator->fails()) {
+        return redirect()->back()->withErrors($validator)->withInput();
     }
+
+    try {
+        $notification = new Notification();
+        $notification->notification_title = $request->input('notification_title');
+
+        // Sanitize message
+        $strippedMessage = strip_tags(html_entity_decode($request->input('notification_message')));
+        $notification->notification_message = $strippedMessage;
+
+        // Handle image
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('notifications', 'public');
+            $notification->image = asset('storage/' . $path);
+        }
+
+        if ($notification->save()) {
+            // Mark users' has_read to unread
+            User::where('has_read', 1)->update(['has_read' => 0]);
+
+            // Dispatch notification job
+            dispatch(new SendNotificationJob(
+                $notification->notification_title,
+                $notification->notification_message
+            ));
+
+            return redirect()->back()->with('success', 'Notification saved and will be sent!');
+        }
+
+        return redirect()->back()->with('failed', 'Notification could not be saved!');
+    } catch (\Exception $e) {
+        Log::error("Notification error: " . $e->getMessage());
+        return redirect()->back()->with('failed', 'Something went wrong. Please try again.');
+    }
+}
 
     /**
      * Display the specified resource.

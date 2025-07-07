@@ -233,6 +233,9 @@
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-POSTapi-v1-paystack-webhook">
                                 <a href="#endpoints-POSTapi-v1-paystack-webhook">POST api/v1/paystack-webhook</a>
                             </li>
+                                                                                <li class="tocify-item level-2" data-unique="endpoints-POSTapi-webhook-9psb-notify">
+                                <a href="#endpoints-POSTapi-webhook-9psb-notify">POST api/webhook/9psb-notify</a>
+                            </li>
                                                                                 <li class="tocify-item level-2" data-unique="endpoints-POSTapi-test-mail">
                                 <a href="#endpoints-POSTapi-test-mail">POST api/test-mail</a>
                             </li>
@@ -247,7 +250,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: June 28, 2025</li>
+        <li>Last updated: July 2, 2025</li>
     </ul>
 </div>
 
@@ -5952,8 +5955,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"operator\": \"architecto\",
     \"product_id\": \"architecto\",
     \"amount\": 4326.41688,
+    \"operator_amount\": 4326.41688,
     \"brand_id\": \"architecto\",
-    \"plan_name\": \"architecto\"
+    \"plan_name\": \"architecto\",
+    \"quantity\": 16
 }"
 </code></pre></div>
 
@@ -5972,8 +5977,10 @@ let body = {
     "operator": "architecto",
     "product_id": "architecto",
     "amount": 4326.41688,
+    "operator_amount": 4326.41688,
     "brand_id": "architecto",
-    "plan_name": "architecto"
+    "plan_name": "architecto",
+    "quantity": 16
 };
 
 fetch(url, {
@@ -6090,6 +6097,17 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>Example: <code>4326.41688</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>operator_amount</code></b>&nbsp;&nbsp;
+<small>number</small>&nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="operator_amount"                data-endpoint="POSTapi-esim-purchase"
+               value="4326.41688"
+               data-component="body">
+    <br>
+<p>Example: <code>4326.41688</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>brand_id</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
  &nbsp;
@@ -6110,6 +6128,17 @@ You can check the Dev Tools console for debugging information.</code></pre>
                data-component="body">
     <br>
 <p>Example: <code>architecto</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>quantity</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="quantity"                data-endpoint="POSTapi-esim-purchase"
+               value="16"
+               data-component="body">
+    <br>
+<p>Example: <code>16</code></p>
         </div>
         </form>
 
@@ -6388,7 +6417,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"plan\": \"architecto\",
     \"amount\": 4326.41688,
     \"image\": \"architecto\",
-    \"beneficiary\": false
+    \"beneficiary\": true
 }"
 </code></pre></div>
 
@@ -6409,7 +6438,7 @@ let body = {
     "plan": "architecto",
     "amount": 4326.41688,
     "image": "architecto",
-    "beneficiary": false
+    "beneficiary": true
 };
 
 fetch(url, {
@@ -6566,7 +6595,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>false</code></p>
+<p>Example: <code>true</code></p>
         </div>
         </form>
 
@@ -7292,7 +7321,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="n"
                data-component="body">
     <br>
-<p>'last_name' =&gt; 'string|required',. Must not be greater than 255 characters. Example: <code>n</code></p>
+<p>Must not be greater than 255 characters. Example: <code>n</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>phone_number</code></b>&nbsp;&nbsp;
@@ -7314,7 +7343,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="architecto"
                data-component="body">
     <br>
-<p>'country' =&gt; 'required|string',. Example: <code>architecto</code></p>
+<p>Example: <code>architecto</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>password</code></b>&nbsp;&nbsp;
@@ -7964,6 +7993,114 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="Accept"                data-endpoint="POSTapi-v1-paystack-webhook"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        </form>
+
+                    <h2 id="endpoints-POSTapi-webhook-9psb-notify">POST api/webhook/9psb-notify</h2>
+
+<p>
+</p>
+
+
+
+<span id="example-requests-POSTapi-webhook-9psb-notify">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "http://localhost/api/webhook/9psb-notify" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "http://localhost/api/webhook/9psb-notify"
+);
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-webhook-9psb-notify">
+</span>
+<span id="execution-results-POSTapi-webhook-9psb-notify" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-webhook-9psb-notify"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-webhook-9psb-notify"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-webhook-9psb-notify" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-webhook-9psb-notify">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-webhook-9psb-notify" data-method="POST"
+      data-path="api/webhook/9psb-notify"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-webhook-9psb-notify', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-POSTapi-webhook-9psb-notify"
+                    onclick="tryItOut('POSTapi-webhook-9psb-notify');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-POSTapi-webhook-9psb-notify"
+                    onclick="cancelTryOut('POSTapi-webhook-9psb-notify');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-POSTapi-webhook-9psb-notify"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/webhook/9psb-notify</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-webhook-9psb-notify"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-webhook-9psb-notify"
                value="application/json"
                data-component="header">
     <br>

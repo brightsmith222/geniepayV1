@@ -17,6 +17,10 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
 use App\Models\GeneralSettings;
 use Jenssegers\Agent\Agent;
+use App\Services\NinePsbService;
+use App\Models\VirtualAccount;
+use Illuminate\Support\Str;
+
 
 
 
@@ -25,6 +29,13 @@ use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
+
+    protected $ninePsb;
+
+public function __construct(NinePsbService $ninePsb)
+{
+    $this->ninePsb = $ninePsb;
+}
 
 
     public function user(Request $request)
@@ -85,115 +96,64 @@ class UserController extends Controller
     }
 
     public function registerUser(Request $request)
-    {
-        $isReferralEnabled = GeneralSettings::where('name', 'referral')->value('is_enabled');
+{
+    $isReferralEnabled = GeneralSettings::where('name', 'referral')->value('is_enabled');
 
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|string|email|max:255|unique:users',
-            'full_name' => 'string|required',
-            // 'last_name' => 'string|required',
-            'username' => 'required|string|max:255|unique:users',
-            'phone_number' => 'required|string|min:11|max:11|unique:users',
-            // 'country' => 'required|string',
-            'ref_code' => 'nullable|string',
-            'password' => [
-                'required',
-                'string',
-                'min:8',
-                // 'regex:/[A-Z]/', // Must contain an uppercase letter
-                // 'regex:/[0-9]/', // Must contain a number
-                // 'regex:/[@$!%*?&#]/' // Must contain a special character
-            ],
+    $validator = Validator::make($request->all(), [
+        'email' => 'required|string|email|max:255|unique:users',
+        'full_name' => 'string|required',
+        'username' => 'required|string|max:255|unique:users',
+        'phone_number' => 'required|string|min:11|max:11|unique:users',
+        'ref_code' => 'nullable|string',
+        'password' => 'required|string|min:8',
+    ]);
 
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                // 'message' => $validator->errors()
-                'message' => $validator->errors()->first()
-            ], 422); // 422 Unprocessable Entity
-        }
-
-
-        try {
-            $user = new User();
-
-            $username = $request->input('username');
-            $fullName = $request->input('full_name');
-            // $lastName = $request->input('last_name');
-            $email = $request->input('email');
-            $phone = $request->input('phone_number');
-            $password = $request->input('password');
-            $ref_code = $request->input('ref_code');
-            // $country     = $request->input('country');
-
-            $user->full_name = $fullName;
-            // $user->last_name = $lastName;
-            $user->email = $email;
-            $user->phone_number = $phone;
-            // $user->status  = $status;
-            $user->username  = $username;
-            if ($ref_code) {
-                $referrer = User::where('username', $ref_code)->first();
-                if ($referrer) {
-                    $user->referred_by = $referrer->id;
-                }
-            }
-            $user->referral_bonus_eligible = $isReferralEnabled;
-            // $user->photo  = $photo;
-            // $user->country  = $country;
-
-            $accountReference = MyFunctions::reserveAccount(
-                $email,
-                $fullName,
-                $username
-            );
-
-            $user->account_reference = $accountReference == false ? null : $accountReference;
-
-            $user->password = Hash::make($password);
-
-
-            if ($user->save()) {
-                $code = rand(100000, 999999);
-                $user->verification_code = $code;
-                $user->verification_code_expires_at = now()->addMinutes(15); // Code expires in 15 minutes
-                $user->save();
-
-                // Send the code via email
-                Mail::to($email)->send(new EmailVerification($code));
-
-                // $token = $user->createToken($email)->plainTextToken;
-                // return GeneralResource::collection($user);
-                // Send the code via email
-
-                return response()->json(
-                    [
-                        'status' => true,
-                        'message' => 'User saved successfully',
-                        // 'token' => $token
-                    ],
-                    200
-
-                );
-            } else {
-                return response()->json(
-                    [
-                        'status' => false,
-                        'message' => 'Something went wrong, user could not be saved'
-                    ],
-                    422
-                );
-            }
-        } catch (\Throwable $th) {
-            log::error('check error: ' . $th->getMessage());
-            return response()->json([
-                'status' => false,
-                'message' => $th->getMessage()
-            ], 422);
-        }
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => false,
+            'message' => $validator->errors()->first()
+        ], 422);
     }
+
+    try {
+        $user = new User();
+        $user->full_name = $request->full_name;
+        $user->email = $request->email;
+        $user->phone_number = $request->phone_number;
+        $user->username = $request->username;
+        $user->password = Hash::make($request->password);
+
+        if ($request->ref_code) {
+            $referrer = User::where('username', $request->ref_code)->first();
+            if ($referrer) {
+                $user->referred_by = $referrer->id;
+            }
+        }
+
+        $user->referral_bonus_eligible = $isReferralEnabled;
+
+        $user->save();
+
+        $code = rand(100000, 999999);
+        $user->verification_code = $code;
+        $user->verification_code_expires_at = now()->addMinutes(15);
+        $user->save();
+
+        Mail::to($user->email)->send(new EmailVerification($code));
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Registration successful! Please check your email for verification code.',
+        ], 200);
+    } catch (\Throwable $th) {
+        Log::error('Registration error: ' . $th->getMessage());
+        return response()->json([
+            'status' => false,
+            'message' => $th->getMessage()
+        ], 422);
+    }
+}
+
 
     public function updateUser(Request $request)
     {
@@ -507,8 +467,50 @@ class UserController extends Controller
                 if ($request->input('first_time') === 'yes') {
                     $user->first_verification = 'yes';
                 }
-                $user->save();
+                
+                $userAccess = $user->save();
 
+                
+        // ✅ Step 1: Check if user already has a virtual account
+        if ($userAccess) {
+        $existingAccount = VirtualAccount::where('user_id', $user->id)->first();
+        if (!$existingAccount) {
+            $reference = now()->format('YmdHis') . Str::random(6);
+
+            $payload = [
+                'transaction' => ['reference' => $reference],
+                'order' => [
+                    'amount' => 0,
+                    'currency' => 'NGN',
+                    'description' => 'User Static Account',
+                    'country' => 'NGA',
+                    'amounttype' => 'ANY',
+                ],
+                'customer' => [
+                    'account' => [
+                        'name' => $user->full_name,
+                        'type' => 'STATIC',
+                    ],
+                ],
+            ];
+
+            try {
+                $response = $this->ninePsb->createVirtualAccount($payload);
+
+                VirtualAccount::create([
+                    'user_id' => $user->id,
+                    'reference' => $reference,
+                    'type' => 'STATIC',
+                    'account_number' => $response['customer']['account']['number'],
+                    'bank' => '9Payment Service Bank',
+                    'raw_response' => json_encode($response),
+
+                ]);
+            } catch (\Throwable $e) {
+                Log::error('Virtual account creation failed: ' . $e->getMessage());
+            }
+        }
+    }
                 return response()->json(
                     [
                         'status' => true,
@@ -545,6 +547,7 @@ class UserController extends Controller
             }
 
             if ($user->first_verification === 'yes') {
+
                 return response()->json([
                     'status' => true,
                     'verified' => $user->first_verification
@@ -1039,15 +1042,33 @@ class UserController extends Controller
         if ($setting && $setting->is_enabled) {
             return response()->json([
                 'status' => true,
-                'referral_bonus' => $setting->referral_bonus,
-                'message' => 'Referral bonus retrieved successfully.'
+                'referral_bonus' => (float) $setting->referral_bonus,
             ]);
         } else {
             return response()->json([
                 'status' => false,
                 'referral_bonus' => 0,
-                'message' => 'Referral bonus is not enabled.'
+                'message' => 'We are not currently offering referral bonuses.'
             ]);
         }
     }
+
+    public function getVirtualCharge()
+{
+    $setting = GeneralSettings::where('name', 'virtual_charge')->first();
+
+    if ($setting && $setting->is_enabled) {
+        return response()->json([
+            'status' => true,
+            'virtual_charge' => (float) $setting->referral_bonus,
+        ]);
+    } else {
+        return response()->json([
+            'status' => false,
+            'virtual_charge' => 0,
+            'message' => 'All deposits are free at the moment.'
+        ]);
+    }
+}
+
 }
