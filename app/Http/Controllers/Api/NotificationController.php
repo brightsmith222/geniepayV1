@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Client\RequestException;
 use App\Models\Notification;
+use App\Models\User;
 
 
 
@@ -77,87 +78,105 @@ class NotificationController extends Controller
     }
 
 
-    public function checkReadStatus(Request $request)
-    {
-        try {
-            // $hasRead = Notification::where('has_read', '=', 0)->first();
-            // Check if there are any unread notifications for the authenticated user
-            $user = $request->user();
-        $hasRead = $user->has_read;
+    // public function checkReadStatus(Request $request)
+    // {
+    //     try {
+    //          $hasRead = Notification::where('is_read', '=', 0)->first();
+    //         // Check if there are any unread notifications for the authenticated user
+    //     $hasRead = $user->has_read;
 
-            if ($hasRead == 1) {
-                return response()->json([
-                    'status' => true,
-                    'data' => true
-                ]);
-            } 
-            else {
-                return response()->json([
-                    'status' => true,
-                    'data' => false
-                ]);
-            }
-        } catch (\Throwable $th) {
-            Log::error('Error: ' . throw $th);
+    //         if ($hasRead == 1) {
+    //             return response()->json([
+    //                 'status' => true,
+    //                 'data' => true
+    //             ]);
+    //         } 
+    //         else {
+    //             return response()->json([
+    //                 'status' => true,
+    //                 'data' => false
+    //             ]);
+    //         }
+    //     } catch (\Throwable $th) {
+    //         Log::error('Error: ' . throw $th);
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'Error: ' . throw $th
+    //         ]);
+    //     }
+    // }
+
+public function markAsRead(Request $request, $id)
+{
+    try {
+        $user = $request->user();
+        $notification = Notification::where('id', $id)
+            ->where(function ($q) use ($user) {
+                $q->where('receiver_id', $user->id)
+                  ->orWhereNull('receiver_id');
+            })
+            ->first();
+
+        if (!$notification) {
             return response()->json([
                 'status' => false,
-                'message' => 'Error: ' . throw $th
-            ]);
+                'message' => 'Notification not found.'
+            ], 404);
         }
+
+        $notification->is_read = 1;
+        $notification->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Notification marked as read.'
+        ]);
+    } catch (\Throwable $th) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Error: ' . $th->getMessage()
+        ], 500);
+    }
+}
+
+public function sendPushNotif(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'title' => 'required|string',
+        'message' => 'required|string',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => false,
+            'message' => $validator->errors()->first()
+        ], 422);
     }
 
+    try {
+        $tokens = User::whereNotNull('fcm_token')->pluck('fcm_token')->toArray();
 
-    public function sendPushNotif(Request $request){
-
-        $validator = Validator::make($request->all(), [
-            'title' => 'required|string',
-            'message' => 'required|string',
-            'fcm_token' => 'required|string',
-
-
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                // 'message' => $validator->errors()
-                'message' => $validator->errors()->first()
-            ], 422); // 422 Unprocessable Entity
-        }
-
-        try {
-
+        foreach ($tokens as $token) {
             $this->fcmService->sendNotification(
-                $request->fcm_token,
+                $token,
                 $request->title,
                 $request->message,
             );
-
-            Log::info("Request  was successful:");
-            return response()->json([
-                'status' => true,
-                'message' => 'Message sent successfully'
-            ], 200);
-            
-        } catch (RequestException $e) {
-            // Handle exceptions that occur during the HTTP request
-            Log::error("Request failed: " . $e->getMessage());
-            return response()->json([
-                'status' => false,
-                'message' => $e->getMessage()
-            ], 400);
-        } catch (\Exception $e) {
-            // Handle any other exceptions
-            Log::error("An error occurred: " . $e->getMessage());
-            return response()->json([
-                'status' => false,
-                'message' => $e->getMessage()
-            ], 500);
         }
 
+        Log::info("Broadcast notification sent to all users.");
+        return response()->json([
+            'status' => true,
+            'message' => 'Message sent to all users successfully'
+        ], 200);
 
-
-
-
+    } catch (\Exception $e) {
+        Log::error("Broadcast error: " . $e->getMessage());
+        return response()->json([
+            'status' => false,
+            'message' => $e->getMessage()
+        ], 500);
     }
+}
+
 }

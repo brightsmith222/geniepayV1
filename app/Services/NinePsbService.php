@@ -24,7 +24,7 @@ class NinePsbService
     public function authenticate(): string
     {
         return Cache::remember('9psb_token', 6900, function () {
-            $response = Http::post($this->baseUrl . 'authenticate', [
+            $response = Http::withoutVerifying()->post($this->baseUrl . 'authenticate', [
                 'publickey' => $this->publicKey,
                 'privatekey' => $this->privateKey,
             ]);
@@ -44,7 +44,7 @@ class NinePsbService
     {
         $token = $this->authenticate();
 
-        $response = Http::withToken($token)->{$method}($this->baseUrl . $endpoint, $payload);
+        $response = Http::withoutVerifying()->withToken($token)->{$method}($this->baseUrl . $endpoint, $payload);
 
         if ($response->successful() && isset($response['code']) && $response['code'] === '00') {
             return $response->json();

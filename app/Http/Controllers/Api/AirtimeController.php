@@ -321,7 +321,7 @@ class AirtimeController extends Controller
         $transaction->service = 'airtime';
         $transaction->image = $image;
         $transaction->phone_number = $mobile_number;
-        $transaction->transaction_id = $transaction_id;
+        $transaction->transaction_id = (string) $transaction_id;
         $transaction->reference = $userReference;
         $transaction->which_api = $which_api;
         $transaction->provider_id = $provider_id;
@@ -338,7 +338,7 @@ class AirtimeController extends Controller
         $walletTrans->amount = "{$amount}";
         $walletTrans->service = 'airtime';
         $walletTrans->status = 'Successful';
-        $walletTrans->transaction_id = $transaction_id;
+        $walletTrans->transaction_id = (string) $transaction_id;
         $walletTrans->balance_before = $balance_before;
         $walletTrans->balance_after = $balance_after;
         $walletTrans->save();

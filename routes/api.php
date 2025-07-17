@@ -36,6 +36,9 @@ Route::post('/update-user', [UserController::class, 'updateUser']);
 Route::get('/user-referred', [UserController::class, 'getReferredUsers']);
 Route::get('/referral-bonus', [UserController::class, 'getReferralBonus']);
 Route::get('/virtual-charge', [UserController::class, 'getVirtualCharge']);
+Route::post('/upload-image', [UserController::class, 'uploadProfileImage']);
+Route::post('/send-change-pin-verification-code', [UserController::class, 'sendChangePinVerificationCode']);
+
 
     
 Route::get('/get_data_plan', [BuyDataController::class, 'getDataPlan']);
@@ -72,7 +75,7 @@ Route::get('/electricity-providers', [ElectricityController::class, 'getElectric
 
 Route::post('/send-pushNotification', [NotificationController::class, 'sendPushNotif']);
 Route::get('/get-notifications', [NotificationController::class, 'index']);
-
+Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
 
 Route::post('/monnify-pay-with-card', [PaymentController::class, 'monnifyPayWithCard']);
 Route::post('/paystack-pay-with-card', [PaymentController::class, 'paystackPayWithCard']);
@@ -94,6 +97,8 @@ Route::get('/giftcard/countries', [GiftCardController::class, 'getCountries']);
 Route::get('/giftcard/operators', [GiftCardController::class, 'getGiftCards']);
 Route::get('/giftcard/denominations', [GiftCardController::class, 'getDenominations']);
 Route::post('/purchase/giftcard', [GiftCardController::class, 'purchase']);
+Route::post('/giftcard-purchase', [GiftCardController::class, 'purchaseGiftcard']);
+
 
 // eSIM
 Route::get('/esim/operators', [EsimController::class, 'getEsims']);
@@ -101,16 +106,18 @@ Route::get('/esim/denominations', [EsimController::class, 'getDenominations']);
 Route::post('/esim/purchase', [EsimController::class, 'purchase']);
 
 //Smile Data
-Route::post('/smile/verify', [SmileController::class, 'verifySmileAccount']);
-Route::get('/smile/plans', [SmileController::class, 'getSmilePlans']);
-Route::post('/smile/purchase', [SmileController::class, 'purchaseSmileData']);
+Route::post('/smile-verify', [SmileController::class, 'verifySmileAccount']);
+Route::get('/smile-plans', [SmileController::class, 'getSmilePlans']);
+Route::post('/smile-purchase', [SmileController::class, 'purchaseSmileData']);
 
 //Spectranet Data
-Route::get('/spectranet/plans', [SpectranetController::class, 'getSpectranetPlans']);
-Route::post('/spectranet/purchase', [SpectranetController::class, 'purchaseSpectranetData']);
+Route::get('/spectranet-plans', [SpectranetController::class, 'getSpectranetPlans']);
+Route::post('/spectranet-purchase', [SpectranetController::class, 'purchaseSpectranetData']);
 
 // Beneficiaries
 Route::post('/beneficiaries', [BeneficiaryController::class, 'index']);
+Route::get('/all-beneficiaries', [BeneficiaryController::class, 'all']);
+Route::delete('/beneficiary/{id}', [BeneficiaryController::class, 'delete']);
 
 
 

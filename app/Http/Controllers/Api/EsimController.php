@@ -15,6 +15,9 @@ use App\MyFunctions;
 use App\Services\ReferralService;
 use App\Services\PercentageService;
 use App\Services\PinService;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\TransactionSuccessMail;
+
 
 class EsimController extends Controller
 {
@@ -147,16 +150,16 @@ class EsimController extends Controller
             'quantity' => 'required|integer',
         ]);
 
-       // $pin = $request->input('pin');
+        $pin = $request->input('pin');
         $user = $request->user();
 
 
-        // if (!$pinService->checkPin($user, $pin)) {
-        //     return response()->json([
-        //         'status' => false,
-        //         'message' => 'Invalid transaction pin.'
-        //     ], 403);
-        // }
+        if (!$pinService->checkPin($user, $pin)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid transaction pin.'
+            ], 403);
+        }
 
         $totalAmount = $request->amount * $request->quantity;
         $wallet_balance = $user->wallet_balance;
@@ -181,11 +184,13 @@ class EsimController extends Controller
             'amountOperator' => $request->operator_amount,
             'quantity' => $request->quantity,
             'userReference' => $reference,
+            //'msisdn' => "2348032337583",
             'simulate' => 1
         ];
 
         $response = Http::withoutVerifying()->post($this->baseUrl, $payload)->json();
-        Log::info('ARTX eSIM purchase request', ['payload' => $payload, 'response' => $response]);
+        Log::info('ARTX eSIM purchase request', ['payload' => $payload]);
+        Log::info('ARTX eSIM purchase response', ['response' => $response]);
         $apiStatusId = $response['status']['id'] ?? null;
         $txStatus = match ($apiStatusId) {
             0 => 'Successful',
@@ -210,7 +215,7 @@ class EsimController extends Controller
             $walletTrans->amount = $totalAmount;
             $walletTrans->service = 'esim';
             $walletTrans->status = 'Successful';
-            $walletTrans->transaction_id = $reference;
+            $walletTrans->transaction_id = (string) $reference;
             $walletTrans->balance_before = $balanceBefore;
             $walletTrans->balance_after = $balanceAfter;
             $walletTrans->save();
@@ -226,8 +231,8 @@ class EsimController extends Controller
         $transaction->service = 'esim';
         $transaction->service_plan = $request->plan_name;
         $transaction->image = $request->brand_id;
-        $transaction->transaction_id = $reference;
-        $transaction->reference = $operatorRef;
+        $transaction->transaction_id = (string) $reference;
+        $transaction->reference = (string) $operatorRef;
         $transaction->plan_id = $request->product_id;
         $transaction->epin = $pin['number'] ?? null;
         $transaction->serial = $pin['serial'] ?? null;
@@ -237,6 +242,23 @@ class EsimController extends Controller
 
         if ($txStatus === 'Successful') {
             (new ReferralService())->handleFirstTransactionBonus($user, 'esim', $totalAmount);
+
+            // Send email to user
+            try {
+                $details = [
+                    'Service Provider' => $transaction->service_provider,
+                    'Plan' => $transaction->service_plan,
+                    'Amount' => '₦' . number_format($transaction->amount, 2),
+                    'ePIN' => $transaction->epin,
+                    'Serial' => $transaction->serial,
+                ];
+                if (!empty($transaction->instructions)) {
+                    $details['Instructions'] = $transaction->instructions;
+                }
+                Mail::to($user->email)->send(new TransactionSuccessMail($details, 'eSIM Purchase Details', 'Your eSIM Purchase Details'));
+            } catch (\Throwable $e) {
+                Log::error('Failed to send eSIM purchase email: ' . $e->getMessage());
+            }
 
             return response()->json([
                 'status' => true,

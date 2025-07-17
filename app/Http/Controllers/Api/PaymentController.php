@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use App\MyFunctions;
 use Illuminate\Support\Facades\Validator;
 use App\Models\User;
+use App\Services\PinService;
 
 
 
@@ -439,83 +440,69 @@ class PaymentController extends Controller
     }
 
 
-    public function transactions(Request $request)
-    {
+public function transactions(Request $request)
+{
+    try {
+        $user = $request->user();
+        $cacheKey = 'transactions:user:' . $user->id;
 
-        try {
-            $user = $request->user();
+        // Cache for 5 minutes (adjust as needed)
+        $transactions = cache()->remember($cacheKey, now()->addMinutes(5), function () use ($user) {
+            return Transactions::where('user_id', $user->id)->get();
+        });
 
-            $transactions = Transactions::all();
-
-            // $transactions = Transactions::where('username', '=', $user->username)->get();
-            return response()->json([
-                'status' => true,
-                'data' => $transactions
-            ]);
-        } catch (RequestException $e) {
-
-            // Handle exceptions that occur during the HTTP request
-            Log::error("Request for transactions  failed" . $e->getMessage());
-            return response()->json(
-                [
-                    'status' => false,
-                    'message' => 'Something went wrong,  please try again'
-                ],
-                422
-            );
-        } catch (\Exception $e) {
-
-            Log::error("Request for transactions general error: " . $e->getMessage());
-            return response()->json(
-                [
-                    'status' => false,
-                    'message' => 'Something went wrong,  please try again'
-                ],
-                422
-            );
-        }
-
+        return response()->json([
+            'status' => true,
+            'data' => $transactions
+        ]);
+    } catch (RequestException $e) {
+        Log::error("Request for transactions failed" . $e->getMessage());
+        return response()->json([
+            'status' => false,
+            'message' => 'Something went wrong, please try again'
+        ], 422);
+    } catch (\Exception $e) {
+        Log::error("Request for transactions general error: " . $e->getMessage());
+        return response()->json([
+            'status' => false,
+            'message' => 'Something went wrong, please try again'
+        ], 422);
     }
+}
 
 
 
-    public function walletTransactions(Request $request)
-    {
+public function walletTransactions(Request $request)
+{
+    try {
+        $user = $request->user();
+        $cacheKey = 'wallet_transactions:user:' . $user->id;
 
-        try {
-            $user = $request->user();
+        // Cache for 5 minutes (adjust as needed)
+        $transactions = cache()->remember($cacheKey, now()->addMinutes(5), function () use ($user) {
+            return WalletTransactions::where('user', $user->username)
+                ->orWhere('receiver_email', $user->email)
+                ->get();
+        });
 
-            // $transactions = WalletTransactions::all();
-
-            $transactions = WalletTransactions::where('user', '=', $user->username)->orWhere('receiver_email', '=', $user->email) ->get();
-            return response()->json([
-                'status' => true,
-                'data' => $transactions
-            ]);
-        } catch (RequestException $e) {
-
-            // Handle exceptions that occur during the HTTP request
-            Log::error("Request for transactions  failed" . $e->getMessage());
-            return response()->json(
-                [
-                    'status' => false,
-                    'message' => 'Something went wrong,  please try again' 
-                ],
-                422
-            );
-        } catch (\Exception $e) {
-
-            Log::error("Request for transactions general error: " . $e->getMessage());
-            return response()->json(
-                [
-                    'status' => false,
-                    'message' => 'Something went wrong,  please try again' 
-                ],
-                422
-            );
-        }
-
+        return response()->json([
+            'status' => true,
+            'data' => $transactions
+        ]);
+    } catch (RequestException $e) {
+        Log::error("Request for wallet transactions failed: " . $e->getMessage());
+        return response()->json([
+            'status' => false,
+            'message' => 'Something went wrong, please try again'
+        ], 422);
+    } catch (\Exception $e) {
+        Log::error("Request for wallet transactions general error: " . $e->getMessage());
+        return response()->json([
+            'status' => false,
+            'message' => 'Something went wrong, please try again'
+        ], 422);
     }
+}
 
 
 
@@ -588,7 +575,7 @@ class PaymentController extends Controller
     }
 
 
-    public function transfer(Request $request)
+    public function transfer(Request $request, PinService $pinService)
     {
 
         $validator = Validator::make($request->all(), [
@@ -607,7 +594,16 @@ class PaymentController extends Controller
 
         try {
 
+            $pin = $request->input('pin');
             $user = $request->user();
+            
+
+            if (!$pinService->checkPin($user, $pin)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Invalid transaction pin.'
+                ], 403);
+            }
             $amount = $request->amount;
             $receiverId = $request->receiver_id;
             
@@ -652,7 +648,8 @@ class PaymentController extends Controller
 
                 return response()->json([
                     'status' => true,
-                    'message' => 'Transfer completed successfully'
+                    'message' => 'Transfer completed successfully',
+                    'data' => $walletTrans
                 ], 200);
 
             } else {

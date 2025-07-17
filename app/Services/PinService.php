@@ -16,10 +16,7 @@ class PinService
      */
     public function checkPin(User $user, string $pin): bool
     {
-        // If you store the pin hashed (recommended)
-        // return Hash::check($pin, $user->pin);
-
-        // If you store the pin as plain text (not recommended)
+        
         return $user->pin === $pin;
     }
 }

@@ -25,19 +25,26 @@ class NinePsbWebhookController extends Controller
     {
         $payload = $request->all();
         Log::info('9PSB Webhook Received', $payload);
-        $username = config('api.9psb.webhook_username');
-        $password = config('api.9psb.webhook_password');
+       
 
         // Extract Basic Auth from header
+        $expectedUsername = config('api.9psb.webhook_username');
+        $expectedPassword = config('api.9psb.webhook_password');
+
         $providedUsername = $request->getUser();
         $providedPassword = $request->getPassword();
 
-        if ($providedUsername !== $username || $providedPassword !== $password) {
-            Log::warning('Unauthorized webhook access attempt.', [
-                'username' => $providedUsername,
-                'ip' => $request->ip()
-            ]);
-            return response()->json(['message' => 'Unauthorized'], 401);
+        if (
+        !is_string($expectedUsername) || !is_string($expectedPassword) ||
+        !hash_equals($expectedUsername, (string) $providedUsername) ||
+        !hash_equals($expectedPassword, (string) $providedPassword)
+        ) {
+        Log::warning('Unauthorized webhook access attempt.', [
+            'provided_username' => $providedUsername,
+            'ip' => $request->ip(),
+        ]);
+
+        return response()->json(['message' => 'Unauthorized'], 401);
         }
 
 
@@ -89,19 +96,19 @@ class NinePsbWebhookController extends Controller
             }
 
             // ✅ Step 5: Confirm payment with 9PSB
-            $confirmation = $this->psb->confirmPayment([
-                'sessionid' => $sessionId,
-                'accountnumber' => $accountNumber,
-                'amount' => (float)$amount
-            ]);
+            // $confirmation = $this->psb->confirmPayment([
+            //     'sessionid' => $sessionId,
+            //     'accountnumber' => $accountNumber,
+            //     'amount' => (float)$amount
+            // ]);
 
-            $confirmedTxn = $confirmation['transactions'][0] ?? null;
-            $confirmedAmount = data_get($confirmedTxn, 'order.amount');
+            // $confirmedTxn = $confirmation['transactions'][0] ?? null;
+            // $confirmedAmount = data_get($confirmedTxn, 'order.amount');
 
-            if ((float)$confirmedAmount != (float)$amount) {
-                Log::warning("Amount mismatch", ['confirmed' => $confirmedAmount, 'webhook' => $amount]);
-                return response()->json(['message' => 'Amount mismatch'], 422);
-            }
+            // if ((float)$confirmedAmount != (float)$amount) {
+            //     Log::warning("Amount mismatch", ['confirmed' => $confirmedAmount, 'webhook' => $amount]);
+            //     return response()->json(['message' => 'Amount mismatch'], 422);
+            // }
 
             // ✅ Step 6: Record transaction
             Webhook9psbSession::create([

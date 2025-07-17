@@ -38,62 +38,40 @@ public function __construct(NinePsbService $ninePsb)
 }
 
 
-    public function user(Request $request)
-    {
-        $user = $request->user()->only('email', 'full_name', 'wallet_balance', 'phone_number', 'image', 'account_reference', 'username');
-        // $credentials = $request->only('email', 'password');
+public function user(Request $request)
+{
+    try {
+        $user = $request->user();
 
-        // Log::info('user details: ' . $user);
+        $userData = [
+            'id'               => $user->id,
+            'email'            => $user->email,
+            'full_name'        => $user->full_name,
+            'wallet_balance'   => $user->wallet_balance,
+            'phone_number'     => $user->phone_number,
+            'account_reference'=> $user->account_reference,
+            'username'         => $user->username,
+            'image'            => $user->image ? asset('storage/' . $user->image) : null,
+        ];
 
-        try {
-
-            // $accessToken = MyFunctions::monnifyAuth();
-
-            // $monnifyHeaders = [
-
-            //     "Content-Type" => "application/json",
-            //     "Authorization" => "Bearer " . $accessToken
-
-            // ];
-
-            //$accountReference = $request->user()->account_reference;
-
-            //$url = "https://sandbox.monnify.com/api/v2/bank-transfer/reserved-accounts/" . $accountReference;
-
-            // Send POST request to Monnify API for authentication
-            // $response = Http::withouVerifying()->withHeaders($monnifyHeaders)->get($url);
-
-            // // Check if the response status is 200
-            // Log::info("Monnify V Accounts response: " . $response);
-            // $bank_accounts = [];
-            // if ($response->successful()) {
-            //     // Get the access token from the response
-            //     $data = $response->json();
-            //     $bank_accounts = $data['responseBody']['accounts'];
-            // } else {
-            //     Log::error("Request for monnify V Accounts failed");
-            // }
-
-            return response()->json(
-                [
-                    'status' => true,
-                    'data' => $user,
-                    //'bank_accounts' => $bank_accounts
-
-                ],
-                200
-            );
-        } catch (\Throwable $th) {
-            Log::info('user details: ' . $th);
-            return response()->json(
-                [
-                    'status' => false,
-                    'message' => $th->getMessage()
-                ],
-                422
-            );
-        };
+        return response()->json(
+            [
+                'status' => true,
+                'data' => $userData,
+            ],
+            200
+        );
+    } catch (\Throwable $th) {
+        Log::info('user details: ' . $th);
+        return response()->json(
+            [
+                'status' => false,
+                'message' => $th->getMessage()
+            ],
+            422
+        );
     }
+}
 
     public function registerUser(Request $request)
 {
@@ -241,6 +219,51 @@ public function __construct(NinePsbService $ninePsb)
         }
     }
 
+public function uploadProfileImage(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:3048', // 2MB max
+    ]);
+
+    Log::info('Profile image upload request', [
+        'user_id' => $request->user()->id,
+        'file' => $request->file('image') ? $request->file('image')->getClientOriginalName() : null
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => false,
+            'message' => $validator->errors()->first()
+        ], 422);
+    }
+
+    try {
+        $user = $request->user();
+
+        // Store the image in the 'public/profile_images' directory
+        $path = $request->file('image')->store('profile_images', 'public');
+
+        Log::info('Profile image stored at', [
+            'path' => $path,
+            'user_id' => $user->id
+        ]);
+
+        // Save the image path to the user
+        $user->image = $path;
+        $user->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Profile image uploaded successfully.',
+            'image_url' => asset('storage/' . $path)
+        ]);
+    } catch (\Throwable $th) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Failed to upload image: ' . $th->getMessage()
+        ], 500);
+    }
+}
 
     public function userLogin(Request $request)
     {
@@ -421,62 +444,61 @@ public function __construct(NinePsbService $ninePsb)
         }
     }
 
-    public function verifyCode(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email|exists:users,email',
-            'code' => 'required|string|size:6',
-            'first_time' => 'nullable|string'
-        ]);
+public function verifyCode(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'email' => 'required|email|exists:users,email',
+        'code' => 'required|string|size:6',
+        'first_time' => 'nullable|string'
+    ]);
 
-        if ($validator->fails()) {
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => false,
+            'message' => $validator->errors()->first()
+        ], 422);
+    }
+
+    try {
+        $email = $request->input('email');
+        $code = $request->input('code');
+
+        // Retrieve the user by email
+        $user = User::where('email', $email)->first();
+
+        if (!$user) {
             return response()->json([
-
                 'status' => false,
-                'message' => $validator->errors()->first()
-            ], 422);
+                'message' => 'User not found.'
+            ], 404);
         }
 
-        try {
-            $email = $request->input('email');
-            $code = $request->input('code');
+        // Check if the code matches and is not expired
+        if (
+            $user->verification_code === $code &&
+            $user->verification_code_expires_at &&
+            $user->verification_code_expires_at >= now()
+        ) {
+            // Code is valid and not expired, proceed with verification
+            $user->status = 'active'; 
+            $user->verification_code = null;
+            $user->verification_code_expires_at = null;
+            if ($request->input('first_time') === 'yes') {
+                $user->first_verification = 'yes';
+            }
+            $user->save();
 
-            // Retrieve the user by email
-            $user = User::where('email', $email)->first();
-
-            if (!$user) {
-                return response()->json(
-                    [
-                        'status' => false,
-                        'message' => 'User not found.'
-                    ],
-                    404
-                );
+            // ✅ Step 1: Check if user already has a virtual account
+            $existingAccount = VirtualAccount::where('user_id', $user->id)->first();
+            if ($existingAccount) {
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Account successfully verified.'
+                ], 200);
             }
 
-            // Check if the code matches and is not expired
-            if (
-                $user->verification_code === $code && $user->verification_code_expires_at &&
-                $user->verification_code_expires_at >= now()
-            ) {
-                // Code is valid and not expired, proceed with verification
-
-                // Optionally, you might want to clear the verification code
-                $user->verification_code = null;
-                $user->verification_code_expires_at = null;
-                if ($request->input('first_time') === 'yes') {
-                    $user->first_verification = 'yes';
-                }
-                
-                $userAccess = $user->save();
-
-                
-        // ✅ Step 1: Check if user already has a virtual account
-        if ($userAccess) {
-        $existingAccount = VirtualAccount::where('user_id', $user->id)->first();
-        if (!$existingAccount) {
+            // ✅ Step 2: Create virtual account
             $reference = now()->format('YmdHis') . Str::random(6);
-
             $payload = [
                 'transaction' => ['reference' => $reference],
                 'order' => [
@@ -497,41 +519,52 @@ public function __construct(NinePsbService $ninePsb)
             try {
                 $response = $this->ninePsb->createVirtualAccount($payload);
 
-                VirtualAccount::create([
-                    'user_id' => $user->id,
-                    'reference' => $reference,
-                    'type' => 'STATIC',
-                    'account_number' => $response['customer']['account']['number'],
-                    'bank' => '9Payment Service Bank',
-                    'raw_response' => json_encode($response),
+                // Check if the response contains the expected data
+                if (
+                    isset($response['customer']['account']['number']) &&
+                    !empty($response['customer']['account']['number'])
+                ) {
+                    VirtualAccount::create([
+                        'user_id' => $user->id,
+                        'reference' => $reference,
+                        'type' => 'STATIC',
+                        'account_number' => $response['customer']['account']['number'],
+                        'bank' => '9Payment Service Bank',
+                        'raw_response' => json_encode($response),
+                    ]);
 
-                ]);
+                    return response()->json([
+                        'status' => true,
+                        'message' => 'Account successfully verified.'
+                    ], 200);
+                } else {
+                    Log::error('Virtual account creation failed: Invalid response', ['response' => $response]);
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Verification succeeded'
+                    ], 500);
+                }
             } catch (\Throwable $e) {
                 Log::error('Virtual account creation failed: ' . $e->getMessage());
-            }
-        }
-    }
-                return response()->json(
-                    [
-                        'status' => true,
-                        'message' => 'Verification code is valid.'
-                    ],
-                    200
-                );
-            } else {
                 return response()->json([
                     'status' => false,
-                    'message' => 'Invalid or expired verification code.'
-                ], 400);
+                    'message' => 'Verification succeeded'
+                ], 500);
             }
-        } catch (\Throwable $th) {
-            Log::error('Error verifying code: ' . $th->getMessage());
+        } else {
             return response()->json([
                 'status' => false,
-                'message' => 'An error occurred. Please try again later.' . $th->getMessage()
-            ], 500);
+                'message' => 'Invalid or expired verification code.'
+            ], 400);
         }
+    } catch (\Throwable $th) {
+        Log::error('Error verifying code: ' . $th->getMessage());
+        return response()->json([
+            'status' => false,
+            'message' => 'An error occurred. Please try again later.' . $th->getMessage()
+        ], 500);
     }
+}
 
 
     public function isAccountVerified(Request $request)
@@ -1008,32 +1041,51 @@ public function __construct(NinePsbService $ninePsb)
         }
     }
 
-    public function getReferredUsers(Request $request)
-    {
-        $user = $request->user();
+public function getReferredUsers(Request $request)
+{
+    $user = $request->user();
 
-        // Get all users where referred_by matches the current user's id
-        $referredUsers = User::where('referred_by', $user->id)
-            ->select('id', 'username', 'full_name', 'email', 'phone_number', 'created_at', 'referral_bonus_given')
-            ->get()
-            ->map(function ($user) {
-                return [
-                    'id' => $user->id,
-                    'username' => $user->username,
-                    'full_name' => $user->full_name,
-                    'email' => $user->email,
-                    'phone_number' => $user->phone_number,
-                    'joined_at' => $user->created_at->format('F j, Y'),
-                    'status' => $user->referral_bonus_given ? 'Rewarded' : 'Pending',
-                ];
-            });
+    // Get all users where referred_by matches the current user's id
+    $referredUsers = User::where('referred_by', $user->id)
+        ->select('id', 'username', 'full_name', 'email', 'phone_number', 'created_at', 'referral_bonus_given')
+        ->get()
+        ->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'username' => $user->username,
+                'full_name' => $user->full_name,
+                'email' => $user->email,
+                'phone_number' => $user->phone_number,
+                'joined_at' => $user->created_at->format('F j, Y'),
+                'status' => $user->referral_bonus_given ? 'Rewarded' : 'Pending',
+            ];
+        });
 
+    $referralSetting = GeneralSettings::where('name', 'referral')->first();
+    $isReferralEnabled = $referralSetting && $referralSetting->is_enabled;
+
+    if ($referredUsers->count() > 0) {
+        // Always show the list if user has referred users, regardless of referral status
         return response()->json([
             'status' => true,
             'count' => $referredUsers->count(),
             'referred_users' => $referredUsers
         ]);
+    } else {
+        // No referred users
+        if (!$isReferralEnabled) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Referral is not currently available.'
+            ]);
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => 'We are not currently offering referral bonuses.'
+            ]);
+        }
     }
+}
 
     public function getReferralBonus()
     {

@@ -127,7 +127,7 @@ class BaseDataController extends Controller
         $transaction->service = 'data';
         $transaction->image = $image;
         $transaction->phone_number = $mobile_number;
-        $transaction->transaction_id = $transaction_id;
+        $transaction->transaction_id = (string) $transaction_id;
         $transaction->service_plan = $plan_size;
         $transaction->reference = $userReference;
         $transaction->plan_id = $plan_id;
@@ -146,7 +146,7 @@ class BaseDataController extends Controller
         $walletTrans->amount = "{$amount}";
         $walletTrans->service = 'data';
         $walletTrans->status = 'Successful';
-        $walletTrans->transaction_id = $transaction_id;
+        $walletTrans->transaction_id = (string) $transaction_id;
         $walletTrans->balance_before = $balance_before;
         $walletTrans->balance_after = $balance_after;
         $walletTrans->save();

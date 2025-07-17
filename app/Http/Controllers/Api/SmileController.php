@@ -57,7 +57,7 @@ class SmileController extends Controller
 
             return response()->json([
                 'status' => ($data['code'] ?? '') == '000',
-                'message' => $data['response_description'] ?? 'Verification failed',
+                'message' => $data['response_description'] ?? 'Verification successful',
                 'data' => $data
             ]);
         } catch (\Exception $e) {
@@ -258,7 +258,7 @@ class SmileController extends Controller
                 $walletTrans->user = $user->username;
                 $walletTrans->amount = $amount;
                 $walletTrans->service = $type;
-                $walletTrans->transaction_id = $transactionId;
+                $walletTrans->transaction_id = (string) $transactionId;
                 $walletTrans->balance_before = $balance_before;
                 $walletTrans->balance_after = $wallet_balance;
                 $walletTrans->status = $status;
@@ -293,7 +293,7 @@ class SmileController extends Controller
             $transaction->smart_card_number  = $tx['unique_element'] ?? $email;
             $transaction->service_plan       = $plan ?? null;
             $transaction->image              = $image ?? null;
-            $transaction->transaction_id     = $transactionId;
+            $transaction->transaction_id     = (string) $transactionId;
             $transaction->quantity           = $tx['quantity'] ?? 1;
             $transaction->commission         = $tx['commission'] ?? '0';
             $transaction->which_api          = 'vtpass';

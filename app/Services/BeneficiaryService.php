@@ -29,6 +29,11 @@ class BeneficiaryService
         return $beneficiary;
     }
 
+    public function getAllForUser($user)
+{
+    return Beneficiary::where('user_id', $user->id)->get();
+}
+
     public function getAll($user, ?string $type = null)
     {
         return Beneficiary::query()

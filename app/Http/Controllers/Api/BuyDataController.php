@@ -182,7 +182,7 @@ class BuyDataController extends BaseDataController
             $network = $request->input('network');
             $mobile_number = $request->input('mobile_number');
             $amount = $request->input('amount');
-            $original_amount = $request->input('original_amount', $amount); // Use original amount if provided
+            $original_amount = $request->input('original_amount');
             $plan = $request->input('plan');
             $plan_size = $request->input('plan_size');
             $beneficiary = $request->input('beneficiary', false);

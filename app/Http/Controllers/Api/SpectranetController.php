@@ -154,7 +154,7 @@ class SpectranetController extends Controller
                 $walletTrans->user = $user->username;
                 $walletTrans->amount = $request->amount;
                 $walletTrans->service = $type;
-                $walletTrans->transaction_id = $transactionId;
+                $walletTrans->transaction_id = (string) $transactionId;
                 $walletTrans->balance_before = $balance_before;
                 $walletTrans->balance_after = $wallet_balance;
                 $walletTrans->status = $status;
@@ -189,7 +189,7 @@ class SpectranetController extends Controller
             $transaction->phone_number       = $tx['unique_element'] ?? $customer_id;
             $transaction->service_plan       = $request->plan ?? null;
             $transaction->image              = $request->image ?? null;
-            $transaction->transaction_id     = $transactionId;
+            $transaction->transaction_id     = (string) $transactionId;
             $transaction->quantity           = $tx['quantity'] ?? 1;
             $transaction->commission         = $tx['commission'] ?? '0';
             $transaction->which_api          = 'vtpass';

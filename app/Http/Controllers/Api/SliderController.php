@@ -13,9 +13,7 @@ class SliderController extends Controller
     public function index()
     {
         try {
-            $sliders = Cache::remember('sliders_all', now()->addHours(24), function () {
-                return Slider::all();
-            });
+            $sliders = Slider::all();
 
             return response()->json([
                 'success' => true,

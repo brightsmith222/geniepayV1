@@ -154,104 +154,107 @@ class CableTvController extends Controller
 
 
 
-    public function verifySmartCard(Request $request, VtpassService $vtpass)
-    {
-        //$webconfig = config('webconfig'); // Assuming you have your web configurations in config/webconfig.php
+public function verifySmartCard(Request $request, VtpassService $vtpass)
+{
+    $validator = Validator::make($request->all(), [
+        'billersCode' => 'required|string',
+        'serviceID' => 'string|required',
+        'planName' => 'required|string',
+    ]);
 
-        $validator = Validator::make($request->all(), [
-            'billersCode' => 'required|string',
-            'serviceID' => 'string|required',
-            'planName' => 'required|string',
-        ]);
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => false,
+            'message' => $validator->errors()->first()
+        ], 422);
+    }
 
-        if ($validator->fails()) {
+    if ($request->isMethod('post')) {
+        try {
+            $billersCode = $request->input('billersCode');
+            $serviceId = $request->input('serviceID');
+            $planName = $request->input('planName');
+
+            $url = config('api.vtpass.base_url') . "merchant-verify";
+            $headers = $vtpass->getHeaders();
+
+            $data = [
+                'billersCode' => $billersCode,
+                'serviceID' => $serviceId,
+                'type' => $planName
+            ];
+
+            $response = Http::withoutVerifying()->withHeaders($headers)->post($url, $data);
+
+            if (!$response->successful()) {
+                $data = $response->json();
+                $message = $data['message'] ?? 'Could not verify smart card. Please try again later.';
+                Log::error("Cable verifySmartCard API error: " . $message);
+                return response()->json([
+                    'status' => false,
+                    'message' => $message
+                ], $response->status());
+            }
+
+            $data = $response->json();
+
+            // Handle vtpass error codes and missing keys
+            if (!isset($data['code']) || $data['code'] != '000') {
+                $message = $data['response_description'] ?? $data['message'] ?? 'Verification failed. Please check your details and try again.';
+                return response()->json([
+                    'status' => false,
+                    'message' => $message
+                ], 400);
+            }
+
+            if (isset($data['content']['error'])) {
+                return response()->json([
+                    'status' => false,
+                    'message' => $data['content']['error']
+                ], 400);
+            }
+
+            // Prepare safe data extraction
+            $customerName = $data['content']['Customer_Name'] ?? null;
+            $address = $data['content']['Address'] ?? null;
+            $cardNumber = $data['content']['Meter_Number'] ?? $data['content']['Customer_Number'] ?? $billersCode;
+            $meterType = $data['content']['Meter_Type'] ?? null;
+
+            $serviceType = 'Smart Card/IUC';
+            if ($planName == 'prepaid' || $planName == 'postpaid') {
+                $serviceType = 'Meter';
+            }
+
+            $message = "You are about to purchase {$serviceId}, {$planName} for (Customer Name: {$customerName}, Customer {$serviceType} Number: {$cardNumber})";
+
+            return response()->json([
+                'status' => true,
+                'message' => $message,
+                'data' => [
+                    "Customer_Name" => $customerName,
+                    "Address" => $address,
+                    "Card_Number" => $cardNumber,
+                    "Meter_Type" => $meterType,
+                ]
+            ]);
+        } catch (RequestException $e) {
+            Log::error("verifySmartCard RequestException: " . $e->getMessage());
             return response()->json([
                 'status' => false,
-                // 'message' => $validator->errors()
-                'message' => $validator->errors()->first()
-            ], 422); // 422 Unprocessable Entity
+                'message' => 'Network error. Please try again later.'
+            ], 400);
+        } catch (\Throwable $e) {
+            Log::error("verifySmartCard Exception: " . $e->getMessage());
+            return response()->json([
+                'status' => false,
+                'message' => 'An unexpected error occurred. Please try again later.'
+            ], 500);
         }
-
-        if ($request->isMethod('post')) {
-
-            try {
-                $billersCode = $request->input('billersCode');
-                $serviceId = $request->input('serviceID');
-                $planName = $request->input('planName');
-
-                $url = config('api.vtpass.base_url') . "merchant-verify";
-
-                $headers = $vtpass->getHeaders();
-
-                $data = [
-                    'billersCode' => $billersCode,
-                    'serviceID' => $serviceId,
-                    'type' => $planName
-                ];
-
-                $response = Http::withoutVerifying()->withHeaders($headers)->post($url, $data);
-
-                if ($response->successful()) {
-                    $data = $response->json();
-                    if ($data['code'] != '000' && array_key_exists('response_description', $data)) {
-                        return response()->json([
-                            'status' => false,
-                            'message' => $data['response_description']
-                        ], 401);
-                    }
-                    if ($data['code'] == '000' && array_key_exists('error', $data['content'])) {
-                        return response()->json([
-                            'status' => false,
-                            'message' => $data['content']['error']
-                        ], 401);
-                    }
-
-                    $customerName = $data['content']['Customer_Name'];
-                    $serviceType = 'Smart Card/IUC';
-
-                    if ($planName == 'prepaid' || $planName == 'postpaid') {
-                        $serviceType = 'Meter';
-                    }
-
-                    $message = "You are about to purchase " . $serviceId . ", " . $planName . " for " . "( Customer Name: " . $customerName . ", Customer " . $serviceType . " Number: " . $billersCode . ")";
-                    return response()->json([
-                        'status' => true,
-                        'message' => $message,
-                        'data' => [
-                            "Customer_Name"=> $data['content']['Customer_Name'],
-                            "Address"=> $data['content']['Address'],
-                            "Card_Number"=> $data['content']['Meter_Number'] ?? $data['content']['Customer_Number'],
-                            "Meter_Type"=> $data['content']['Meter_Type'],
-                        ]
-
-                    ]);
-                } else {
-                    $data = $response->json();
-                    Log::error("Error Occured: " . $data['message']);
-                    return response()->json([
-                        'status' => false,
-                        'message' => $data['message']
-                    ], $response->status());
-                }
-            } catch (RequestException $e) {
-                // Handle exceptions that occur during the HTTP request
-                Log::error("Request failed: " . $e->getMessage());
-                return response()->json([
-                    'status' => false,
-                    'message' => $e->getMessage()
-                ], 400);
-            } catch (\Exception $e) {
-                // Handle any other exceptions
-                Log::error("An error occurred: " . $e->getMessage());
-                return response()->json([
-                    'status' => false,
-                    'message' => $e->getMessage()
-                ], 500);
-            }
-        }
-
-        return response()->json(['message' => 'Invalid request method'], 405);
     }
+
+    return response()->json(['status' => false, 'message' => 'Invalid request method'], 405);
+}
+
 
     public function cableSubscription(Request $request, VtpassService $vtpass, PinService $pinService)
     {
@@ -398,7 +401,7 @@ class CableTvController extends Controller
                             $transaction->image = $request->image;
                             // $transaction->quantity =  $quantity;
                             // $transaction->epin = $responseData['pins'];
-                            $transaction->transaction_id = $data['requestId'];
+                            $transaction->transaction_id = (string) $data['requestId'];
                             $transaction->electricity_token = $data['token'] ?? $data['purchased_code'] ?? null;
                             $transaction->which_api = 'vtpass';
                             $transaction->save();
@@ -408,7 +411,7 @@ class CableTvController extends Controller
                             $walletTrans->user = $user->username;
                             $walletTrans->amount = $amount;
                             $walletTrans->service = $service;
-                            $walletTrans->transaction_id = $data['requestId'];
+                            $walletTrans->transaction_id = (string) $data['requestId'];
                             $walletTrans->balance_before = $balance_before;
                             $walletTrans->balance_after = $user->wallet_balance;
                             $walletTrans->status = $status;

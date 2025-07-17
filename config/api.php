@@ -25,6 +25,9 @@ return [
     'webhook_username' => env('NINE_PSB_WEBHOOK_USERNAME'),
     'webhook_password' => env('NINE_PSB_WEBHOOK_PASSWORD'),
 ],
-
+'reloadly' => [
+    'client_id' => env('RELOADLY_CLIENT_ID'),
+    'client_secret' => env('RELOADLY_CLIENT_SECRET'),
+],
 ];
 

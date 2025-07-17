@@ -15,6 +15,8 @@ use App\MyFunctions;
 use App\Services\ReferralService;
 use App\Services\PercentageService;
 use App\Services\PinService;
+use App\Helpers\ReloadlyHelper;
+
 
 
 
@@ -314,7 +316,7 @@ class GiftCardController extends Controller
             $walletTrans->amount = $totalAmount;
             $walletTrans->service = 'giftcard';
             $walletTrans->status = 'Successful';
-            $walletTrans->transaction_id = $reference;
+            $walletTrans->transaction_id = (string) $reference;
             $walletTrans->balance_before = $balanceBefore;
             $walletTrans->balance_after = $user->wallet_balance;
             $walletTrans->save();
@@ -330,9 +332,9 @@ class GiftCardController extends Controller
         $transaction->status = $txStatus;
         $transaction->service = 'giftcard';
         $transaction->image = $image;
-        $transaction->transaction_id = $reference;
+        $transaction->transaction_id = (string) $reference;
         $transaction->service_plan = $quantity;
-        $transaction->reference = $operatorRef;
+        $transaction->reference = (string) $operatorRef;
         $transaction->plan_id = $plan_id;
         $transaction->epin = $epin;
         $transaction->serial = $serial;
@@ -371,4 +373,53 @@ class GiftCardController extends Controller
             ], 500);
         }
     }
+
+
+
+
+
+
+    public function purchaseGiftcard(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required|integer',
+            'country_code' => 'required|string',
+            'quantity' => 'required|integer|min:1',
+            'unit_price' => 'required|numeric',
+            'recipient_email' => 'nullable|email',
+            'recipient_phone' => 'nullable|array',
+        ]);
+
+        $token = ReloadlyHelper::getAccessToken();
+
+        $payload = [
+            "productId" => $request->product_id,
+            "countryCode" => $request->country_code,
+            "quantity" => $request->quantity,
+            "unitPrice" => $request->unit_price,
+            "recipientEmail" => $request->recipient_email,
+            "recipientPhoneDetails" => $request->recipient_phone,
+            "customIdentifier" => uniqid('gift_'),
+        ];
+
+        $response = Http::withToken($token)
+            ->withHeaders([
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/com.reloadly.giftcards-v1+json'
+            ])
+            ->post('https://giftcards.reloadly.com/orders', $payload);
+
+        if ($response->failed()) {
+            return response()->json(['error' => $response->json()], 400);
+        }
+
+        // Optionally save transaction in DB here
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $response->json(),
+        ]);
+    }
+
+
 }

@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use App\Models\DataTopupPercentage; 
+use Illuminate\Support\Facades\Cache;
 
 class DataSettings extends Component
 {
@@ -32,38 +33,55 @@ class DataSettings extends Component
     }
 
     public function updatePercentage($network)
-    {
-        // Validate input
-        $this->validate([
-            "percentages.$network" => 'required|numeric|min:0|max:100',
-        ]);
-
-        // Update or create record
-        DataTopupPercentage::updateOrCreate(
-            ['network_name' => $network],
-            [
-                'network_percentage' => $this->percentages[$network],
-                'status' => $this->statuses[$network], // Ensure status is updated
-            ]
-        );
-
-        flash()->success("$network percentage updated successfully!");
-    }
-
-    public function toggleStatus($network)
 {
-    // Toggle the status between 1 (active) and 0 (disabled)
+    $this->validate([
+        "percentages.$network" => 'required|numeric|min:0|max:100',
+    ]);
+
+    DataTopupPercentage::updateOrCreate(
+        ['network_name' => $network],
+        [
+            'network_percentage' => $this->percentages[$network],
+            'status' => $this->statuses[$network],
+        ]
+    );
+
+    // Clear related cache so new percentage takes effect
+    Cache::forget("data_plans:artx_data:network:{$this->mapNetworkToId($network)}");
+    Cache::forget("data_plans:glad_data:network:{$this->mapNetworkToId($network)}");
+
+    flash()->success("$network percentage updated successfully!");
+}
+
+public function toggleStatus($network)
+{
     $this->statuses[$network] = $this->statuses[$network] === 1 ? 0 : 1;
 
-    // Update the database
     DataTopupPercentage::updateOrCreate(
         ['network_name' => $network],
         ['status' => $this->statuses[$network]]
     );
 
-    // Flash a success message
+    // Clear related cache so new status takes effect
+    Cache::forget("data_plans:artx_data:network:{$this->mapNetworkToId($network)}");
+    Cache::forget("data_plans:glad_data:network:{$this->mapNetworkToId($network)}");
+
     $statusText = $this->statuses[$network] === 1 ? 'ON' : 'OFF';
     flash()->success("$network status updated to $statusText!");
+}
+
+// Add this helper method in your DataSettings class:
+protected function mapNetworkToId($network)
+{
+    return match (strtolower($network)) {
+        'mtn' => 1,
+        'glo' => 2,
+        'airtel' => 3,
+        '9mobile' => 6,
+        'smile' => 7,
+        'spectranet' => 8,
+        default => 0
+    };
 }
 
 

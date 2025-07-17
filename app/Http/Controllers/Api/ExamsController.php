@@ -110,7 +110,7 @@ class ExamsController extends Controller
                         $transaction->image = $request->image;
                         $transaction->quantity =  $quantity;
                         $transaction->epin = $responseData['pins'];
-                        $transaction->transaction_id = $responseData['id'];
+                        $transaction->transaction_id = (string) $responseData['id'];
                         $transaction->save();
                         Log::error('API failed with details', $responseData);
                         return response()->json([
@@ -132,7 +132,7 @@ class ExamsController extends Controller
                     $transaction->image = $request->image;
                     $transaction->quantity =  $quantity;
                     $transaction->epin = $responseData['pins'];
-                    $transaction->transaction_id = $responseData['id'];
+                    $transaction->transaction_id = (string) $responseData['id'];
                     $transaction->save();
 
                     $walletTrans = new  WalletTransactions();
@@ -141,7 +141,7 @@ class ExamsController extends Controller
                     $walletTrans->amount = "{$amount}";
                     $walletTrans->service = 'exam';
                     $walletTrans->status = 'Successful';
-                    $walletTrans->transaction_id = $responseData['id'];
+                    $walletTrans->transaction_id = (string) $responseData['id'];
                     $walletTrans->balance_before = $balance_before;
                     $walletTrans->balance_after = $user->wallet_balance;
                     $walletTrans->save();
@@ -333,8 +333,8 @@ class ExamsController extends Controller
             $transaction->phone_number = $request->phone;
             $transaction->epin = $requeryResponse['Pin'] ?? null;
             $transaction->image = $request->image ?? null;
-            $transaction->transaction_id = $requeryResponse['requestId'] ?? null;
-            $transaction->reference = $requeryResponse['content']['transactions']['transactionId'] ?? null;
+            $transaction->transaction_id = (string) $requeryResponse['requestId'] ?? null;
+            $transaction->reference = (string) $requeryResponse['content']['transactions']['transactionId'] ?? null;
             $transaction->smart_card_number = $requeryResponse['content']['transactions']['unique_element'] ?? null;
             $transaction->which_api = 'vtpass';
             $transaction->save();
@@ -344,7 +344,7 @@ class ExamsController extends Controller
             $walletTrans->user = $user->username;
             $walletTrans->amount = $totalAmount;
             $walletTrans->service = $examType;
-            $walletTrans->transaction_id = $transaction->transaction_id;
+            $walletTrans->transaction_id = (string) $transaction->transaction_id;
             $walletTrans->balance_before = $balance_before;
             $walletTrans->balance_after = $user->wallet_balance;
             $walletTrans->status = $status;
@@ -510,8 +510,8 @@ class ExamsController extends Controller
             $transaction->serial = $serials;
             $transaction->epin = $pins;
             $transaction->image = $request->image ?? null;
-            $transaction->transaction_id = $requeryResponse['requestId'] ?? null;
-            $transaction->reference = $requeryResponse['content']['transactions']['transactionId'] ?? null;
+            $transaction->transaction_id = (string) $requeryResponse['requestId'] ?? null;
+            $transaction->reference = (string) $requeryResponse['content']['transactions']['transactionId'] ?? null;
             $transaction->smart_card_number = $requeryResponse['content']['transactions']['unique_element'] ?? null;
             $transaction->which_api = 'vtpass';
             $transaction->save();
@@ -521,7 +521,7 @@ class ExamsController extends Controller
             $walletTrans->user = $user->username;
             $walletTrans->amount = $totalAmount;
             $walletTrans->service = $examType;
-            $walletTrans->transaction_id = $transaction->transaction_id;
+            $walletTrans->transaction_id = (string) $transaction->transaction_id;
             $walletTrans->balance_before = $balance_before;
             $walletTrans->balance_after = $user->wallet_balance;
             $walletTrans->status = $status;

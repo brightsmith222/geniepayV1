@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\BeneficiaryService;
 use Illuminate\Support\Facades\Log;
+use App\Models\Beneficiary;
 
 class BeneficiaryController extends Controller
 {
@@ -51,4 +52,65 @@ class BeneficiaryController extends Controller
             return response()->json(['status' => false, 'message' => $e->getMessage()], 422);
         }
     }
+
+public function all(Request $request)
+{
+    try {
+        $user = $request->user();
+
+        $beneficiaries = (new BeneficiaryService())->getAllForUser($user);
+
+        Log::info('Retrieved all beneficiaries', [
+            'user_id' => $user->id,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'All beneficiaries retrieved',
+            'data' => $beneficiaries,
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Error retrieving all beneficiaries: ' . $e->getMessage(), [
+            'user_id' => $request->user()->id,
+        ]);
+        return response()->json(['status' => false, 'message' => $e->getMessage()], 500);
+    }
+}
+
+public function delete(Request $request, $id)
+{
+    try {
+        $user = $request->user();
+
+        $beneficiary = Beneficiary::where('id', $id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$beneficiary) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Beneficiary not found or does not belong to you.'
+            ], 404);
+        }
+
+        $beneficiary->delete();
+
+        Log::info('Beneficiary deleted', [
+            'user_id' => $user->id,
+            'beneficiary_id' => $id,
+        ]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Beneficiary deleted successfully.'
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Error deleting beneficiary: ' . $e->getMessage(), [
+            'user_id' => $request->user()->id,
+            'beneficiary_id' => $id,
+        ]);
+        return response()->json(['status' => false, 'message' => $e->getMessage()], 500);
+    }
+}
+
 }
