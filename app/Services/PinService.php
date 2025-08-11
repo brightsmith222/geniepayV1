@@ -16,7 +16,6 @@ class PinService
      */
     public function checkPin(User $user, string $pin): bool
     {
-        
-        return $user->pin === $pin;
+        return Hash::check($pin, $user->pin);
     }
 }

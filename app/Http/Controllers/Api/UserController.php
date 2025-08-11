@@ -95,7 +95,7 @@ public function user(Request $request)
 
     try {
         $user = new User();
-        $user->full_name = $request->full_name;
+        $user->full_name = ucfirst(strtolower($request->full_name));
         $user->email = $request->email;
         $user->phone_number = $request->phone_number;
         $user->username = $request->username;
@@ -347,11 +347,68 @@ public function uploadProfileImage(Request $request)
         }
     }
 
+    public function loginWithPin(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'email' => 'required|email|exists:users,email',
+        'pin' => 'required|string|min:4',
+        'fcm_token' => 'string|nullable',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'status' => false,
+            'message' => $validator->errors()->first()
+        ], 422);
+    }
+
+    try {
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user || !Hash::check($request->pin, $user->pin)
+            ) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid PIN.'
+            ], 401);
+        }
+
+        if ($user->status !== 'active') {
+            return response()->json([
+                'status' => false,
+                'message' => 'Your account is not active.'
+            ], 403);
+        }
+
+        $token = $user->createToken($user->email)->plainTextToken;
+        $user->last_login_at = now();
+        $user->fcm_token = $request->fcm_token;
+        $user->save();
+
+        return response()->json([
+            'status' => true,
+            'token' => $token,
+            'verified' => $user->first_verification,
+        ]);
+    } catch (\Throwable $th) {
+        Log::error('PIN login failed: ' . $th->getMessage());
+        return response()->json([
+            'status' => false,
+            'message' => 'Something went wrong.'
+        ], 500);
+    }
+}
+
+
 
     public function sendVerificationCode(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|exists:users,email',
+        ]);
+
+        Log::info('Verification code request', [
+            'email' => $request->input('email')
         ]);
 
         if ($validator->fails()) {
@@ -667,6 +724,8 @@ public function verifyCode(Request $request)
             ],
         ]);
 
+        Log::info('Password recovery initiated for email: ' . $request->input('email'));
+
         if ($validator->fails()) {
             return response()->json(
                 [
@@ -866,7 +925,7 @@ public function verifyCode(Request $request)
             $user = $request->user();
 
             // $user->password = $password;
-            $user->pin = $pin;
+            $user->pin = Hash::make($pin);
             $user->save();
 
             return response()->json(
@@ -1112,7 +1171,7 @@ public function getReferredUsers(Request $request)
     if ($setting && $setting->is_enabled) {
         return response()->json([
             'status' => true,
-            'virtual_charge' => (float) $setting->referral_bonus,
+            'virtual_charge' => (float) $setting->giftcard_percentage,
         ]);
     } else {
         return response()->json([
@@ -1122,5 +1181,40 @@ public function getReferredUsers(Request $request)
         ]);
     }
 }
+
+public function getVirtualAccount(Request $request)
+{
+    $user = $request->user();
+
+    $accounts = VirtualAccount::where('user_id', $user->id)->get();
+
+    // Get virtual charge value from GeneralSettings
+    $virtualChargeSetting = GeneralSettings::where('name', 'virtual_charge')->first();
+    $virtual_charge = ($virtualChargeSetting && $virtualChargeSetting->is_enabled)
+        ? (float) $virtualChargeSetting->giftcard_percentage
+        : 0;
+
+    if ($accounts->count() > 0) {
+        return response()->json([
+            'status' => true,
+            'accounts' => $accounts->map(function ($account) use ($virtual_charge) {
+                return [
+                    'reference' => $account->reference,
+                    'type' => $account->type,
+                    'account_number' => $account->account_number,
+                    'bank' => $account->bank,
+                    'virtual_charge' => $virtual_charge,
+                ];
+            }),
+        ]);
+    } else {
+        return response()->json([
+            'status' => false,
+            'message' => 'No account found',
+            'virtual_charge' => $virtual_charge
+        ], 404);
+    }
+}
+
 
 }

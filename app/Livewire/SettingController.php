@@ -55,7 +55,7 @@ class SettingController extends Component
     $this->artxAirtimeEnabled = (bool) GeneralSettings::where('name', 'artx_airtime')->value('is_enabled');
     $this->artxgiftcardEnabled = (bool) GeneralSettings::where('name', 'artx_giftcard')->value('is_enabled');
     $this->referralBonus = GeneralSettings::where('name', 'referral')->value('referral_bonus') ?? 0;
-    $this->virtualCharge = GeneralSettings::where('name', 'virtual_charge')->value('referral_bonus') ?? 0;
+    $this->virtualCharge = GeneralSettings::where('name', 'virtual_charge')->value('giftcard_percentage') ?? 0;
 
 }
 

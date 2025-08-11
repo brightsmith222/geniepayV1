@@ -19,8 +19,7 @@ use App\Http\Controllers\Api\BeneficiaryController;
 use App\Http\Controllers\Api\MobilePinController;
 use App\Http\Controllers\Api\NinePsbWebhookController;
 use App\Http\Controllers\Api\HashTestController;
-
-
+use App\Http\Controllers\Api\InternationalAirtimeController;
 
 // Route::get('/user', function (Request $request) {
 //     return $request->user();
@@ -36,8 +35,10 @@ Route::post('/update-user', [UserController::class, 'updateUser']);
 Route::get('/user-referred', [UserController::class, 'getReferredUsers']);
 Route::get('/referral-bonus', [UserController::class, 'getReferralBonus']);
 Route::get('/virtual-charge', [UserController::class, 'getVirtualCharge']);
+Route::get('/get-virtual', [UserController::class, 'getVirtualAccount']);
 Route::post('/upload-image', [UserController::class, 'uploadProfileImage']);
 Route::post('/send-change-pin-verification-code', [UserController::class, 'sendChangePinVerificationCode']);
+Route::post('/login-with-pin', [UserController::class, 'loginWithPin']);
 
 
     
@@ -97,7 +98,11 @@ Route::get('/giftcard/countries', [GiftCardController::class, 'getCountries']);
 Route::get('/giftcard/operators', [GiftCardController::class, 'getGiftCards']);
 Route::get('/giftcard/denominations', [GiftCardController::class, 'getDenominations']);
 Route::post('/purchase/giftcard', [GiftCardController::class, 'purchase']);
-Route::post('/giftcard-purchase', [GiftCardController::class, 'purchaseGiftcard']);
+Route::get('/giftcard-country', [GiftCardController::class, 'getCountry']);
+Route::get('/giftcard/products/{countryIso}', [GiftCardController::class, 'getProductsByCountry']);
+Route::get('/giftcard-product', [GiftCardController::class, 'getProductDetails']);
+Route::post('/giftcard-purchase', [GiftCardController::class, 'purchasecard']);
+Route::post('/giftcard-redeem/{orderId}', [GiftCardController::class, 'getGiftCardRedeemCode']);
 
 
 // eSIM
@@ -108,7 +113,7 @@ Route::post('/esim/purchase', [EsimController::class, 'purchase']);
 //Smile Data
 Route::post('/smile-verify', [SmileController::class, 'verifySmileAccount']);
 Route::get('/smile-plans', [SmileController::class, 'getSmilePlans']);
-Route::post('/smile-purchase', [SmileController::class, 'purchaseSmileData']);
+Route::post('/internet-purchase', [SmileController::class, 'purchaseInternetData']);
 
 //Spectranet Data
 Route::get('/spectranet-plans', [SpectranetController::class, 'getSpectranetPlans']);
@@ -119,6 +124,13 @@ Route::post('/beneficiaries', [BeneficiaryController::class, 'index']);
 Route::get('/all-beneficiaries', [BeneficiaryController::class, 'all']);
 Route::delete('/beneficiary/{id}', [BeneficiaryController::class, 'delete']);
 
+// International Airtime
+//Route::post('/detect-country', [InternationalAirtimeController::class, 'detectCountry']);
+Route::get('/airtime-operators', [InternationalAirtimeController::class, 'getAirtimeOperators']);
+Route::get('/data-operators', [InternationalAirtimeController::class, 'getDataOperators']);
+Route::get('/get-operator/{id}', [InternationalAirtimeController::class, 'getOperatorById']);
+Route::post('/purchase', [InternationalAirtimeController::class, 'purchase']);
+Route::post('/all-operator', [InternationalAirtimeController::class, 'getAllOperators']);
 
 
 
@@ -131,6 +143,7 @@ Route::post('/register', [UserController::class, 'registerUser']);
 Route::post('/verify-code', [UserController::class, 'verifyCode']);
 Route::post('/send-verification-code', [UserController::class, 'sendVerificationCode']);
 Route::post('/recover-password', [UserController::class, 'recoverPassword']);
+Route::post('/send-forgot-password-code', [UserController::class, 'sendForgotPasswordCode']);
 
 Route::post('/v1/monnify-webhook', [PaymentController::class, 'monnifyWebhook']);
 Route::post('/v1/paystack-webhook', [PaymentController::class, 'paystackWebhook']);

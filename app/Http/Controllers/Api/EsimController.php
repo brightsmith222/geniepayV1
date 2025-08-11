@@ -184,7 +184,6 @@ class EsimController extends Controller
             'amountOperator' => $request->operator_amount,
             'quantity' => $request->quantity,
             'userReference' => $reference,
-            //'msisdn' => "2348032337583",
             'simulate' => 1
         ];
 
@@ -211,6 +210,7 @@ class EsimController extends Controller
 
             $walletTrans = new WalletTransactions();
             $walletTrans->trans_type = 'debit';
+            $walletTrans->user_id = $user->id;
             $walletTrans->user = $user->username;
             $walletTrans->amount = $totalAmount;
             $walletTrans->service = 'esim';
@@ -227,7 +227,7 @@ class EsimController extends Controller
         $transaction->amount = $totalAmount;
         $transaction->service_provider = $productName;
         $transaction->provider_id = $request->operator;
-        $transaction->status = $txStatus;
+        $transaction->status = ucfirst(strtolower($txStatus));
         $transaction->service = 'esim';
         $transaction->service_plan = $request->plan_name;
         $transaction->image = $request->brand_id;
@@ -263,7 +263,15 @@ class EsimController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'eSIM purchased successfully',
-                'data' => $transaction,
+                'data' => [
+                    'transaction' => $transaction,
+                    'card_details' => [
+                        'epin' => $transaction->epin,
+                        'serial' => $transaction->serial,
+                        'instructions' => $transaction->instructions
+                    ]
+            ],
+
             ]);
         } elseif ($txStatus === 'Pending') {
             return response()->json([

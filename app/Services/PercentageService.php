@@ -30,6 +30,25 @@ class PercentageService
         return $originalAmount;
     }
 
+    // Calculate discounted amount for international airtime topup.
+    public function calculateIntAirtimeDiscountedAmount(float $originalAmount): float
+{
+    $record = AirtimeTopupPercentage::where('network_name', 'INTERNATIONAL')->first();
+
+        if ($record && (bool) $record->status) {
+            $percentage = (float) $record->network_percentage;
+            return $originalAmount + $this->calculateMarkup($percentage, $originalAmount);
+        }
+
+        if (!$record) {
+            Log::warning("AirtimeTopupPercentage record not found for international airtime");
+        } elseif (!(bool) $record->status) {
+            Log::info("AirtimeTopupPercentage is disabled for international airtime");
+        }
+
+        return $originalAmount;
+    }
+
     // Calculate discounted amount for data topup.
     public function calculateDataDiscountedAmount(int $networkId, float $originalAmount): float
     {
@@ -138,6 +157,33 @@ public function calculateSpectranetDiscountedAmount(float $originalAmount): floa
     return $originalAmount;
 }
 
+// Calculate discounted amount for international data topup.
+public function calculateInternationalDiscountedAmount(float $originalAmount): float
+{
+    $record = DataTopupPercentage::where('network_name', 'international')->first();
+
+    if ($record && (bool) $record->status) {
+        $percentage = (float) $record->network_percentage;
+
+        // Log the percentage and original amount
+        Log::info("Applying InternationalPercentage for network name: international", [
+            'percentage' => $percentage,
+            'original_amount' => $originalAmount
+        ]);
+
+        return $originalAmount + $this->calculateDiscount($percentage, $originalAmount);
+    }
+
+    if (!$record) {
+        Log::warning("DataTopupPercentage record not found for network name: international");
+    } elseif (!(bool) $record->status) {
+        Log::info("DataTopupPercentage is disabled for network name: international");
+    }
+
+    // Return the original amount if no percentage is found or disabled
+    return $originalAmount;
+}
+
 // Calculate virtual charge.
 public function virtualCharge(float $originalAmount): float
 {
@@ -163,4 +209,10 @@ public function virtualCharge(float $originalAmount): float
     {
         return ($percentage / 100) * $amount;
     }
+
+    // Markup calculator
+private function calculateMarkup(float $percentage, float $amount): float
+{
+    return ($percentage / 100) * $amount;
+}
 }

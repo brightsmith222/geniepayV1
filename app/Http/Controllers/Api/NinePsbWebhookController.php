@@ -96,19 +96,19 @@ class NinePsbWebhookController extends Controller
             }
 
             // ✅ Step 5: Confirm payment with 9PSB
-            // $confirmation = $this->psb->confirmPayment([
-            //     'sessionid' => $sessionId,
-            //     'accountnumber' => $accountNumber,
-            //     'amount' => (float)$amount
-            // ]);
+            $confirmation = $this->psb->confirmPayment([
+                'sessionid' => $sessionId,
+                'accountnumber' => $accountNumber,
+                'amount' => (float)$amount
+            ]);
 
-            // $confirmedTxn = $confirmation['transactions'][0] ?? null;
-            // $confirmedAmount = data_get($confirmedTxn, 'order.amount');
+            $confirmedTxn = $confirmation['transactions'][0] ?? null;
+            $confirmedAmount = data_get($confirmedTxn, 'order.amount');
 
-            // if ((float)$confirmedAmount != (float)$amount) {
-            //     Log::warning("Amount mismatch", ['confirmed' => $confirmedAmount, 'webhook' => $amount]);
-            //     return response()->json(['message' => 'Amount mismatch'], 422);
-            // }
+            if ((float)$confirmedAmount != (float)$amount) {
+                Log::warning("Amount mismatch", ['confirmed' => $confirmedAmount, 'webhook' => $amount]);
+                return response()->json(['message' => 'Amount mismatch'], 422);
+            }
 
             // ✅ Step 6: Record transaction
             Webhook9psbSession::create([
@@ -127,7 +127,8 @@ class NinePsbWebhookController extends Controller
 
             if ($credited) {
                 $walletTrans = new  WalletTransactions();
-                $walletTrans->trans_type = 'credit';
+                $walletTrans->trans_type = 'Credit';
+                $walletTrans->user_id = $user->id;
                 $walletTrans->user = $user->username;
                 $walletTrans->amount = $amount;
                 $walletTrans->service = 'Wallet Funded';

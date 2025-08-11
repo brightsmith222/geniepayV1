@@ -9,7 +9,7 @@ class AirtimeSettings extends Component
 {
     public $percentages = []; // Store network percentages
     public $statuses = []; // Store network statuses
-    public $networkNames = ['MTN', 'Glo', 'Airtel', '9mobile']; // Networks
+    public $networkNames = ['MTN', 'Glo', 'Airtel', '9mobile', 'international']; // Networks
     public $activeTab = 'MTN'; // Track the active tab
 
     public function mount()

@@ -81,7 +81,7 @@ public function sendNotification($token, $title, $body, $image = null)
 
     // Send the request
     try {
-        $response = $this->httpClient->post($url, [
+        $response = $this->httpClient->withoutVerifying()->post($url, [
             'headers' => [
                 'Authorization' => 'Bearer ' . $this->getAccessToken(),
                 'Content-Type' => 'application/json',

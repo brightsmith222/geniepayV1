@@ -334,6 +334,7 @@ class AirtimeController extends Controller
     {
         $walletTrans = new WalletTransactions();
         $walletTrans->trans_type = 'debit';
+        $walletTrans->user_id = $user->id;
         $walletTrans->user = $user->username;
         $walletTrans->amount = "{$amount}";
         $walletTrans->service = 'airtime';

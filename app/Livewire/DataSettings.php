@@ -10,7 +10,7 @@ class DataSettings extends Component
 {
     public $percentages = []; // Store network percentages
     public $statuses = []; // Store network statuses
-    public $networkNames = ['MTN', 'Glo', 'Airtel', '9mobile', 'Smile', 'spectranet']; // Networks
+    public $networkNames = ['MTN', 'Glo', 'Airtel', '9mobile', 'Smile', 'spectranet', 'international']; // Networks
     public $activeTab = 'MTN'; // Track the active tab
 
     public function mount()
@@ -80,6 +80,7 @@ protected function mapNetworkToId($network)
         '9mobile' => 6,
         'smile' => 7,
         'spectranet' => 8,
+        'international' => 9,
         default => 0
     };
 }

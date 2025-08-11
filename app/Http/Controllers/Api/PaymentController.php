@@ -77,7 +77,6 @@ class PaymentController extends Controller
                         ],
                         200
                     );
-
                 } else {
                     return response()->json(
                         [
@@ -87,7 +86,6 @@ class PaymentController extends Controller
                         422
                     );
                 }
-
             } else {
                 Log::error("Request for monnify payment failed");
                 return response()->json(
@@ -98,7 +96,6 @@ class PaymentController extends Controller
                     422
                 );
             }
-
         } catch (RequestException $e) {
 
             // Handle exceptions that occur during the HTTP request
@@ -121,7 +118,6 @@ class PaymentController extends Controller
                 422
             );
         }
-
     }
 
     public function monnifyWebhook(Request $request)
@@ -159,7 +155,6 @@ class PaymentController extends Controller
 
             // If the signature doesn't match or is missing, return a 400 Bad Request
             return response()->json(['status' => 'error', 'message' => 'Invalid signature'], 400);
-
         } catch (RequestException $e) {
 
             // Handle exceptions that occur during the HTTP request
@@ -183,7 +178,6 @@ class PaymentController extends Controller
                     422
                 );
         }
-
     }
 
 
@@ -245,7 +239,6 @@ class PaymentController extends Controller
                         ],
                         200
                     );
-
                 } else {
                     return response()->json(
                         [
@@ -255,7 +248,6 @@ class PaymentController extends Controller
                         422
                     );
                 }
-
             } else {
                 Log::error("Request for paystack payment failed");
                 return response()->json(
@@ -266,7 +258,6 @@ class PaymentController extends Controller
                     422
                 );
             }
-
         } catch (RequestException $e) {
 
             // Handle exceptions that occur during the HTTP request
@@ -289,7 +280,6 @@ class PaymentController extends Controller
                 422
             );
         }
-
     }
 
 
@@ -337,7 +327,7 @@ class PaymentController extends Controller
                     $data = $data['data'];
                     $paymentMethod = $data['channel'];
                     $email = $data['customer']['email'];
-                    $amount = $data['amount']/100;
+                    $amount = $data['amount'] / 100;
                     $reference = $data['reference'];
                     $user = User::where('email', '=', $email)->first();
 
@@ -393,15 +383,16 @@ class PaymentController extends Controller
 
 
                     $walletTrans = new  WalletTransactions();
-                            $walletTrans->trans_type = 'credit';
-                            $walletTrans->user = $user->username;
-                            $walletTrans->amount = $amount;
-                            $walletTrans->service = 'Wallet Funded';
-                            $walletTrans->status = 'Successful';
-                            $walletTrans->transaction_id =$reference;
-                            $walletTrans->balance_before = $balance_before;
-                            $walletTrans->balance_after = $user->wallet_balance;
-                            $walletTrans->save();
+                    $walletTrans->trans_type = 'credit';
+                    $walletTrans->user_id = $user->id;
+                    $walletTrans->user = $user->username;
+                    $walletTrans->amount = $amount;
+                    $walletTrans->service = 'Wallet Funded';
+                    $walletTrans->status = 'Successful';
+                    $walletTrans->transaction_id = $reference;
+                    $walletTrans->balance_before = $balance_before;
+                    $walletTrans->balance_after = $user->wallet_balance;
+                    $walletTrans->save();
 
 
 
@@ -413,7 +404,6 @@ class PaymentController extends Controller
 
             // If the signature doesn't match or is missing, return a 400 Bad Request
             return response()->json(['status' => 'error', 'message' => 'Invalid signature'], 400);
-
         } catch (RequestException $e) {
 
             // Handle exceptions that occur during the HTTP request
@@ -436,7 +426,6 @@ class PaymentController extends Controller
                 422
             );
         }
-
     }
 
 
@@ -444,12 +433,8 @@ public function transactions(Request $request)
 {
     try {
         $user = $request->user();
-        $cacheKey = 'transactions:user:' . $user->id;
 
-        // Cache for 5 minutes (adjust as needed)
-        $transactions = cache()->remember($cacheKey, now()->addMinutes(5), function () use ($user) {
-            return Transactions::where('user_id', $user->id)->get();
-        });
+        $transactions = Transactions::where('user_id', $user->id)->get();
 
         return response()->json([
             'status' => true,
@@ -476,14 +461,11 @@ public function walletTransactions(Request $request)
 {
     try {
         $user = $request->user();
-        $cacheKey = 'wallet_transactions:user:' . $user->id;
 
-        // Cache for 5 minutes (adjust as needed)
-        $transactions = cache()->remember($cacheKey, now()->addMinutes(5), function () use ($user) {
-            return WalletTransactions::where('user', $user->username)
-                ->orWhere('receiver_email', $user->email)
-                ->get();
-        });
+        $transactions = WalletTransactions::where('user', $user->username)
+            ->orWhere('receiver_email', $user->email)
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         return response()->json([
             'status' => true,
@@ -527,11 +509,11 @@ public function walletTransactions(Request $request)
             $user = $request->user();
 
             $receiverId = $request->receiver_id;
-            if($receiverId == $user->email || $receiverId == $user->username || $receiverId == $user->phone){
+            if ($receiverId == $user->email || $receiverId == $user->username || $receiverId == $user->phone) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Oops! Sorry, you can\'t make transfer to yourself.'
-                ], 422); 
+                ], 422);
             }
             $receiver = User::where('email', '=', $receiverId)->orWhere('username', '=', $receiverId)->orWhere('phone_number', '=', $receiverId)->first();
 
@@ -540,15 +522,13 @@ public function walletTransactions(Request $request)
                 return response()->json([
                     'status' => true,
                     'message' => $message
-                ], );
-
+                ],);
             } else {
                 return response()->json([
                     'status' => false,
                     'message' => 'No user found with the data provided, please confirm and try again'
                 ], 422);
             }
-
         } catch (RequestException $e) {
 
             // Handle exceptions that occur during the HTTP request
@@ -571,7 +551,6 @@ public function walletTransactions(Request $request)
                 422
             );
         }
-
     }
 
 
@@ -596,7 +575,7 @@ public function walletTransactions(Request $request)
 
             $pin = $request->input('pin');
             $user = $request->user();
-            
+
 
             if (!$pinService->checkPin($user, $pin)) {
                 return response()->json([
@@ -606,14 +585,14 @@ public function walletTransactions(Request $request)
             }
             $amount = $request->amount;
             $receiverId = $request->receiver_id;
-            
-            if($receiverId == $user->email || $receiverId == $user->username || $receiverId == $user->phone){
+
+            if ($receiverId == $user->email || $receiverId == $user->username || $receiverId == $user->phone) {
                 return response()->json([
                     'status' => false,
                     'message' => 'Oops! Sorry, you can\'t make transfer to yourself.'
-                ], 422); 
+                ], 422);
             }
-            
+
             $receiver = User::where('email', '=', $receiverId)->orWhere('username', '=', $receiverId)->orWhere('phone_number', '=', $receiverId)->first();
 
             if ($user->wallet_balance < $amount) {
@@ -632,33 +611,49 @@ public function walletTransactions(Request $request)
                 $receiver->wallet_balance += $amount;
                 $receiver->save();
 
-                $walletTrans = new  WalletTransactions();
-                            $walletTrans->trans_type = 'debit';
-                            $walletTrans->amount = $amount;
-                            $walletTrans->user = $user->username;
-                            $walletTrans->sender_email = $user->email;
-                            $walletTrans->sender_name = $user->full_name;
-                            $walletTrans->receiver_email = $receiver->email;
-                            $walletTrans->receiver_name = $receiver->full_name;
-                            $walletTrans->service = 'transfer';
-                            $walletTrans->transaction_id = MyFunctions::generateRequestId();
-                            $walletTrans->balance_before = $balance_before;
-                            $walletTrans->balance_after = $user->wallet_balance;
-                            $walletTrans->save();
+                // Debit record for sender
+                $walletTransSender = new WalletTransactions();
+                $walletTransSender->trans_type = 'debit';
+                $walletTransSender->amount = $amount;
+                $walletTransSender->user_id = $user->id;
+                $walletTransSender->user = $user->username;
+                $walletTransSender->sender_email = $user->email;
+                $walletTransSender->sender_name = $user->full_name;
+                $walletTransSender->receiver_email = $receiver->email;
+                $walletTransSender->receiver_name = $receiver->full_name;
+                $walletTransSender->service = 'transfer';
+                $walletTransSender->transaction_id = MyFunctions::generateRequestId();
+                $walletTransSender->balance_before = $balance_before;
+                $walletTransSender->balance_after = $user->wallet_balance;
+                $walletTransSender->save();
+
+                // Credit record for receiver
+                $walletTransReceiver = new WalletTransactions();
+                $walletTransReceiver->trans_type = 'credit';
+                $walletTransReceiver->amount = $amount;
+                $walletTransReceiver->user_id = $receiver->id;
+                $walletTransReceiver->user = $receiver->username;
+                $walletTransReceiver->sender_email = $user->email;
+                $walletTransReceiver->sender_name = $user->full_name;
+                $walletTransReceiver->receiver_email = $receiver->email;
+                $walletTransReceiver->receiver_name = $receiver->full_name;
+                $walletTransReceiver->service = 'transfer';
+                $walletTransReceiver->transaction_id = MyFunctions::generateRequestId();
+                $walletTransReceiver->balance_before = $receiver->wallet_balance - $amount;
+                $walletTransReceiver->balance_after = $receiver->wallet_balance;
+                $walletTransReceiver->save();
 
                 return response()->json([
                     'status' => true,
                     'message' => 'Transfer completed successfully',
-                    'data' => $walletTrans
+                    'data' => $walletTransSender
                 ], 200);
-
             } else {
                 return response()->json([
                     'status' => false,
                     'message' => 'No user found with the data provided, please confirm and try again'
                 ], 422);
             }
-
         } catch (RequestException $e) {
 
             // Handle exceptions that occur during the HTTP request
@@ -681,13 +676,7 @@ public function walletTransactions(Request $request)
                 422
             );
         }
-
     }
 
-    public function walletTrans(){
-
-
-    }
-
-
+    public function walletTrans() {}
 }

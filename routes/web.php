@@ -95,6 +95,7 @@ Route::post('transaction/{requestId}/resolve', [TransactionsController::class, '
 Route::post('/transaction/refresh-status', [TransactionsController::class, 'refreshStatus'])->name('transaction.refresh');
 
 
+
 //Reported Transaction
 Route::get('reported', [ReportedController::class, 'index'])->name('reported.index');
 Route::post('reported/{id}/reportrefund', [ReportedController::class, 'reportedrefund'])->name('report.refund');
@@ -148,6 +149,7 @@ Route::get('/product-explorer/{operator_id}/{product_id}', [ProductLookupControl
 
 
 
+Route::post('/vtpasswebhook', [TransactionsController::class, 'vtpassRequeryWebhook']);
 
 Route::get('/email', function (Request $request) {
 
