@@ -198,9 +198,7 @@ class PaymentController extends Controller
         }
 
         try {
-            // $accessToken = 'sk_live_8e8bd77578eb2daa2ded52faca4541205cd26a68';
-           // $accessToken = 'sk_test_8c3ada1bedbdf69f78b042862196b7b43a24d1d9';
-
+    
             $url = 'https://api.paystack.co/transaction/initialize';
 
             $payload = [
@@ -293,11 +291,7 @@ class PaymentController extends Controller
         try {
             // Get the website configuration values
             $webconfig = config('website'); // Assuming you have website configuration stored in a config file
-            // $secretKey = 'sk_test_8c3ada1bedbdf69f78b042862196b7b43a24d1d9';
-            // $secretKey = 'sk_live_8e8bd77578eb2daa2ded52faca4541205cd26a68';
-
-           // $secretKey = 'sk_test_8c3ada1bedbdf69f78b042862196b7b43a24d1d9';
-
+      
             // Log::info('Paystack Webhook Data:');
 
 
