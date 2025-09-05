@@ -156,6 +156,24 @@
                 <p>Enable or Disable a service.</p>
                 <div class="card shadow-sm">
                     <div class="card-body p-3">
+                        <p>Enable/Disable Card Payment</p>
+                <div class="form-group">
+                    <label class="toggle-switch">
+                        <span class="toggle-label">Card Payment</span>
+                        <input type="checkbox"class="toggle-input" @change="$wire.toggleSetting('card_payment')" {{ $cardPaymentEnabled ? 'checked' : '' }}>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">
+                            <span class="{{ $cardPaymentEnabled ? 'state-on' : 'state-off' }}">
+                                {{ $cardPaymentEnabled ? 'On' : 'Off' }}
+                            </span>
+                        </span>
+                    </label>
+                </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-body p-3">
                         <p>Enable/Disable VTpass API</p>
                 <div class="form-group">
                     <label class="toggle-switch">
@@ -171,6 +189,9 @@
                 </div>
                     </div>
                 </div>
+
+
+
                 <div class="card shadow-sm">
                 <div class="card-body p-3">
                     <p>Enable/Disable Airtime API</p>
@@ -338,7 +359,71 @@
                        </button>
                     </div>
                     
-                    <div class="bonus-hint">Set the amount rewarded for each successful referral</div>
+                    <div class="bonus-hint">Set the amount charged for virtual account transactions</div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                    <div class="card-body p-3">
+                        <p>Enable/Disable Card Payment Charges</p>
+                    <label class="toggle-switch">
+                        <span class="toggle-label">Enable Card Charges</span>
+                        <input type="checkbox"class="toggle-input" @change="$wire.toggleSetting('card_payment')" {{ $cardPaymentEnabled ? 'checked' : '' }}>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">
+                            <span class="{{ $cardPaymentEnabled ? 'state-on' : 'state-off' }}">
+                                {{ $cardPaymentEnabled ? 'On' : 'Off' }}
+                            </span>
+                        </span>
+                    </label>
+                    <div class="bonus-header">
+                        <label for="card_charge" class="bonus-label">
+                            <i class="fas fa-credit-card bonus-icon"></i>
+                            Card Charge Amount
+                        </label>
+                        <span class="bonus-currency">NGN</span>
+                    </div>
+                    
+                    <div class="bonus-input-group">
+                        <input type="number" 
+                               id="card_charge" 
+                               step="0.01" 
+                               min="0"
+                               wire:model.defer="cardCharge"
+                               class="bonus-input"
+                               placeholder="0.00">
+                        
+                               <button wire:click="saveCardCharge" 
+                               class="bonus-save-btn"
+                               wire:loading.attr="disabled"
+                               wire:target="saveCardCharge">
+                           <span wire:loading.remove wire:target="saveCardCharge">
+                               <i class="fas fa-check"></i> Update
+                           </span>
+                           <span wire:loading wire:target="saveCardCharge">
+                               <i class="fas fa-spinner fa-spin"></i> Saving
+                           </span>
+                       </button>
+                    </div>
+                    
+                    <div class="bonus-hint">Set the amount charged for card payment transactions</div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                    <div class="card-body p-3">
+                        <p>Enable/Disable Maintenance Mode</p>
+                    <label class="toggle-switch">
+                        <span class="toggle-label">Maintenance Mode</span>
+                        <input type="checkbox"class="toggle-input" @change="$wire.toggleSetting('maintenance')" {{ $maintenanceEnabled ? 'checked' : '' }}>
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">
+                            <span class="{{ $maintenanceEnabled ? 'state-on' : 'state-off' }}">
+                                {{ $maintenanceEnabled ? 'On' : 'Off' }}
+                            </span>
+                        </span>
+                    </label>
+                    <div class="bonus-hint">Enable maintenance mode to temporarily disable the application for users</div>
                 </div>
             </div>
                 

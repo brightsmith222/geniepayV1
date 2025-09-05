@@ -330,9 +330,10 @@ class BaseDataController extends Controller
 {
     $mappedNetwork = match ($network) {
         1 => 1,  // MTN
-        6 => 6, // 9Mobile
         2 => 2, // GLO
         3 => 3, // Airtel
+        6 => 6, // 9Mobile
+
         default => 0, // Unknown
     };
     return $mappedNetwork;

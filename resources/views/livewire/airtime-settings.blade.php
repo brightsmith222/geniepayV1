@@ -1,5 +1,7 @@
 <div>
     <h1>Airtime Top-Up Percentage Settings</h1>
+    
+    
 
     <!-- Display Flash Messages -->
     @if (session()->has('success'))
@@ -39,14 +41,34 @@
                      role="tabpanel" 
                      aria-labelledby="net-{{ strtolower(str_replace(' ', '-', $network)) }}-tab">
                     <div class="tab-inner-content">
-                        <div class="d-flex" style="justify-content: space-between;">
-                            <div>
-                                <h5>{{ $network }} Percentage</h5>
+                        <!-- Percentage Charge Toggle -->
+                        <div class="percentage-section">
+                            <div class="d-flex" style="justify-content: space-between;">
+                                <div>
+                                    <h5>{{ $network }} Percentage Charge</h5>
+                                    <small class="text-muted">Enable/Disable percentage charge for {{ $network }}</small>
+                                </div>
+                                <div class="toggle {{ $statuses[$network] === 1 ? 'active' : '' }}" 
+                                     wire:click="toggleStatus('{{ $network }}')">
+                                    <div class="switch">
+                                        <span>{{ $statuses[$network] === 1 ? 'ON' : 'OFF' }}</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="toggle {{ $statuses[$network] === 1 ? 'active' : '' }}" 
-                                 wire:click="toggleStatus('{{ $network }}')">
-                                <div class="switch">
-                                    <span>{{ $statuses[$network] === 1 ? 'ON' : 'OFF' }}</span>
+                        </div>
+                        
+                        <!-- Service Availability Toggle -->
+                        <div class="service-availability-section">
+                            <div class="d-flex" style="justify-content: space-between;">
+                                <div>
+                                    <h6>Service Availability</h6>
+                                    <small class="text-muted">Enable/Disable {{ $network }} service completely</small>
+                                </div>
+                                <div class="toggle {{ $activeStatuses[$network] === 1 ? 'active' : '' }}" 
+                                     wire:click="toggleActiveStatus('{{ $network }}')">
+                                    <div class="switch">
+                                        <span>{{ $activeStatuses[$network] === 1 ? 'ON' : 'OFF' }}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -91,7 +91,7 @@ class AirtimeController extends Controller
 
             // Calculate discounted amount
             $amount_charged = $airtimePercentageService->calculateDiscountedAmount($network, $amount);
-
+            
             // Process the request through the API service
             $response = $apiService->processRequest([
                 'network' => $network,

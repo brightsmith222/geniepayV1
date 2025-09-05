@@ -13,12 +13,18 @@ class GeneralSettings extends Model
         'name',
         'is_enabled',
         'referral_bonus',
-        
+        'giftcard_percentage',
+        'virtual_percentage',
+        'card_charge',
     ];
 
     // In GeneralSettings model
-protected $casts = [
-    'is_enabled' => 'boolean',
-];
+    protected $casts = [
+        'is_enabled' => 'boolean',
+        'referral_bonus' => 'decimal:2',
+        'giftcard_percentage' => 'decimal:2',
+        'virtual_percentage' => 'decimal:2',
+        'card_charge' => 'decimal:2',
+    ];
 
 }

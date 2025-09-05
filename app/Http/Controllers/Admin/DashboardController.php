@@ -164,11 +164,15 @@ class DashboardController extends Controller
     // Get location from IP address (example using ip-api.com)
     private function getLocationFromIp($ip)
 {
-    // Example using ip-api.com (free geolocation API)
     $response = @file_get_contents("http://ip-api.com/json/{$ip}");
+    if ($response === false) {
+        // Could not fetch data from API
+        return 'Unknown Location';
+    }
+
     $data = json_decode($response, true);
 
-    if ($data && $data['status'] === 'success') {
+    if (is_array($data) && isset($data['status']) && $data['status'] === 'success') {
         return "{$data['city']}, {$data['regionName']}, {$data['country']}";
     }
 

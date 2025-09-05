@@ -21,203 +21,212 @@ class ExamsController extends Controller
 {
 
 
-public function buyResultChecker(Request $request, PinService $pinService)
-{
-    $validator = Validator::make($request->all(), [
-        'exam' =>  'required|string',
-        'amount' => 'string|required',
-        'quantity' => 'string|required',
-        'image' => 'string|nullable'
-    ]);
-
-    if ($validator->fails()) {
-        Log::warning('buyResultChecker validation failed', [
-            'errors' => $validator->errors()->all(),
-            'request' => $request->all()
+    public function buyResultChecker(Request $request, PinService $pinService)
+    {
+        $validator = Validator::make($request->all(), [
+            'exam' =>  'required|string',
+            'amount' => 'string|required',
+            'quantity' => 'string|required',
+            'image' => 'string|nullable'
         ]);
-        return response()->json([
-            'status' => false,
-            'message' => $validator->errors()->first()
-        ], 422);
-    }
 
-    try {
-        $exam = $request->input('exam');
-        $quantity = $request->input('quantity');
-        $amount = $request->input('amount');
-        $pin = $request->input('pin');
-        $user = $request->user();
-
-        if (!$pinService->checkPin($user, $pin)) {
-            Log::warning('buyResultChecker: Invalid transaction pin', [
-                'user_id' => $user->id,
-                'username' => $user->username
+        if ($validator->fails()) {
+            Log::warning('buyResultChecker validation failed', [
+                'errors' => $validator->errors()->all(),
+                'request' => $request->all()
             ]);
             return response()->json([
                 'status' => false,
-                'message' => 'Invalid transaction pin.'
-            ], 403);
+                'message' => $validator->errors()->first()
+            ], 422);
         }
 
-        $wallet_balance = $user->wallet_balance;
+        try {
+            $exam = $request->input('exam');
+            $quantity = $request->input('quantity');
+            $amount = $request->input('amount');
+            $pin = $request->input('pin');
+            $user = $request->user();
 
-        if ($wallet_balance < $amount) {
-            Log::warning('buyResultChecker: Insufficient balance', [
-                'user_id' => $user->id,
-                'wallet_balance' => $wallet_balance,
-                'amount' => $amount
+            if (!$pinService->checkPin($user, $pin)) {
+                Log::warning('buyResultChecker: Invalid transaction pin', [
+                    'user_id' => $user->id,
+                    'username' => $user->username
+                ]);
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Invalid transaction pin.'
+                ], 403);
+            }
+
+            $wallet_balance = $user->wallet_balance;
+
+            if ($wallet_balance < $amount) {
+                Log::warning('buyResultChecker: Insufficient balance', [
+                    'user_id' => $user->id,
+                    'wallet_balance' => $wallet_balance,
+                    'amount' => $amount
+                ]);
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Insufficient balance ₦' . number_format($wallet_balance)
+                ], 400);
+            }
+
+            $amount_charged = $amount;
+            $url = config('api.glad.base_url') . "api/epin/";
+            $gladAPIKey = config('api.glad.api_key');
+
+            $headers = [
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Token ' . $gladAPIKey,
+            ];
+
+            $data = [
+                'exam_name' => strtoupper($exam),
+                'quantity' => $quantity,
+                'amount' => $amount,
+            ];
+
+            Log::info('buyResultChecker: Sending request to Glad API', [
+                'url' => $url,
+                'headers' => $headers,
+                'data' => $data
             ]);
-            return response()->json([
-                'status' => false,
-                'message' => 'Insufficient balance ₦' . number_format($wallet_balance)
-            ], 400);
-        }
 
-        $amount_charged = $amount;
-        $url = config('api.glad.base_url') . "api/epin/";
-        $gladAPIKey = config('api.glad.api_key');
+            $response = Http::withoutVerifying()->withHeaders($headers)->post($url, $data);
+            $statusCode = $response->getStatusCode();
 
-        $headers = [
-            'Content-Type' => 'application/json',
-            'Authorization' => 'Token ' . $gladAPIKey,
-        ];
-
-        $data = [
-            'exam_name' => strtoupper($exam),
-            'quantity' => $quantity,
-            'amount' => $amount,
-        ];
-
-        Log::info('buyResultChecker: Sending request to Glad API', [
-            'url' => $url,
-            'headers' => $headers,
-            'data' => $data
-        ]);
-
-        $response = Http::withoutVerifying()->withHeaders($headers)->post($url, $data);
-        $statusCode = $response->getStatusCode();
-
-        Log::info('buyResultChecker: Glad API response status code', [
-            'status_code' => $statusCode
-        ]);
-
-        if ($statusCode >= 200 && $statusCode < 300) {
-            $responseData = json_decode($response->getBody()->getContents(), true);
-
-            Log::info('buyResultChecker: Glad API response data', [
-                'response' => $responseData
+            Log::info('buyResultChecker: Glad API response status code', [
+                'status_code' => $statusCode
             ]);
 
-            if ($statusCode == 201 || $statusCode == 200) {
-                if (isset($responseData['Status']) && $responseData['Status'] == 'failed') {
+            if ($statusCode >= 200 && $statusCode < 300) {
+                $responseData = json_decode($response->getBody()->getContents(), true);
+
+                if (!is_array($responseData)) {
+                    Log::error('buyResultChecker: Glad API returned invalid or empty response', [
+                        'raw_response' => $response->getBody()->getContents()
+                    ]);
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'An error occurred. Please try again later.'
+                    ], 500);
+                }
+
+                Log::info('buyResultChecker: Glad API response data', [
+                    'response' => $responseData
+                ]);
+
+                if ($statusCode == 201 || $statusCode == 200) {
+                    if (isset($responseData['Status']) && $responseData['Status'] == 'failed') {
+                        $transaction = new Transactions();
+                        $transaction->amount = $amount;
+                        $transaction->service_provider = strtoupper($exam);
+                        $transaction->service = 'exam';
+                        $transaction->status = 'Failed';
+                        $transaction->image = $request->image;
+                        $transaction->quantity =  $quantity;
+                        $transaction->epin = $responseData['pins'] ?? null;
+                        $transaction->transaction_id = (string) ($responseData['id'] ?? null);
+                        $transaction->save();
+                        Log::error('buyResultChecker: API returned failed status', [
+                            'response' => $responseData
+                        ]);
+                        return response()->json([
+                            'status' => false,
+                            'message' => 'Transaction failed, please try again'
+                        ], 400);
+                    }
+
+                    $user->wallet_balance = $wallet_balance - $amount_charged;
+                    $balance_before = $wallet_balance;
+                    $user->save();
+
                     $transaction = new Transactions();
                     $transaction->amount = $amount;
                     $transaction->service_provider = strtoupper($exam);
                     $transaction->service = 'exam';
-                    $transaction->status = 'Failed';
+                    $transaction->status = 'Successful';
                     $transaction->image = $request->image;
                     $transaction->quantity =  $quantity;
                     $transaction->epin = $responseData['pins'] ?? null;
                     $transaction->transaction_id = (string) ($responseData['id'] ?? null);
                     $transaction->save();
-                    Log::error('buyResultChecker: API returned failed status', [
-                        'response' => $responseData
+
+                    $walletTrans = new  WalletTransactions();
+                    $walletTrans->trans_type = 'debit';
+                    $walletTrans->user_id = $user->id;
+                    $walletTrans->user = $user->username;
+                    $walletTrans->amount = "{$amount}";
+                    $walletTrans->service = 'exam';
+                    $walletTrans->status = 'Successful';
+                    $walletTrans->transaction_id = (string) ($responseData['id'] ?? null);
+                    $walletTrans->balance_before = $balance_before;
+                    $walletTrans->balance_after = $user->wallet_balance;
+                    $walletTrans->save();
+
+                    Log::info('buyResultChecker: Transaction and wallet transaction saved', [
+                        'transaction_id' => $transaction->transaction_id,
+                        'user_id' => $user->id
                     ]);
+
                     return response()->json([
-                        'status' => false,
-                        'message' => 'Transaction failed, please try again'
-                    ], 400);
+                        'status' => true,
+                        'message' => 'Result checker purchased successfully.',
+                        'data' => [
+                            'transaction' => $transaction,
+                            'pins' => $responseData['pins'] ?? null
+                        ]
+                    ]);
                 }
 
-                $user->wallet_balance = $wallet_balance - $amount_charged;
-                $balance_before = $wallet_balance;
-                $user->save();
-
-                $transaction = new Transactions();
-                $transaction->amount = $amount;
-                $transaction->service_provider = strtoupper($exam);
-                $transaction->service = 'exam';
-                $transaction->status = 'Successful';
-                $transaction->image = $request->image;
-                $transaction->quantity =  $quantity;
-                $transaction->epin = $responseData['pins'] ?? null;
-                $transaction->transaction_id = (string) ($responseData['id'] ?? null);
-                $transaction->save();
-
-                $walletTrans = new  WalletTransactions();
-                $walletTrans->trans_type = 'debit';
-                $walletTrans->user_id = $user->id;
-                $walletTrans->user = $user->username;
-                $walletTrans->amount = "{$amount}";
-                $walletTrans->service = 'exam';
-                $walletTrans->status = 'Successful';
-                $walletTrans->transaction_id = (string) ($responseData['id'] ?? null);
-                $walletTrans->balance_before = $balance_before;
-                $walletTrans->balance_after = $user->wallet_balance;
-                $walletTrans->save();
-
-                Log::info('buyResultChecker: Transaction and wallet transaction saved', [
-                    'transaction_id' => $transaction->transaction_id,
-                    'user_id' => $user->id
+                Log::warning("buyResultChecker: Unexpected API response", [
+                    'response' => $responseData
                 ]);
-
+                $errorMsg = $responseData['error'] ?? 'Transaction could not be processed, please try again.';
                 return response()->json([
-                    'status' => true,
-                    'message' => 'Result checker purchased successfully.',
-                    'data' => [
-                        'transaction' => $transaction,
-                        'pins' => $responseData['pins'] ?? null
-                    ]
-                ]);
+                    'status' => false,
+                    'message' => $errorMsg
+                ], $statusCode);
             }
 
-            Log::warning("buyResultChecker: Unexpected API response", [
-                'response' => $responseData
+            // Handle non-2xx responses
+            $responseBody = $response->getBody()->getContents();
+            $responseArr = json_decode($responseBody, true);
+            $service_error = $responseArr['error'][0] ?? 'Something went wrong, please contact admin';
+            if (Str::contains($service_error, 'insufficient balance')) {
+                $service_error = 'Something went wrong, please contact admin';
+            }
+            Log::error("buyResultChecker: Non-2xx response", [
+                'status_code' => $statusCode,
+                'error' => $service_error,
+                'response' => $responseArr
             ]);
-            $errorMsg = $responseData['error'] ?? 'Transaction could not be processed, please try again.';
             return response()->json([
                 'status' => false,
-                'message' => $errorMsg
+                'message' => $service_error
             ], $statusCode);
+        } catch (RequestException $e) {
+            Log::error("buyResultChecker: RequestException", [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'status' => false,
+                'message' => 'A network error occurred. Please try again later.'
+            ], 500);
+        } catch (\Exception $e) {
+            Log::error("buyResultChecker: Exception", [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'status' => false,
+                'message' => 'An unexpected error occurred. Please try again later.'
+            ], 500);
         }
-
-        // Handle non-2xx responses
-        $responseBody = $response->getBody()->getContents();
-        $responseArr = json_decode($responseBody, true);
-        $service_error = $responseArr['error'][0] ?? 'Something went wrong, please contact admin';
-        if (Str::contains($service_error, 'insufficient balance')) {
-            $service_error = 'Something went wrong, please contact admin';
-        }
-        Log::error("buyResultChecker: Non-2xx response", [
-            'status_code' => $statusCode,
-            'error' => $service_error,
-            'response' => $responseArr
-        ]);
-        return response()->json([
-            'status' => false,
-            'message' => $service_error
-        ], $statusCode);
-
-    } catch (RequestException $e) {
-        Log::error("buyResultChecker: RequestException", [
-            'message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-        return response()->json([
-            'status' => false,
-            'message' => 'A network error occurred. Please try again later.'
-        ], 500);
-    } catch (\Exception $e) {
-        Log::error("buyResultChecker: Exception", [
-            'message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ]);
-        return response()->json([
-            'status' => false,
-            'message' => 'An unexpected error occurred. Please try again later.'
-        ], 500);
     }
-}
 
     public function fetchJambVariations(VtpassJambService $vtpass)
     {

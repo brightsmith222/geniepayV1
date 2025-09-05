@@ -20,6 +20,7 @@ use App\Http\Controllers\Api\MobilePinController;
 use App\Http\Controllers\Api\NinePsbWebhookController;
 use App\Http\Controllers\Api\HashTestController;
 use App\Http\Controllers\Api\InternationalAirtimeController;
+use App\Http\Controllers\Api\TicketController;
 
 // Route::get('/user', function (Request $request) {
 //     return $request->user();
@@ -39,6 +40,17 @@ Route::get('/get-virtual', [UserController::class, 'getVirtualAccount']);
 Route::post('/upload-image', [UserController::class, 'uploadProfileImage']);
 Route::post('/send-change-pin-verification-code', [UserController::class, 'sendChangePinVerificationCode']);
 Route::post('/login-with-pin', [UserController::class, 'loginWithPin']);
+Route::get('/card-payment', [UserController::class, 'isCardPaymentActivated']);
+Route::get('/active-service', [UserController::class, 'getServices']);
+
+// Support Tickets
+Route::get('/tickets', [TicketController::class, 'index']);
+Route::post('/tickets', [TicketController::class, 'store']);
+Route::get('/tickets/{ticket}', [TicketController::class, 'show']);
+Route::post('/tickets/{ticket}/reply', [TicketController::class, 'reply']);
+Route::patch('/tickets/{ticket}/status', [TicketController::class, 'updateStatus']);
+Route::get('/attachments/{attachment}/view', [TicketController::class, 'viewAttachment']);
+Route::get('/attachments/{attachment}/download', [TicketController::class, 'downloadAttachment']);
 
 
     
@@ -84,6 +96,7 @@ Route::get('/transactions', [PaymentController::class, 'transactions']);
 Route::get('/wallet_transactions', [PaymentController::class, 'walletTransactions']);
 Route::post('/verify-receiver', [PaymentController::class, 'verifyReceiver']);
 Route::post('/transfer', [PaymentController::class, 'transfer']);
+Route::post('/paystack-callback', [PaymentController::class, 'paystackCallback']);
 
 // Sliders
 Route::get('/sliders', [SliderController::class, 'index']);
@@ -152,6 +165,7 @@ Route::post('/v1/paystack-webhook', [PaymentController::class, 'paystackWebhook'
 Route::post('/webhook/9psb-notify', [NinePsbWebhookController::class, 'handle']);
 
 Route::post('/generate-hash', [HashTestController::class, 'generate']);
+Route::get('/maintenance', [UserController::class, 'maintenance']);
 
 Route::post('/test-mail', [UserController::class, 'testMail']);
 

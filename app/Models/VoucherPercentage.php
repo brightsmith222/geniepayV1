@@ -13,7 +13,8 @@ class VoucherPercentage extends Model
         'network_id',
         'network_name', 
         'network_percentage', 
-        'status'
+        'status',
+        'active'
     ];
 
 }

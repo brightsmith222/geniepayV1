@@ -16,6 +16,7 @@ class AirtimeTopupPercentage extends Model
         'network_id',
         'network_percentage',
         'status',
+        'active',
     ];
 
 }

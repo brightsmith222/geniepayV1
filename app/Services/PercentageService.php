@@ -202,6 +202,37 @@ public function virtualCharge(float $originalAmount): float
 
     return $originalAmount;
 }
+
+/**
+ * Calculate Paystack payment charge.
+ */
+public function calculatePaystackCharge(float $originalAmount): float
+{
+    $setting = GeneralSettings::where('name', 'card_payment')->first();
+
+    // Only apply charge if card payment is enabled
+    if ($setting && (bool) $setting->is_enabled && (float) $setting->giftcard_percentage > 0) {
+        $percentage = (float) $setting->giftcard_percentage;
+        $charge = ($percentage / 100) * $originalAmount;
+        return $originalAmount + $charge;
+    }
+
+    // If not enabled or no percentage, return the original amount
+    return $originalAmount;
+}
+
+    /**
+ * Generate a unique ticket ID like "TKT-25635"
+ *
+ * @return string
+ */
+public static function generateTicketId()
+{
+    $prefix = 'TKT-';
+    $number = random_int(10000, 99999); // 5-digit random number
+    return $prefix . $number;
+}
+
     /**
      * Calculate discount based on percentage.
      */

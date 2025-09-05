@@ -26,7 +26,10 @@ class SettingController extends Component
     public $gladAirtimeEnabled;
     public $artxAirtimeEnabled;
     public $artxgiftcardEnabled;
+    public $cardPaymentEnabled;
+    public $cardCharge;
     public $referralBonus;
+    public $maintenanceEnabled;
     protected $listeners = ['deleteAccount'];
     
 
@@ -54,8 +57,11 @@ class SettingController extends Component
     $this->gladAirtimeEnabled = (bool) GeneralSettings::where('name', 'glad_airtime')->value('is_enabled');
     $this->artxAirtimeEnabled = (bool) GeneralSettings::where('name', 'artx_airtime')->value('is_enabled');
     $this->artxgiftcardEnabled = (bool) GeneralSettings::where('name', 'artx_giftcard')->value('is_enabled');
+    $this->cardPaymentEnabled = (bool) GeneralSettings::where('name', 'card_payment')->value('is_enabled');
+    $this->maintenanceEnabled = (bool) GeneralSettings::where('name', 'maintenance')->value('is_enabled');
     $this->referralBonus = GeneralSettings::where('name', 'referral')->value('referral_bonus') ?? 0;
-    $this->virtualCharge = GeneralSettings::where('name', 'virtual_charge')->value('giftcard_percentage') ?? 0;
+    $this->virtualCharge = GeneralSettings::where('name', 'virtual_charge')->value('virtual_percentage') ?? 0;
+    $this->cardCharge = GeneralSettings::where('name', 'card_payment')->value('card_charge') ?? 0;
 
 }
 
@@ -71,8 +77,12 @@ public function toggleSetting($name)
         $this->referralEnabled = $setting->is_enabled;
     }
 
-    if ($name === 'virtual_charge') {
+    if ($name === 'virtual_charges') {
         $this->virtualEnabled = $setting->is_enabled;
+    }
+
+    if ($name === 'card_payment') {
+        $this->cardPaymentEnabled = $setting->is_enabled;
     }
 
     if ($name === 'vtpass') {
@@ -97,6 +107,10 @@ public function toggleSetting($name)
 
     if ($name === 'artx_giftcard') {
         $this->artxgiftcardEnabled = $setting->is_enabled;
+    }
+
+    if ($name === 'maintenance') {
+        $this->maintenanceEnabled = $setting->is_enabled;
     }
     
 
@@ -124,14 +138,25 @@ public function saveVirtualCharge()
 
     GeneralSettings::updateOrCreate(
         ['name' => 'virtual_charge'],
-        ['referral_bonus' => $this->virtualCharge]
+        ['virtual_percentage' => $this->virtualCharge]
     );
 
     flash()->success('Virtual charge updated successfully!');
 
 }
 
+public function saveCardCharge()
+{
+    Log::info('Saving card charge: ' . $this->cardCharge);
 
+    GeneralSettings::updateOrCreate(
+        ['name' => 'card_payment'],
+        ['card_charge' => $this->cardCharge]
+    );
+
+    flash()->success('Card charge updated successfully!');
+
+}
   
   
 // Update profile information
@@ -203,8 +228,23 @@ public function saveVirtualCharge()
     return redirect('/')->with('success', 'Your account has been deleted.');
 }
 
-    
+    /**
+     * Get the maintenance mode status
+     * @return bool
+     */
+    public function maintenance()
+    {
+        return (bool) GeneralSettings::where('name', 'maintenance')->value('is_enabled');
+    }
 
+    /**
+     * Static method to check maintenance mode from anywhere in the application
+     * @return bool
+     */
+    public static function isMaintenanceMode()
+    {
+        return (bool) GeneralSettings::where('name', 'maintenance')->value('is_enabled');
+    }
 
     public function render()
     {

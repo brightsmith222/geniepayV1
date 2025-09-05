@@ -73,7 +73,21 @@ public function referralBonuses()
     return $this->hasMany(ReferralBonus::class, 'referrer_id');
 }
 
+/**
+ * Get the tickets for the user.
+ */
+public function tickets()
+{
+    return $this->hasMany(Ticket::class);
+}
 
+/**
+ * Get the ticket replies for the user.
+ */
+public function ticketReplies()
+{
+    return $this->hasMany(TicketReply::class);
+}
 
     /**
      * The attributes that should be hidden for serialization.

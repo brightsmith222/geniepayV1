@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class NinePsbService
 {
@@ -13,9 +14,9 @@ class NinePsbService
 
     public function __construct()
     {
-        $this->baseUrl = config('api.9psb.base_url');
-        $this->publicKey = config('api.9psb.public_key');
-        $this->privateKey = config('api.9psb.private_key');
+        $this->baseUrl = 'https://baastest.9psb.com.ng/iva-api/v1/merchant/virtualaccount/';
+        $this->publicKey = '8D2DE8945F514D95A7517A99DAC30F55';
+        $this->privateKey = 'oQ5YcwuKFz1v_M18X2t4_rPlXCro9LWyo8Zn-XHhz7G9KCNCzDDnGT4wphbVoSGS';
     }
 
     /**
@@ -29,9 +30,13 @@ class NinePsbService
                 'privatekey' => $this->privateKey,
             ]);
 
+            Log::info("Authentication response: " . $response);
+
             if ($response->successful() && $response['code'] === '00') {
                 return $response['access_token'];
             }
+
+            Log::error("Authentication response: " . $response);
 
             throw new \Exception("Authentication failed: " . $response['message']);
         });
@@ -45,6 +50,7 @@ class NinePsbService
         $token = $this->authenticate();
 
         $response = Http::withoutVerifying()->withToken($token)->{$method}($this->baseUrl . $endpoint, $payload);
+        Log::info("9PSB {$endpoint} response: " . $response);
 
         if ($response->successful() && isset($response['code']) && $response['code'] === '00') {
             return $response->json();

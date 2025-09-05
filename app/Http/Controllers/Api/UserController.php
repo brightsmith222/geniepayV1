@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
 use App\Models\GeneralSettings;
+use App\Models\Service;
 use Jenssegers\Agent\Agent;
 use App\Services\NinePsbService;
 use App\Models\VirtualAccount;
@@ -51,7 +52,7 @@ public function user(Request $request)
             'phone_number'     => $user->phone_number,
             'account_reference'=> $user->account_reference,
             'username'         => $user->username,
-            'image'            => $user->image ? asset('storage/' . $user->image) : null,
+            'image'            => $user->image ?? null,
         ];
 
         return response()->json(
@@ -109,6 +110,8 @@ public function user(Request $request)
         }
 
         $user->referral_bonus_eligible = $isReferralEnabled;
+        $user->image = url('profile_images/profile.png');
+
 
         $user->save();
 
@@ -137,7 +140,7 @@ public function user(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'full_name' => 'required|string',
-            'username' => 'required|string',
+            //'username' => 'required|string',
             'phone_number' => 'required|string|min:11|max:11',
 
         ]);
@@ -152,7 +155,7 @@ public function user(Request $request)
 
         try {
             $fullName = $request->input('full_name');
-            $userName = $request->input('username');
+           // $userName = $request->input('username');
             $phone = $request->input('phone_number');
 
 
@@ -172,23 +175,23 @@ public function user(Request $request)
                 }
             }
 
-            if ($user->username != $userName) {
-                $checkUserName = User::where('username', $userName)->first();
-                if ($checkUserName) {
-                    return response()->json(
-                        [
-                            'status' => false,
-                            'message' => 'Oops! This username already exist, please use another username'
-                        ],
-                        422
-                    );
-                }
-            }
+            // if ($user->username != $userName) {
+            //     $checkUserName = User::where('username', $userName)->first();
+            //     if ($checkUserName) {
+            //         return response()->json(
+            //             [
+            //                 'status' => false,
+            //                 'message' => 'Oops! This username already exist, please use another username'
+            //             ],
+            //             422
+            //         );
+            //     }
+            // }
 
 
             $user->phone_number = $phone;
             $user->full_name = $fullName;
-            $user->username = $userName;
+            //$user->username = $userName;
 
 
 
@@ -573,8 +576,11 @@ public function verifyCode(Request $request)
                 ],
             ];
 
+            Log::info('Creating virtual account for user', ['payload' => $payload]);
+
             try {
                 $response = $this->ninePsb->createVirtualAccount($payload);
+                Log::info('Virtual account creation response', ['response' => $response]);
 
                 // Check if the response contains the expected data
                 if (
@@ -583,10 +589,12 @@ public function verifyCode(Request $request)
                 ) {
                     VirtualAccount::create([
                         'user_id' => $user->id,
+                        "name" => $response['customer']['account']['name'] ?? $user->full_name,
                         'reference' => $reference,
                         'type' => 'STATIC',
                         'account_number' => $response['customer']['account']['number'],
                         'bank' => '9Payment Service Bank',
+                        'api' => '9psb',
                         'raw_response' => json_encode($response),
                     ]);
 
@@ -1186,10 +1194,19 @@ public function getVirtualAccount(Request $request)
 {
     $user = $request->user();
 
+    // Check if virtual account is enabled in settings
+    $setting = GeneralSettings::where('name', 'virtual_account')->first();
+    if (!$setting || !$setting->is_enabled) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Kindly use card payment method',
+        ], 404);
+    }
+
     $accounts = VirtualAccount::where('user_id', $user->id)->get();
 
     // Get virtual charge value from GeneralSettings
-    $virtualChargeSetting = GeneralSettings::where('name', 'virtual_charge')->first();
+    $virtualChargeSetting = GeneralSettings::where('name', 'virtual_account')->first();
     $virtual_charge = ($virtualChargeSetting && $virtualChargeSetting->is_enabled)
         ? (float) $virtualChargeSetting->giftcard_percentage
         : 0;
@@ -1200,6 +1217,7 @@ public function getVirtualAccount(Request $request)
             'accounts' => $accounts->map(function ($account) use ($virtual_charge) {
                 return [
                     'reference' => $account->reference,
+                    'name' => $account->name,
                     'type' => $account->type,
                     'account_number' => $account->account_number,
                     'bank' => $account->bank,
@@ -1215,6 +1233,80 @@ public function getVirtualAccount(Request $request)
         ], 404);
     }
 }
+
+public function isCardPaymentActivated()
+{
+    $setting = GeneralSettings::where('name', 'card_payment')->first();
+
+    if ($setting && $setting->is_enabled) {
+        return response()->json([
+            'status' => true,
+            'card_payment' => true,
+        ]);
+    } else {
+        return response()->json([
+            'status' => false,
+            'card_payment' => false,
+        ]);
+    }
+}
+
+/**
+ * Check if the application is in maintenance mode
+ * @return \Illuminate\Http\JsonResponse
+ */
+public function maintenance()
+{
+    try {
+        $setting = GeneralSettings::where('name', 'maintenance')->first();
+        
+        $isMaintenanceMode = $setting && $setting->is_enabled;
+        
+        return response()->json([
+            'status' => $isMaintenanceMode
+        ]);
+    } catch (\Throwable $th) {
+        Log::error('Error checking maintenance mode: ' . $th->getMessage());
+        return response()->json([
+            'maintenance' => false
+        ]);
+    }
+}
+
+/**
+ * Retrieve all services with their status
+ * @return \Illuminate\Http\JsonResponse
+ */
+public function getServices()
+{
+    try {
+        $services = Service::select('service_type', 'provider_name', 'is_active')
+            ->orderBy('service_type')
+            ->orderBy('provider_name')
+            ->get()
+            ->map(function ($s) {
+                return [
+                    'service_type' => $s->service_type,
+                    'provider_name' => $s->provider_name,
+                    'is_active' => (bool) $s->is_active,
+                    'message' => ((bool) $s->is_active) ? null : 'this service is temporary unavailable',
+                ];
+            });
+
+        return response()->json([
+            'status' => true,
+            'data' => $services
+        ]);
+    } catch (\Throwable $th) {
+        Log::error('Error retrieving services: ' . $th->getMessage());
+        return response()->json([
+            'status' => false,
+            'message' => 'This service is currently unavailable',
+            'data' => []
+        ], 500);
+    }
+}
+
 
 
 }

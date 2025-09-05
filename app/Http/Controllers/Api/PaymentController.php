@@ -13,6 +13,7 @@ use App\MyFunctions;
 use Illuminate\Support\Facades\Validator;
 use App\Models\User;
 use App\Services\PinService;
+use App\Services\PercentageService;
 
 
 
@@ -130,7 +131,7 @@ class PaymentController extends Controller
 
         try {
             $receivedSignature = $request->header('monnify-signature');
-            $secretKey = 'X9FV8PP9R0WYP259690KK77UM6RME5';
+            $secretKey = 'X9FV8PP9R0W4MYP259690KK77UM6RME5';
 
             if ($receivedSignature) {
                 // Generate expected signature
@@ -182,11 +183,11 @@ class PaymentController extends Controller
 
 
 
-    public function paystackPayWithCard(Request $request)
+    public function paystackPayWithCard(Request $request, PercentageService $percentageService)
     {
 
         $validator = Validator::make($request->all(), [
-            'amount' => 'required|string',
+            'amount' => 'required',
 
         ]);
 
@@ -197,17 +198,24 @@ class PaymentController extends Controller
             ], 422); // 422 Unprocessable Entity
         }
 
+        $originalAmount = (float) $request->amount;
+        $amountWithCharge = $percentageService->calculatePaystackCharge((float) $request->amount);
+
         try {
             // $accessToken = 'sk_live_8e8bd77578eb2daa2ded52faca4541205cd26a68';
-            $accessToken = 'sk_test_8c3ada1edbdf69f78b042862196b7b43a24d1d9';
+            $accessToken = config('api.paystack.secret_key');
 
-            $url = 'https://api.paystack.co/transaction/initialize';
+            $url = config('api.paystack.base_url');
 
             $payload = [
-                "amount" => $request->amount * 100,
+                "amount" => $amountWithCharge * 100,
                 "email" => $request->user()->email,
-                "reference" => "Geniepay" . MyFunctions::generateRequestId(),
-                "callback_url" => "https://geniepayapi.geniepay.ng",
+                "reference" => "GEN" . MyFunctions::generateRequestId(),
+                "callback_url" => config('api.paystack.callback_url'),
+                "metadata" => [
+                    "cancel_action" => config('api.paystack.close_url'),
+                    "original_amount" => $originalAmount,
+                ],
                 "channels" => ["card", "bank_transfer", "bank", "ussd"]
             ];
 
@@ -219,7 +227,7 @@ class PaymentController extends Controller
             ];
 
             // Send POST request to Monnify API for authentication
-            $response = Http::withHeaders($headers)->post($url, $payload);
+            $response = Http::WithoutVerifying()->withHeaders($headers)->post($url, $payload);
 
             // Check if the response status is 200
             // Log::info("Paystack Payment response: " . $response);
@@ -283,208 +291,201 @@ class PaymentController extends Controller
     }
 
 
+   public function paystackWebhook(Request $request)
+{
+    Log::info('Paystack Webhook: Received request');
 
+    try {
+        $secretKey = config('api.paystack.secret_key');
 
+        $receivedSignature = $request->header('X-Paystack-Signature');
+        Log::info('Paystack Webhook: Received signature', ['signature' => $receivedSignature]);
 
+        if ($receivedSignature) {
+            $expectedSignature = hash_hmac(
+                'sha512',
+                $request->getContent(),
+                $secretKey
+            );
+            Log::info('Paystack Webhook: Expected signature', ['expected' => $expectedSignature]);
 
-    public function paystackWebhook(Request $request)
-    {
+            if (hash_equals($expectedSignature, $receivedSignature)) {
+                $data = json_decode($request->getContent(), true);
+                Log::info('Paystack Webhook: Signature matched, data decoded', ['data' => $data]);
 
-        try {
-            // Get the website configuration values
-            $webconfig = config('website'); // Assuming you have website configuration stored in a config file
-            // $secretKey = 'sk_test_8c3a1bedbdf69f78b042862196b7b43a24d1d9';
-            // $secretKey = 'sk_live_8e8b7578eb2daaed52faca4541205cd26a68';
+                $evenStatus = $data['event'] ?? null;
+                Log::info('Paystack Webhook: Event status', ['event' => $evenStatus]);
 
-            $secretKey = 'sk_test_8c3ada1beddf69fb042862196b7b43a4d1d9';
+                
+                $data = $data['data'] ?? [];
+                $paymentMethod = $data['channel'] ?? null;
+                $email = $data['customer']['email'] ?? null;
+                $metadata = $data['metadata'] ?? [];
+                $originalAmount = $metadata['original_amount'] ?? null;
+                $amount = $originalAmount ?? null;
+                $reference = $data['reference'] ?? null;
+                
 
-            // Log::info('Paystack Webhook Data:');
+                $user = User::where('email', '=', $email)->first();
+                if (!$user) {
+                    Log::warning('Paystack Webhook: User not found', ['email' => $email]);
+                    return response()->json(['status' => 'error', 'message' => 'User not found'], 404);
+                }
 
+                // VERIFY with Paystack API
+                $verification = Http::withoutVerifying()
+                    ->withToken($secretKey)
+                    ->get("https://api.paystack.co/transaction/verify/{$reference}")
+                    ->json();
 
-            // Validate event by checking the Paystack signature
-            $receivedSignature = $request->header('X-Paystack-Signature');
-            if ($receivedSignature) {
-                // Generate expected signature
-                $expectedSignature = hash_hmac(
-                    'sha512',
-                    $request->getContent(),
-                    $secretKey
+                Log::info('Paystack Webhook: Verification response', ['verification' => $verification]);
+
+                if (!$verification['status']) {
+                    Log::warning("Paystack Webhook: Verification request failed", ['reference' => $reference]);
+                    return response()->json(['status' => 'error'], 400);
+                }
+
+                $verifiedStatus = $verification['data']['status'] ?? null;
+                Log::info('Paystack Webhook: Verified status', ['verifiedStatus' => $verifiedStatus]);
+
+                $checkTransaction = Transactions::where('transaction_id', '=', $reference)->first();
+                if ($checkTransaction != null && $checkTransaction->status == 'Successful') {
+                    Log::info('Paystack Webhook: Transaction already successful', ['reference' => $reference]);
+                    return response()->json(['status' => 'success'], 200);
+                }
+
+                $status = $verifiedStatus === 'success' ? 'Successful' : ucfirst($verifiedStatus);
+
+                $transaction = Transactions::updateOrCreate(
+                    ['transaction_id' => $reference],
+                    [
+                        'status' => $status,
+                        'username' => $user->username,
+                        'user_id' => $user->id,
+                        'trans_type' => 'credit',
+                        'amount_with_charge' => $data['amount'] / 100,
+                        'phone_number' => $data['customer']['phone'] ?? null,
+                        'image' => 'assets/images/card.png',
+                        'service' => 'Wallet Funded',
+                        'service_provider' => $paymentMethod,
+                        'service_plan' => 'Paystack'
+                    ]
                 );
+                Log::info('Paystack Webhook: Transaction updated/created', ['transaction' => $transaction]);
 
-                // Compare signatures
-                if (hash_equals($expectedSignature, $receivedSignature)) {
-                    // Retrieve the request's body
-                    $data = json_decode($request->getContent(), true);
-
-                    // Handle the webhook event here (you can add logic to process the event)
-                    // Example: Log the data
-                    Log::info('Paystack Webhook Data:', $data);
-                    $evenStatus = $data['event'];
-
-
-                    // if($evenStatus == 'charge.success'){
-
-                    $data = $data['data'];
-                    $paymentMethod = $data['channel'];
-                    $email = $data['customer']['email'];
-                    $amount = $data['amount'] / 100;
-                    $reference = $data['reference'];
-                    $user = User::where('email', '=', $email)->first();
-
-                    Log::info('here is 1');
-
-                    $checkTransaction = Transactions::where('transaction_id', '=', $reference)->first();
-                    if ($checkTransaction != null && $checkTransaction->status == 'Successful') {
-                        return response()->json(['status' => 'success'], 200);
-                    }
-
-                    Log::info('here is 2');
+                if ($transaction->wasRecentlyCreated || $transaction->wasChanged('status')) {
                     $balance_before = $user->wallet_balance;
-
                     if ($evenStatus == 'charge.success') {
                         $user->wallet_balance += $amount;
                         $user->save();
+                        Log::info('Paystack Webhook: User wallet updated', [
+                            'user_id' => $user->id,
+                            'wallet_balance' => $user->wallet_balance
+                        ]);
                     }
 
-                    Log::info('here is 3');
-
-                    $status = $data['status'] == 'success' ? 'Successful' : $data['status'];
-
-                    Log::info('here is 4');
-
-                    // $transaction = Transactions::updateOrCreate(
-                    //     ['transaction_id' => $reference],
-                    //     [
-                    //         'status' => $status,
-                    //         'username' => $user->username,
-                    //         'transaction_id' => $reference,
-                    //         'amount' => $amount,
-                    //         'phone_numbetr' => '07056642288',
-                    //         'image' => 'assets/images/card-transfer.png',
-                    //         'service' => $paymentMethod . ' payment',
-                    //         'service_provider' => 'Paystack',
-                    //         // 'username' => $user->username,
-                    //     ]
-                    // );
-
-                    Log::info('paystack webhook payments');
-                    $transaction = new Transactions();
-                    $transaction->status = $status;
-                    $transaction->username = $user->username;
-                    $transaction->transaction_id = $reference;
-                    $transaction->amount = $amount;
-                    $transaction->phone_number = '07056642288';
-                    $transaction->image = 'assets/images/card.png';
-                    $transaction->service = 'Wallet Funded';
-                    $transaction->service_provider = $paymentMethod;
-                    $transaction->service_plan = 'Paystack';
-
-                    $transaction->save();
-
-
-                    $walletTrans = new  WalletTransactions();
+                    $walletTrans = new WalletTransactions();
                     $walletTrans->trans_type = 'credit';
-                    $walletTrans->user_id = $user->id;
                     $walletTrans->user = $user->username;
+                    $walletTrans->user_id = $user->id;
                     $walletTrans->amount = $amount;
                     $walletTrans->service = 'Wallet Funded';
-                    $walletTrans->status = 'Successful';
+                    $walletTrans->status = $status;
                     $walletTrans->transaction_id = $reference;
                     $walletTrans->balance_before = $balance_before;
                     $walletTrans->balance_after = $user->wallet_balance;
                     $walletTrans->save();
-
-
-
-                    // }
-
-                    return response()->json(['status' => 'success'], 200);
+                    Log::info('Paystack Webhook: Wallet transaction saved', ['walletTrans' => $walletTrans]);
                 }
+
+                return response()->json([
+                    'status' => true,
+                    'message' => '',
+                    'data' => $transaction
+                ], 200);
+            } else {
+                Log::warning('Paystack Webhook: Signature mismatch');
             }
+        } else {
+            Log::warning('Paystack Webhook: No signature received');
+        }
 
-            // If the signature doesn't match or is missing, return a 400 Bad Request
-            return response()->json(['status' => 'error', 'message' => 'Invalid signature'], 400);
+        // If the signature doesn't match or is missing, return a 400 Bad Request
+        return response()->json(['status' => 'error', 'message' => 'Invalid signature'], 400);
+    } catch (RequestException $e) {
+        Log::error("Paystack Webhook: RequestException", ['error' => $e->getMessage()]);
+        return response()->json([
+            'status' => false,
+            'message' => 'Something went wrong,  please try again'
+        ], 422);
+    } catch (\Exception $e) {
+        Log::error("Paystack Webhook: General Exception", ['error' => $e->getMessage()]);
+        return response()->json([
+            'status' => false,
+            'message' => 'Something went wrong,  please try again'
+        ], 422);
+    }
+}
+
+
+
+
+    public function transactions(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            $transactions = Transactions::where('user_id', $user->id)->get();
+
+            return response()->json([
+                'status' => true,
+                'data' => $transactions
+            ]);
         } catch (RequestException $e) {
-
-            // Handle exceptions that occur during the HTTP request
-            Log::error("Request for paystack payment  failed" . $e->getMessage());
-            return response()->json(
-                [
-                    'status' => false,
-                    'message' => 'Something went wrong,  please try again'
-                ],
-                422
-            );
+            Log::error("Request for transactions failed" . $e->getMessage());
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong, please try again'
+            ], 422);
         } catch (\Exception $e) {
-
-            Log::error("Request for monnify payment general error: " . $e->getMessage());
-            return response()->json(
-                [
-                    'status' => false,
-                    'message' => 'Something went wrong,  please try again'
-                ],
-                422
-            );
+            Log::error("Request for transactions general error: " . $e->getMessage());
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong, please try again'
+            ], 422);
         }
     }
 
 
-public function transactions(Request $request)
-{
-    try {
-        $user = $request->user();
 
-        $transactions = Transactions::where('user_id', $user->id)->get();
+    public function walletTransactions(Request $request)
+    {
+        try {
+            $user = $request->user();
 
-        return response()->json([
-            'status' => true,
-            'data' => $transactions
-        ]);
-    } catch (RequestException $e) {
-        Log::error("Request for transactions failed" . $e->getMessage());
-        return response()->json([
-            'status' => false,
-            'message' => 'Something went wrong, please try again'
-        ], 422);
-    } catch (\Exception $e) {
-        Log::error("Request for transactions general error: " . $e->getMessage());
-        return response()->json([
-            'status' => false,
-            'message' => 'Something went wrong, please try again'
-        ], 422);
+            $transactions = WalletTransactions::where('user', $user->username)
+                ->orWhere('receiver_email', $user->email)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'status' => true,
+                'data' => $transactions
+            ]);
+        } catch (RequestException $e) {
+            Log::error("Request for wallet transactions failed: " . $e->getMessage());
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong, please try again'
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error("Request for wallet transactions general error: " . $e->getMessage());
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong, please try again'
+            ], 422);
+        }
     }
-}
-
-
-
-public function walletTransactions(Request $request)
-{
-    try {
-        $user = $request->user();
-
-        $transactions = WalletTransactions::where('user', $user->username)
-            ->orWhere('receiver_email', $user->email)
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return response()->json([
-            'status' => true,
-            'data' => $transactions
-        ]);
-    } catch (RequestException $e) {
-        Log::error("Request for wallet transactions failed: " . $e->getMessage());
-        return response()->json([
-            'status' => false,
-            'message' => 'Something went wrong, please try again'
-        ], 422);
-    } catch (\Exception $e) {
-        Log::error("Request for wallet transactions general error: " . $e->getMessage());
-        return response()->json([
-            'status' => false,
-            'message' => 'Something went wrong, please try again'
-        ], 422);
-    }
-}
 
 
 
@@ -552,6 +553,8 @@ public function walletTransactions(Request $request)
             );
         }
     }
+
+    
 
 
     public function transfer(Request $request, PinService $pinService)
@@ -622,6 +625,7 @@ public function walletTransactions(Request $request)
                 $walletTransSender->receiver_email = $receiver->email;
                 $walletTransSender->receiver_name = $receiver->full_name;
                 $walletTransSender->service = 'transfer';
+                $walletTransSender->status = 'Successful';
                 $walletTransSender->transaction_id = MyFunctions::generateRequestId();
                 $walletTransSender->balance_before = $balance_before;
                 $walletTransSender->balance_after = $user->wallet_balance;
@@ -638,6 +642,7 @@ public function walletTransactions(Request $request)
                 $walletTransReceiver->receiver_email = $receiver->email;
                 $walletTransReceiver->receiver_name = $receiver->full_name;
                 $walletTransReceiver->service = 'transfer';
+                $walletTransReceiver->status = 'Successful';
                 $walletTransReceiver->transaction_id = MyFunctions::generateRequestId();
                 $walletTransReceiver->balance_before = $receiver->wallet_balance - $amount;
                 $walletTransReceiver->balance_after = $receiver->wallet_balance;
@@ -677,6 +682,4 @@ public function walletTransactions(Request $request)
             );
         }
     }
-
-    public function walletTrans() {}
 }

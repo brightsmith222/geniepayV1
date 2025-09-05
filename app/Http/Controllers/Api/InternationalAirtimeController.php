@@ -94,6 +94,16 @@ class InternationalAirtimeController extends Controller
         $countryISO = ReloadlyHelper::getCountryISO($request->phone);
         Log::info('getAirtimeOperators: Detected country ISO', ['countryISO' => $countryISO]);
 
+        // Check if the country is Nigeria (NG)
+    if ($countryISO === 'NG') {
+        Log::info('getAirtimeOperators: Nigerian number detected', ['phone' => $request->phone]);
+        return response()->json([
+            'status' => false, 
+            'message' => 'Please use the local section to recharge.',
+            'is_nigerian' => true
+        ], 422);
+    }
+
         if (!$countryISO) {
             Log::warning('getAirtimeOperators: Invalid phone number', ['phone' => $request->phone]);
             return response()->json(['status' => false, 'message' => 'Invalid phone number']);
@@ -318,6 +328,15 @@ class InternationalAirtimeController extends Controller
 
         $countryISO = ReloadlyHelper::getCountryISO($request->phone);
         Log::info('getDataOperators: Detected country ISO', ['countryISO' => $countryISO]);
+
+        if ($countryISO === 'NG') {
+        Log::info('getAirtimeOperators: Nigerian number detected', ['phone' => $request->phone]);
+        return response()->json([
+            'status' => false, 
+            'message' => 'Please use the local section to recharge.',
+            'is_nigerian' => true
+        ], 422);
+    }
 
         if (!$countryISO) {
             Log::warning('getDataOperators: Invalid phone number', ['phone' => $request->phone]);

@@ -20,6 +20,7 @@ use App\Http\Controllers\ReportedController;
 use App\Http\Controllers\UserSearchController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\ProductLookupController;
+use App\Http\Controllers\TicketController;
 
 
 
@@ -98,9 +99,20 @@ Route::post('/transaction/refresh-status', [TransactionsController::class, 'refr
 
 //Reported Transaction
 Route::get('reported', [ReportedController::class, 'index'])->name('reported.index');
+
+// Support Tickets Management
+Route::get('tickets', [TicketController::class, 'index'])->name('tickets.index');
+Route::get('tickets/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
+Route::get('tickets/statistics', [TicketController::class, 'statistics'])->name('tickets.statistics');
+Route::post('tickets/{ticket}/reply', [TicketController::class, 'addReply'])->name('tickets.reply');
+Route::patch('tickets/{ticket}/status', [TicketController::class, 'updateStatus'])->name('tickets.updateStatus');
+Route::post('tickets/{ticket}/close', [TicketController::class, 'close'])->name('tickets.close');
 Route::post('reported/{id}/reportrefund', [ReportedController::class, 'reportedrefund'])->name('report.refund');
 Route::get('reported/{transactionId}', [ReportedController::class, 'show'])->name('reported.reports');
 Route::get('reported/resolved', [ReportedController::class, 'resolved'])->name('reported.resolved');
+Route::get('attachments/{attachment}/download', [TicketController::class, 'downloadAttachment'])->name('attachments.download');
+Route::delete('attachments/{attachment}', [TicketController::class, 'deleteAttachment'])->name('attachments.delete');
+
 
   // Notification
 Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');

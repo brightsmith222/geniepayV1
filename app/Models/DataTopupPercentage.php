@@ -13,5 +13,6 @@ class DataTopupPercentage extends Model
         'network_name',
         'network_percentage',
         'status',
+        'active',
     ];
 }

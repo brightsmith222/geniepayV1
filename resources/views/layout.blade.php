@@ -144,6 +144,7 @@
 
             <li><a href="{{ URL::to('product-explorer') }}"><i class="fas fa-database"></i> Product Lookup</a></li>
             <li><a href="{{ URL::to('notifications') }}"><i class="fas fa-bell"></i> Notification</a></li>
+            <li><a href="{{ URL::to('tickets') }}"><i class="fas fa-ticket-alt"></i> Support Tickets</a></li>
             <li><a href="{{ URL::to('settings') }}"><i class="fas fa-cog"></i> Settings</a></li>
 
             <!-- Logout -->
